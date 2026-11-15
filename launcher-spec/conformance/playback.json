@@ -1,0 +1,1292 @@
+{
+ "about": "PlaybackMachine: feed events in order; each step lists the exact commands expected. fadeDuration 0.4 unless given; skip fades use 0.3. A segmented pack moves onto the target window as soon as the window is ready (P-005); the running intro/loop keeps playing there.",
+ "fadeDuration": 0.4,
+ "cases": [
+  {
+   "name": "full pack fills the launch then hands off",
+   "layout": {
+    "intro": "i.mp4",
+    "loop": "l.mp4",
+    "final": "o.mp4",
+    "finalSegment": "outro"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": [
+      {
+       "command": "showOnLaunchScreen"
+      },
+      {
+       "command": "play",
+       "segment": "intro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "segmentEnded",
+      "segment": "intro"
+     },
+     "expect": [
+      {
+       "command": "play",
+       "segment": "loop",
+       "looping": true
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "loopCycleEnded"
+     },
+     "expect": []
+    },
+    {
+     "event": {
+      "event": "windowReady"
+     },
+     "expect": [
+      {
+       "command": "moveToTargetWindow",
+       "animated": true
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "windowReady"
+     },
+     "expect": []
+    },
+    {
+     "event": {
+      "event": "loopCycleEnded"
+     },
+     "expect": [
+      {
+       "command": "play",
+       "segment": "outro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "loopCycleEnded"
+     },
+     "expect": []
+    },
+    {
+     "event": {
+      "event": "reachedHandoff"
+     },
+     "expect": [
+      {
+       "command": "beginFade",
+       "duration": 0.4
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "reachedHandoff"
+     },
+     "expect": []
+    },
+    {
+     "event": {
+      "event": "segmentEnded",
+      "segment": "outro"
+     },
+     "expect": []
+    },
+    {
+     "event": {
+      "event": "fadeCompleted"
+     },
+     "expect": [
+      {
+       "command": "close",
+       "reason": "completed",
+       "wasVisible": true
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "skip"
+     },
+     "expect": []
+    },
+    {
+     "event": {
+      "event": "targetExited"
+     },
+     "expect": []
+    }
+   ]
+  },
+  {
+   "name": "window ready during intro skips the loop",
+   "layout": {
+    "intro": "i.mp4",
+    "loop": "l.mp4",
+    "final": "o.mp4",
+    "finalSegment": "outro"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": [
+      {
+       "command": "showOnLaunchScreen"
+      },
+      {
+       "command": "play",
+       "segment": "intro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "windowReady"
+     },
+     "expect": [
+      {
+       "command": "moveToTargetWindow",
+       "animated": true
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "segmentEnded",
+      "segment": "intro"
+     },
+     "expect": [
+      {
+       "command": "play",
+       "segment": "outro",
+       "looping": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "immediate loop exit",
+   "layout": {
+    "intro": "i.mp4",
+    "loop": "l.mp4",
+    "final": "o.mp4",
+    "finalSegment": "outro"
+   },
+   "loopExit": "immediate",
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": [
+      {
+       "command": "showOnLaunchScreen"
+      },
+      {
+       "command": "play",
+       "segment": "intro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "segmentEnded",
+      "segment": "intro"
+     },
+     "expect": [
+      {
+       "command": "play",
+       "segment": "loop",
+       "looping": true
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "windowReady"
+     },
+     "expect": [
+      {
+       "command": "moveToTargetWindow",
+       "animated": true
+      },
+      {
+       "command": "play",
+       "segment": "outro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "loopCycleEnded"
+     },
+     "expect": []
+    }
+   ]
+  },
+  {
+   "name": "intro without loop holds the last frame",
+   "layout": {
+    "intro": "i.mp4",
+    "final": "o.mp4",
+    "finalSegment": "outro"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": [
+      {
+       "command": "showOnLaunchScreen"
+      },
+      {
+       "command": "play",
+       "segment": "intro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "segmentEnded",
+      "segment": "intro"
+     },
+     "expect": [
+      {
+       "command": "holdLastFrame"
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "windowReady"
+     },
+     "expect": [
+      {
+       "command": "moveToTargetWindow",
+       "animated": true
+      },
+      {
+       "command": "play",
+       "segment": "outro",
+       "looping": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "loop-only pack",
+   "layout": {
+    "loop": "l.mp4",
+    "final": "o.mp4",
+    "finalSegment": "outro"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": [
+      {
+       "command": "showOnLaunchScreen"
+      },
+      {
+       "command": "play",
+       "segment": "loop",
+       "looping": true
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "windowReady"
+     },
+     "expect": [
+      {
+       "command": "moveToTargetWindow",
+       "animated": true
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "loopCycleEnded"
+     },
+     "expect": [
+      {
+       "command": "play",
+       "segment": "outro",
+       "looping": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "segmented pack with window already ready",
+   "layout": {
+    "intro": "i.mp4",
+    "loop": "l.mp4",
+    "final": "o.mp4",
+    "finalSegment": "outro"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": true
+     },
+     "expect": [
+      {
+       "command": "showOnTargetWindow"
+      },
+      {
+       "command": "play",
+       "segment": "outro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "segmentEnded",
+      "segment": "intro"
+     },
+     "expect": []
+    }
+   ]
+  },
+  {
+   "name": "single video waits invisibly",
+   "layout": {
+    "final": "v.mp4",
+    "finalSegment": "video"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": []
+    },
+    {
+     "event": {
+      "event": "windowReady"
+     },
+     "expect": [
+      {
+       "command": "showOnTargetWindow"
+      },
+      {
+       "command": "play",
+       "segment": "video",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "segmentEnded",
+      "segment": "video"
+     },
+     "expect": [
+      {
+       "command": "beginFade",
+       "duration": 0.4
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "fadeCompleted"
+     },
+     "expect": [
+      {
+       "command": "close",
+       "reason": "completed",
+       "wasVisible": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "timeout before anything is shown",
+   "layout": {
+    "final": "v.mp4",
+    "finalSegment": "video"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": []
+    },
+    {
+     "event": {
+      "event": "waitTimedOut"
+     },
+     "expect": [
+      {
+       "command": "close",
+       "reason": "window-timeout",
+       "wasVisible": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "timeout while covering the launch fades",
+   "layout": {
+    "intro": "i.mp4",
+    "loop": "l.mp4",
+    "final": "o.mp4",
+    "finalSegment": "outro"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": [
+      {
+       "command": "showOnLaunchScreen"
+      },
+      {
+       "command": "play",
+       "segment": "intro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "segmentEnded",
+      "segment": "intro"
+     },
+     "expect": [
+      {
+       "command": "play",
+       "segment": "loop",
+       "looping": true
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "waitTimedOut"
+     },
+     "expect": [
+      {
+       "command": "beginFade",
+       "duration": 0.4
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "windowReady"
+     },
+     "expect": []
+    },
+    {
+     "event": {
+      "event": "fadeCompleted"
+     },
+     "expect": [
+      {
+       "command": "close",
+       "reason": "window-timeout",
+       "wasVisible": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "timeout after window ready is ignored",
+   "layout": {
+    "intro": "i.mp4",
+    "loop": "l.mp4",
+    "final": "o.mp4",
+    "finalSegment": "outro"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": [
+      {
+       "command": "showOnLaunchScreen"
+      },
+      {
+       "command": "play",
+       "segment": "intro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "windowReady"
+     },
+     "expect": [
+      {
+       "command": "moveToTargetWindow",
+       "animated": true
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "waitTimedOut"
+     },
+     "expect": []
+    }
+   ]
+  },
+  {
+   "name": "skip during intro",
+   "layout": {
+    "intro": "i.mp4",
+    "loop": "l.mp4",
+    "final": "o.mp4",
+    "finalSegment": "outro"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": [
+      {
+       "command": "showOnLaunchScreen"
+      },
+      {
+       "command": "play",
+       "segment": "intro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "skip"
+     },
+     "expect": [
+      {
+       "command": "beginFade",
+       "duration": 0.3
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "skip"
+     },
+     "expect": []
+    },
+    {
+     "event": {
+      "event": "reachedHandoff"
+     },
+     "expect": []
+    },
+    {
+     "event": {
+      "event": "fadeCompleted"
+     },
+     "expect": [
+      {
+       "command": "close",
+       "reason": "skipped",
+       "wasVisible": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "skip during outro",
+   "layout": {
+    "intro": "i.mp4",
+    "loop": "l.mp4",
+    "final": "o.mp4",
+    "finalSegment": "outro"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": [
+      {
+       "command": "showOnLaunchScreen"
+      },
+      {
+       "command": "play",
+       "segment": "intro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "windowReady"
+     },
+     "expect": [
+      {
+       "command": "moveToTargetWindow",
+       "animated": true
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "segmentEnded",
+      "segment": "intro"
+     },
+     "expect": [
+      {
+       "command": "play",
+       "segment": "outro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "skip"
+     },
+     "expect": [
+      {
+       "command": "beginFade",
+       "duration": 0.3
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "fadeCompleted"
+     },
+     "expect": [
+      {
+       "command": "close",
+       "reason": "skipped",
+       "wasVisible": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "skip while invisibly waiting",
+   "layout": {
+    "final": "v.mp4",
+    "finalSegment": "video"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": []
+    },
+    {
+     "event": {
+      "event": "skip"
+     },
+     "expect": [
+      {
+       "command": "close",
+       "reason": "skipped",
+       "wasVisible": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "target exits",
+   "layout": {
+    "intro": "i.mp4",
+    "loop": "l.mp4",
+    "final": "o.mp4",
+    "finalSegment": "outro"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": [
+      {
+       "command": "showOnLaunchScreen"
+      },
+      {
+       "command": "play",
+       "segment": "intro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "targetExited"
+     },
+     "expect": [
+      {
+       "command": "close",
+       "reason": "target-exited",
+       "wasVisible": true
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "targetExited"
+     },
+     "expect": []
+    }
+   ]
+  },
+  {
+   "name": "user switches away",
+   "layout": {
+    "intro": "i.mp4",
+    "loop": "l.mp4",
+    "final": "o.mp4",
+    "finalSegment": "outro"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": [
+      {
+       "command": "showOnLaunchScreen"
+      },
+      {
+       "command": "play",
+       "segment": "intro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "userSwitched"
+     },
+     "expect": [
+      {
+       "command": "close",
+       "reason": "user-switched",
+       "wasVisible": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "superseded",
+   "layout": {
+    "intro": "i.mp4",
+    "loop": "l.mp4",
+    "final": "o.mp4",
+    "finalSegment": "outro"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": [
+      {
+       "command": "showOnLaunchScreen"
+      },
+      {
+       "command": "play",
+       "segment": "intro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "superseded"
+     },
+     "expect": [
+      {
+       "command": "close",
+       "reason": "superseded",
+       "wasVisible": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "decode failure",
+   "layout": {
+    "intro": "i.mp4",
+    "loop": "l.mp4",
+    "final": "o.mp4",
+    "finalSegment": "outro"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": [
+      {
+       "command": "showOnLaunchScreen"
+      },
+      {
+       "command": "play",
+       "segment": "intro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "failed",
+      "why": "decode"
+     },
+     "expect": [
+      {
+       "command": "close",
+       "reason": "failed-decode",
+       "wasVisible": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "target exits while fading",
+   "layout": {
+    "intro": "i.mp4",
+    "loop": "l.mp4",
+    "final": "o.mp4",
+    "finalSegment": "outro"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": [
+      {
+       "command": "showOnLaunchScreen"
+      },
+      {
+       "command": "play",
+       "segment": "intro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "skip"
+     },
+     "expect": [
+      {
+       "command": "beginFade",
+       "duration": 0.3
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "targetExited"
+     },
+     "expect": [
+      {
+       "command": "close",
+       "reason": "target-exited",
+       "wasVisible": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "hidden before window",
+   "layout": {
+    "intro": "i.mp4",
+    "loop": "l.mp4",
+    "final": "o.mp4",
+    "finalSegment": "outro"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": [
+      {
+       "command": "showOnLaunchScreen"
+      },
+      {
+       "command": "play",
+       "segment": "intro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "targetHidden"
+     },
+     "expect": [
+      {
+       "command": "close",
+       "reason": "target-hidden",
+       "wasVisible": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "hidden after window is ignored",
+   "layout": {
+    "final": "v.mp4",
+    "finalSegment": "video"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": true
+     },
+     "expect": [
+      {
+       "command": "showOnTargetWindow"
+      },
+      {
+       "command": "play",
+       "segment": "video",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "targetHidden"
+     },
+     "expect": []
+    }
+   ]
+  },
+  {
+   "name": "events before start are ignored",
+   "layout": {
+    "intro": "i.mp4",
+    "loop": "l.mp4",
+    "final": "o.mp4",
+    "finalSegment": "outro"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "windowReady"
+     },
+     "expect": []
+    },
+    {
+     "event": {
+      "event": "segmentEnded",
+      "segment": "intro"
+     },
+     "expect": []
+    },
+    {
+     "event": {
+      "event": "loopCycleEnded"
+     },
+     "expect": []
+    },
+    {
+     "event": {
+      "event": "reachedHandoff"
+     },
+     "expect": []
+    },
+    {
+     "event": {
+      "event": "fadeCompleted"
+     },
+     "expect": []
+    },
+    {
+     "event": {
+      "event": "skip"
+     },
+     "expect": []
+    },
+    {
+     "event": {
+      "event": "waitTimedOut"
+     },
+     "expect": []
+    },
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": [
+      {
+       "command": "showOnLaunchScreen"
+      },
+      {
+       "command": "play",
+       "segment": "intro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "start",
+      "windowReady": true
+     },
+     "expect": []
+    }
+   ]
+  },
+  {
+   "name": "window ready during intro moves at once and keeps playing the intro",
+   "layout": {
+    "intro": "i.mp4",
+    "loop": "l.mp4",
+    "final": "o.mp4",
+    "finalSegment": "outro"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": [
+      {
+       "command": "showOnLaunchScreen"
+      },
+      {
+       "command": "play",
+       "segment": "intro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "windowReady"
+     },
+     "expect": [
+      {
+       "command": "moveToTargetWindow",
+       "animated": true
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "windowReady"
+     },
+     "expect": []
+    },
+    {
+     "event": {
+      "event": "segmentEnded",
+      "segment": "intro"
+     },
+     "expect": [
+      {
+       "command": "play",
+       "segment": "outro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "reachedHandoff"
+     },
+     "expect": [
+      {
+       "command": "beginFade",
+       "duration": 0.4
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "window ready during a cycle-end loop moves at once, outro waits for the cycle",
+   "layout": {
+    "intro": "i.mp4",
+    "loop": "l.mp4",
+    "final": "o.mp4",
+    "finalSegment": "outro"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": [
+      {
+       "command": "showOnLaunchScreen"
+      },
+      {
+       "command": "play",
+       "segment": "intro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "segmentEnded",
+      "segment": "intro"
+     },
+     "expect": [
+      {
+       "command": "play",
+       "segment": "loop",
+       "looping": true
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "windowReady"
+     },
+     "expect": [
+      {
+       "command": "moveToTargetWindow",
+       "animated": true
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "loopCycleEnded"
+     },
+     "expect": [
+      {
+       "command": "play",
+       "segment": "outro",
+       "looping": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "timeout after moving to the window is ignored",
+   "layout": {
+    "intro": "i.mp4",
+    "final": "o.mp4",
+    "finalSegment": "outro"
+   },
+   "steps": [
+    {
+     "event": {
+      "event": "start",
+      "windowReady": false
+     },
+     "expect": [
+      {
+       "command": "showOnLaunchScreen"
+      },
+      {
+       "command": "play",
+       "segment": "intro",
+       "looping": false
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "windowReady"
+     },
+     "expect": [
+      {
+       "command": "moveToTargetWindow",
+       "animated": true
+      }
+     ]
+    },
+    {
+     "event": {
+      "event": "waitTimedOut"
+     },
+     "expect": []
+    },
+    {
+     "event": {
+      "event": "segmentEnded",
+      "segment": "intro"
+     },
+     "expect": [
+      {
+       "command": "play",
+       "segment": "outro",
+       "looping": false
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

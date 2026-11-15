@@ -1,0 +1,237 @@
+{
+ "about": "TARGETS.md: windowsMatch = process image path vs target identity; choose = per-target pack selection (expectMissing: the target's own pack was unavailable); state = playback-state.json v1/v2 reading.",
+ "windowsMatch": [
+  {
+   "name": "codex-match",
+   "identity": {
+    "package": "OpenAI.Codex",
+    "exe": "app\\ChatGPT.exe"
+   },
+   "imagePath": "C:\\Program Files\\WindowsApps\\OpenAI.Codex_1.2025.300.0_x64__2p2nqsd0c76g0\\app\\ChatGPT.exe",
+   "expect": true
+  },
+  {
+   "name": "codex-other-exe-in-package",
+   "identity": {
+    "package": "OpenAI.Codex",
+    "exe": "app\\ChatGPT.exe"
+   },
+   "imagePath": "C:\\Program Files\\WindowsApps\\OpenAI.Codex_1.2025.300.0_x64__2p2nqsd0c76g0\\app\\Helper.exe",
+   "expect": false
+  },
+  {
+   "name": "package-without-exe-matches-any",
+   "identity": {
+    "package": "OpenAI.Codex"
+   },
+   "imagePath": "C:\\Program Files\\WindowsApps\\OpenAI.Codex_1.0.0.0_x64__abc\\app\\Helper.exe",
+   "expect": true
+  },
+  {
+   "name": "package-prefix-is-not-enough",
+   "identity": {
+    "package": "OpenAI.Codex"
+   },
+   "imagePath": "C:\\Program Files\\WindowsApps\\OpenAI.CodexBeta_1.0.0.0_x64__abc\\app\\ChatGPT.exe",
+   "expect": false
+  },
+  {
+   "name": "package-case-insensitive",
+   "identity": {
+    "package": "openai.codex",
+    "exe": "APP\\chatgpt.EXE"
+   },
+   "imagePath": "c:\\program files\\windowsapps\\OpenAI.Codex_9_x64__z\\app\\ChatGPT.exe",
+   "expect": true
+  },
+  {
+   "name": "path-exact",
+   "identity": {
+    "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+   },
+   "imagePath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+   "expect": true
+  },
+  {
+   "name": "path-case-insensitive",
+   "identity": {
+    "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+   },
+   "imagePath": "c:\\PROGRAM FILES\\google\\chrome\\application\\CHROME.EXE",
+   "expect": true
+  },
+  {
+   "name": "path-other-folder",
+   "identity": {
+    "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+   },
+   "imagePath": "D:\\Portable\\Chrome\\chrome.exe",
+   "expect": false
+  },
+  {
+   "name": "path-suffix-is-not-enough",
+   "identity": {
+    "path": "C:\\Tools\\app.exe"
+   },
+   "imagePath": "C:\\Tools\\myapp.exe",
+   "expect": false
+  }
+ ],
+ "choose": [
+  {
+   "name": "target-pack",
+   "animation": "night-garden",
+   "rotation": "fixed",
+   "favorites": [],
+   "available": [
+    "demo-garden",
+    "night-garden"
+   ],
+   "active": "demo-garden",
+   "lastPackId": null,
+   "random": 0.0,
+   "expect": "night-garden",
+   "expectMissing": false
+  },
+  {
+   "name": "target-pack-ignores-rotation",
+   "animation": "night-garden",
+   "rotation": "shuffleAll",
+   "favorites": [],
+   "available": [
+    "demo-garden",
+    "night-garden",
+    "z"
+   ],
+   "active": "demo-garden",
+   "lastPackId": "night-garden",
+   "random": 0.0,
+   "expect": "night-garden",
+   "expectMissing": false
+  },
+  {
+   "name": "global-fixed",
+   "animation": null,
+   "rotation": "fixed",
+   "favorites": [],
+   "available": [
+    "demo-garden",
+    "night-garden"
+   ],
+   "active": "night-garden",
+   "lastPackId": null,
+   "random": 0.9,
+   "expect": "night-garden",
+   "expectMissing": false
+  },
+  {
+   "name": "global-rotation-uses-target-last",
+   "animation": null,
+   "rotation": "shuffleAll",
+   "favorites": [],
+   "available": [
+    "a",
+    "b"
+   ],
+   "active": "a",
+   "lastPackId": "a",
+   "random": 0.0,
+   "expect": "b",
+   "expectMissing": false
+  },
+  {
+   "name": "missing-pack-falls-back-to-global",
+   "animation": "gone",
+   "rotation": "fixed",
+   "favorites": [],
+   "available": [
+    "demo-garden"
+   ],
+   "active": "demo-garden",
+   "lastPackId": null,
+   "random": 0.0,
+   "expect": "demo-garden",
+   "expectMissing": true
+  },
+  {
+   "name": "missing-pack-falls-back-to-rotation",
+   "animation": "gone",
+   "rotation": "shuffleAll",
+   "favorites": [],
+   "available": [
+    "a",
+    "b",
+    "c"
+   ],
+   "active": "a",
+   "lastPackId": "b",
+   "random": 0.99,
+   "expect": "c",
+   "expectMissing": true
+  }
+ ],
+ "state": [
+  {
+   "name": "v1-moves-to-default-target",
+   "json": {
+    "schemaVersion": 1,
+    "lastAutoPlayAt": 1794643200.5,
+    "lastPackId": "demo-garden",
+    "snoozeUntil": 1794650000
+   },
+   "expectSnooze": 1794650000,
+   "expectTargets": {
+    "default-codex": {
+     "lastAutoPlayAt": 1794643200.5,
+     "lastPackId": "demo-garden"
+    }
+   }
+  },
+  {
+   "name": "v2-per-target",
+   "json": {
+    "schemaVersion": 2,
+    "snoozeUntil": null,
+    "targets": {
+     "default-codex": {
+      "lastAutoPlayAt": 10
+     },
+     "chrome-1": {
+      "lastAutoPlayAt": 20,
+      "lastPackId": "a"
+     }
+    }
+   },
+   "expectSnooze": null,
+   "expectTargets": {
+    "default-codex": {
+     "lastAutoPlayAt": 10,
+     "lastPackId": null
+    },
+    "chrome-1": {
+     "lastAutoPlayAt": 20,
+     "lastPackId": "a"
+    }
+   }
+  },
+  {
+   "name": "v2-bad-target-id-resets",
+   "json": {
+    "schemaVersion": 2,
+    "targets": {
+     "Bad Id": {
+      "lastAutoPlayAt": 10
+     }
+    }
+   },
+   "expectReset": true
+  },
+  {
+   "name": "v3-unknown-resets",
+   "json": {
+    "schemaVersion": 3
+   },
+   "expectReset": true
+  }
+ ]
+}

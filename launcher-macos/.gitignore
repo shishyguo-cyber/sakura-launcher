@@ -1,0 +1,29 @@
+.build/
+build/
+.DS_Store
+__pycache__/
+
+# Media never enters the public repository, except the original demo pack.
+*.mp4
+*.m4v
+*.mov
+*.webm
+*.mkv
+!demo-pack/*.mp4
+!demo-pack/*.m4v
+!demo-pack/*.mov
+
+# Isolated sandbox-safe build and verification output.
+.work/
+
+# Local check logs that contain machine paths
+checks/p003/
+checks/p004/
+checks/p007/
+checks/p0*-verify.log
+
+# P-008 author-check logs and generated review artifacts.
+checks/p008/
+checks/unit-tests.log
+# Per-phase local check logs (contain machine paths)
+checks/p0*/

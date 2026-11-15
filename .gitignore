@@ -1,0 +1,26 @@
+# Local tools, collaboration and release review data
+.agents/
+.collab/
+.superpowers/
+.cache/
+.worktrees/
+.DS_Store
+__pycache__/
+*.pyc
+.env
+.env.*
+*.local.env
+# Generated native builds and machine logs
+.build/
+.work/
+build/
+bin/
+obj/
+checks/
+*.user
+.vs/
+# Private animation-production workspace
+assets/
+handoff/
+raiden-startup-preview/
+node_modules/

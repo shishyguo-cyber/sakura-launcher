@@ -1,0 +1,598 @@
+{
+ "about": "Manifest validation. valid=false means decoding or validatedLayout must fail. handoff: PackManifest.handoffTime(finalDuration:). expectCover: the manifest's cover file name, null when absent. expectVideoFit: the manifest's videoFit (absent = not checked; default auto).",
+ "manifests": [
+  {
+   "name": "segmented",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "intro": "i.mp4",
+     "loop": "l.mp4",
+     "outro": "o.mp4"
+    }
+   },
+   "valid": true,
+   "layout": {
+    "intro": "i.mp4",
+    "loop": "l.mp4",
+    "final": "o.mp4",
+    "finalSegment": "outro",
+    "coversLaunch": true
+   }
+  },
+  {
+   "name": "single video",
+   "json": {
+    "schemaVersion": 1,
+    "id": "b",
+    "name": "B",
+    "segments": {
+     "video": "v.mov"
+    }
+   },
+   "valid": true,
+   "layout": {
+    "final": "v.mov",
+    "finalSegment": "video",
+    "coversLaunch": false
+   }
+  },
+  {
+   "name": "outro only",
+   "json": {
+    "schemaVersion": 1,
+    "id": "c",
+    "name": "C",
+    "segments": {
+     "outro": "o.mp4"
+    }
+   },
+   "valid": true,
+   "layout": {
+    "final": "o.mp4",
+    "finalSegment": "outro",
+    "coversLaunch": false
+   }
+  },
+  {
+   "name": "unknown top-level key ignored",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "theme": "x"
+   },
+   "valid": true,
+   "layout": {
+    "final": "v.mp4",
+    "finalSegment": "video",
+    "coversLaunch": false
+   }
+  },
+  {
+   "name": "all options",
+   "json": {
+    "schemaVersion": 1,
+    "id": "demo-garden",
+    "name": "花园",
+    "segments": {
+     "intro": "i.m4v",
+     "outro": "o.mp4"
+    },
+    "handoffAt": 1.2,
+    "fadeDuration": 0.5,
+    "volume": 0.8,
+    "maxWaitSeconds": 12,
+    "loopExit": "immediate",
+    "notice": "LICENSE.md"
+   },
+   "valid": true,
+   "layout": {
+    "intro": "i.m4v",
+    "final": "o.mp4",
+    "finalSegment": "outro",
+    "coversLaunch": true
+   }
+  },
+  {
+   "name": "schema 2",
+   "json": {
+    "schemaVersion": 2,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    }
+   },
+   "valid": false
+  },
+  {
+   "name": "bad id",
+   "json": {
+    "schemaVersion": 1,
+    "id": "Bad ID",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    }
+   },
+   "valid": false
+  },
+  {
+   "name": "id too long",
+   "json": {
+    "schemaVersion": 1,
+    "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    }
+   },
+   "valid": false
+  },
+  {
+   "name": "blank name",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "  ",
+    "segments": {
+     "video": "v.mp4"
+    }
+   },
+   "valid": false
+  },
+  {
+   "name": "no segments",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {}
+   },
+   "valid": false
+  },
+  {
+   "name": "intro only",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "intro": "i.mp4"
+    }
+   },
+   "valid": false
+  },
+  {
+   "name": "video with outro",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4",
+     "outro": "o.mp4"
+    }
+   },
+   "valid": false
+  },
+  {
+   "name": "parent path",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "../v.mp4"
+    }
+   },
+   "valid": false
+  },
+  {
+   "name": "sub path",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "sub/v.mp4"
+    }
+   },
+   "valid": false
+  },
+  {
+   "name": "backslash path",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "sub\\v.mp4"
+    }
+   },
+   "valid": false
+  },
+  {
+   "name": "hidden file",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": ".v.mp4"
+    }
+   },
+   "valid": false
+  },
+  {
+   "name": "gif",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.gif"
+    }
+   },
+   "valid": false
+  },
+  {
+   "name": "volume 1.5",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "volume": 1.5
+   },
+   "valid": false
+  },
+  {
+   "name": "fade 0",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "fadeDuration": 0
+   },
+   "valid": false
+  },
+  {
+   "name": "wait 600",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "maxWaitSeconds": 600
+   },
+   "valid": false
+  },
+  {
+   "name": "negative handoff",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "handoffAt": -1
+   },
+   "valid": false
+  },
+  {
+   "name": "notice outside",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "notice": "../NOTICE.md"
+   },
+   "valid": false
+  },
+  {
+   "name": "unknown segment",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "credits": "c.mp4"
+    }
+   },
+   "valid": false
+  },
+  {
+   "name": "missing name",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "segments": {
+     "video": "v.mp4"
+    }
+   },
+   "valid": false
+  },
+  {
+   "name": "bad loopExit",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "loopExit": "never"
+   },
+   "valid": false
+  },
+  {
+   "name": "cover png",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "cover": "cover.png"
+   },
+   "valid": true,
+   "layout": {
+    "final": "v.mp4",
+    "finalSegment": "video",
+    "coversLaunch": false
+   },
+   "expectCover": "cover.png"
+  },
+  {
+   "name": "cover jpg",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "cover": "Cover.JPG"
+   },
+   "valid": true,
+   "layout": {
+    "final": "v.mp4",
+    "finalSegment": "video",
+    "coversLaunch": false
+   },
+   "expectCover": "Cover.JPG"
+  },
+  {
+   "name": "cover jpeg",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "cover": "art.jpeg"
+   },
+   "valid": true,
+   "layout": {
+    "final": "v.mp4",
+    "finalSegment": "video",
+    "coversLaunch": false
+   },
+   "expectCover": "art.jpeg"
+  },
+  {
+   "name": "cover gif rejected",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "cover": "cover.gif"
+   },
+   "valid": false
+  },
+  {
+   "name": "cover path rejected",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "cover": "art/cover.png"
+   },
+   "valid": false
+  },
+  {
+   "name": "cover dotfile rejected",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "cover": ".cover.png"
+   },
+   "valid": false
+  },
+  {
+   "name": "cover number rejected",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "cover": 3
+   },
+   "valid": false
+  },
+  {
+   "name": "cover empty rejected",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "cover": ""
+   },
+   "valid": false
+  },
+  {
+   "name": "no cover",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    }
+   },
+   "valid": true,
+   "layout": {
+    "final": "v.mp4",
+    "finalSegment": "video",
+    "coversLaunch": false
+   },
+   "expectCover": null
+  },
+  {
+   "name": "videoFit fit",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "videoFit": "fit"
+   },
+   "valid": true,
+   "layout": {
+    "final": "v.mp4",
+    "finalSegment": "video",
+    "coversLaunch": false
+   },
+   "expectVideoFit": "fit"
+  },
+  {
+   "name": "videoFit fill",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "videoFit": "fill"
+   },
+   "valid": true,
+   "layout": {
+    "final": "v.mp4",
+    "finalSegment": "video",
+    "coversLaunch": false
+   },
+   "expectVideoFit": "fill"
+  },
+  {
+   "name": "videoFit auto",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "videoFit": "auto"
+   },
+   "valid": true,
+   "layout": {
+    "final": "v.mp4",
+    "finalSegment": "video",
+    "coversLaunch": false
+   },
+   "expectVideoFit": "auto"
+  },
+  {
+   "name": "videoFit stretch rejected",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "videoFit": "stretch"
+   },
+   "valid": false
+  },
+  {
+   "name": "videoFit number rejected",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "videoFit": 1
+   },
+   "valid": false
+  }
+ ],
+ "handoff": [
+  {
+   "fadeDuration": 0.5,
+   "finalDuration": 4,
+   "expect": 3.5
+  },
+  {
+   "fadeDuration": 0.5,
+   "handoffAt": 1.2,
+   "finalDuration": 4,
+   "expect": 1.2
+  },
+  {
+   "fadeDuration": 0.5,
+   "handoffAt": 10,
+   "finalDuration": 4,
+   "expect": 3.5
+  },
+  {
+   "fadeDuration": 0.5,
+   "finalDuration": 0.2,
+   "expect": 0
+  },
+  {
+   "finalDuration": 2,
+   "expect": 1.6
+  }
+ ]
+}

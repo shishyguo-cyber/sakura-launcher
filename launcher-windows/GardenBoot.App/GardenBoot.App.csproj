@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyName>Sakura</AssemblyName>
+    <Product>Sakura</Product>
+    <Version>0.2.0-preview.3</Version>
+    <AssemblyTitle>Sakura</AssemblyTitle>
+    <RootNamespace>GardenBoot.App</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="GardenBoot.UiChecks" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../GardenBoot.Core/GardenBoot.Core.csproj" />
+    <Content Include="../../launcher-macos/demo-pack/manifest.json;../../launcher-macos/demo-pack/NOTICE.md;../../launcher-macos/demo-pack/*.mp4;../../launcher-macos/demo-pack/*.png">
+      <Link>demo-pack/%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+</Project>

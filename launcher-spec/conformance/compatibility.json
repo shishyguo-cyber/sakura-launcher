@@ -1,0 +1,380 @@
+{
+ "about": "COMPATIBILITY.md: verdict = CompatibilityRules.verdict; reappear = ReappearTracker fed in order, expectFired = indexes of samples that fire; quiet = QuietRules.skip(enabled, state).",
+ "verdict": [
+  {
+   "name": "good",
+   "runningAtStart": false,
+   "coldStart": true,
+   "windowSeconds": 2.1,
+   "maxWait": 10,
+   "expect": "good"
+  },
+  {
+   "name": "good-at-limit",
+   "runningAtStart": false,
+   "coldStart": true,
+   "windowSeconds": 10,
+   "maxWait": 10,
+   "expect": "good"
+  },
+  {
+   "name": "slow",
+   "runningAtStart": false,
+   "coldStart": true,
+   "windowSeconds": 14.2,
+   "maxWait": 10,
+   "expect": "slowWindow"
+  },
+  {
+   "name": "no-window",
+   "runningAtStart": false,
+   "coldStart": true,
+   "windowSeconds": null,
+   "maxWait": 10,
+   "expect": "noWindow"
+  },
+  {
+   "name": "already-running",
+   "runningAtStart": true,
+   "coldStart": false,
+   "windowSeconds": null,
+   "maxWait": 10,
+   "expect": "alreadyRunning"
+  },
+  {
+   "name": "not-opened",
+   "runningAtStart": false,
+   "coldStart": false,
+   "windowSeconds": null,
+   "maxWait": 10,
+   "expect": "notOpened"
+  },
+  {
+   "name": "running-then-quit-and-cold-start",
+   "runningAtStart": true,
+   "coldStart": true,
+   "windowSeconds": 3.4,
+   "maxWait": 10,
+   "expect": "good"
+  }
+ ],
+ "reappear": [
+  {
+   "name": "tray-app-reopened",
+   "samples": [
+    {
+     "t": 0,
+     "running": true,
+     "hidden": false,
+     "hasWindow": true,
+     "hasVisibleMain": true
+    },
+    {
+     "t": 1,
+     "running": true,
+     "hidden": false,
+     "hasWindow": false,
+     "hasVisibleMain": false
+    },
+    {
+     "t": 2,
+     "running": true,
+     "hidden": false,
+     "hasWindow": false,
+     "hasVisibleMain": false
+    },
+    {
+     "t": 3.5,
+     "running": true,
+     "hidden": false,
+     "hasWindow": false,
+     "hasVisibleMain": false
+    },
+    {
+     "t": 4,
+     "running": true,
+     "hidden": false,
+     "hasWindow": true,
+     "hasVisibleMain": true
+    },
+    {
+     "t": 5,
+     "running": true,
+     "hidden": false,
+     "hasWindow": true,
+     "hasVisibleMain": true
+    }
+   ],
+   "expectFired": [
+    4
+   ]
+  },
+  {
+   "name": "brief-gap-does-not-count",
+   "samples": [
+    {
+     "t": 0,
+     "running": true,
+     "hidden": false,
+     "hasWindow": false,
+     "hasVisibleMain": false
+    },
+    {
+     "t": 1.5,
+     "running": true,
+     "hidden": false,
+     "hasWindow": false,
+     "hasVisibleMain": false
+    },
+    {
+     "t": 1.9,
+     "running": true,
+     "hidden": false,
+     "hasWindow": true,
+     "hasVisibleMain": true
+    }
+   ],
+   "expectFired": []
+  },
+  {
+   "name": "minimize-restore-does-not-count",
+   "samples": [
+    {
+     "t": 0,
+     "running": true,
+     "hidden": false,
+     "hasWindow": true,
+     "hasVisibleMain": true
+    },
+    {
+     "t": 1,
+     "running": true,
+     "hidden": false,
+     "hasWindow": true,
+     "hasVisibleMain": false
+    },
+    {
+     "t": 5,
+     "running": true,
+     "hidden": false,
+     "hasWindow": true,
+     "hasVisibleMain": false
+    },
+    {
+     "t": 6,
+     "running": true,
+     "hidden": false,
+     "hasWindow": true,
+     "hasVisibleMain": true
+    }
+   ],
+   "expectFired": []
+  },
+  {
+   "name": "hide-unhide-does-not-count",
+   "samples": [
+    {
+     "t": 0,
+     "running": true,
+     "hidden": false,
+     "hasWindow": true,
+     "hasVisibleMain": true
+    },
+    {
+     "t": 1,
+     "running": true,
+     "hidden": true,
+     "hasWindow": false,
+     "hasVisibleMain": false
+    },
+    {
+     "t": 5,
+     "running": true,
+     "hidden": true,
+     "hasWindow": false,
+     "hasVisibleMain": false
+    },
+    {
+     "t": 6,
+     "running": true,
+     "hidden": false,
+     "hasWindow": true,
+     "hasVisibleMain": true
+    }
+   ],
+   "expectFired": []
+  },
+  {
+   "name": "window-appears-but-not-visible-yet",
+   "samples": [
+    {
+     "t": 0,
+     "running": true,
+     "hidden": false,
+     "hasWindow": false,
+     "hasVisibleMain": false
+    },
+    {
+     "t": 3,
+     "running": true,
+     "hidden": false,
+     "hasWindow": false,
+     "hasVisibleMain": false
+    },
+    {
+     "t": 3.5,
+     "running": true,
+     "hidden": false,
+     "hasWindow": true,
+     "hasVisibleMain": false
+    },
+    {
+     "t": 4,
+     "running": true,
+     "hidden": false,
+     "hasWindow": true,
+     "hasVisibleMain": true
+    }
+   ],
+   "expectFired": [
+    3
+   ]
+  },
+  {
+   "name": "exit-resets",
+   "samples": [
+    {
+     "t": 0,
+     "running": true,
+     "hidden": false,
+     "hasWindow": false,
+     "hasVisibleMain": false
+    },
+    {
+     "t": 3,
+     "running": true,
+     "hidden": false,
+     "hasWindow": false,
+     "hasVisibleMain": false
+    },
+    {
+     "t": 3.5,
+     "running": false,
+     "hidden": false,
+     "hasWindow": false,
+     "hasVisibleMain": false
+    },
+    {
+     "t": 4,
+     "running": true,
+     "hidden": false,
+     "hasWindow": true,
+     "hasVisibleMain": true
+    }
+   ],
+   "expectFired": []
+  },
+  {
+   "name": "fires-once-then-needs-another-collapse",
+   "samples": [
+    {
+     "t": 0,
+     "running": true,
+     "hidden": false,
+     "hasWindow": false,
+     "hasVisibleMain": false
+    },
+    {
+     "t": 2.5,
+     "running": true,
+     "hidden": false,
+     "hasWindow": false,
+     "hasVisibleMain": false
+    },
+    {
+     "t": 3,
+     "running": true,
+     "hidden": false,
+     "hasWindow": true,
+     "hasVisibleMain": true
+    },
+    {
+     "t": 4,
+     "running": true,
+     "hidden": false,
+     "hasWindow": true,
+     "hasVisibleMain": true
+    },
+    {
+     "t": 5,
+     "running": true,
+     "hidden": false,
+     "hasWindow": false,
+     "hasVisibleMain": false
+    },
+    {
+     "t": 6,
+     "running": true,
+     "hidden": false,
+     "hasWindow": false,
+     "hasVisibleMain": false
+    },
+    {
+     "t": 7.2,
+     "running": true,
+     "hidden": false,
+     "hasWindow": false,
+     "hasVisibleMain": false
+    },
+    {
+     "t": 8,
+     "running": true,
+     "hidden": false,
+     "hasWindow": true,
+     "hasVisibleMain": true
+    }
+   ],
+   "expectFired": [
+    2,
+    7
+   ]
+  }
+ ],
+ "quiet": [
+  {
+   "name": "off",
+   "enabled": false,
+   "state": "fullscreen",
+   "expectSkip": false,
+   "expectDetail": null
+  },
+  {
+   "name": "fullscreen",
+   "enabled": true,
+   "state": "fullscreen",
+   "expectSkip": true,
+   "expectDetail": "fullscreen"
+  },
+  {
+   "name": "game",
+   "enabled": true,
+   "state": "game",
+   "expectSkip": true,
+   "expectDetail": "game"
+  },
+  {
+   "name": "presentation",
+   "enabled": true,
+   "state": "presentation",
+   "expectSkip": true,
+   "expectDetail": "presentation"
+  },
+  {
+   "name": "normal",
+   "enabled": true,
+   "state": "normal",
+   "expectSkip": false,
+   "expectDetail": null
+  }
+ ]
+}

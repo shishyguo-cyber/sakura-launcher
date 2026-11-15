@@ -1,0 +1,7 @@
+bin/
+obj/
+*.user
+.vs/
+
+# Machine-specific remote test settings
+scripts/remote.local.env

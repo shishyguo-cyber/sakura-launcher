@@ -1,0 +1,112 @@
+{
+ "about": "LaunchFilter.skip, PlaybackPolicy.endsOnActivation and shouldAutoPlay. expect null = play.",
+ "launchFilter": [
+  {
+   "targetHidden": true,
+   "launcherAge": 3600,
+   "startedAtLogin": false,
+   "uptime": 99999,
+   "expect": "hidden"
+  },
+  {
+   "targetHidden": false,
+   "launcherAge": 10,
+   "startedAtLogin": true,
+   "uptime": 50000,
+   "expect": "at-login"
+  },
+  {
+   "targetHidden": false,
+   "launcherAge": 20,
+   "startedAtLogin": false,
+   "uptime": 60,
+   "expect": "at-login"
+  },
+  {
+   "targetHidden": false,
+   "launcherAge": 46,
+   "startedAtLogin": true,
+   "uptime": 50000,
+   "expect": null
+  },
+  {
+   "targetHidden": false,
+   "launcherAge": 5,
+   "startedAtLogin": false,
+   "uptime": 50000,
+   "expect": null
+  },
+  {
+   "targetHidden": false,
+   "launcherAge": 44.9,
+   "startedAtLogin": false,
+   "uptime": 200,
+   "expect": "at-login"
+  },
+  {
+   "targetHidden": false,
+   "launcherAge": 10,
+   "startedAtLogin": false,
+   "uptime": 190.5,
+   "expect": null
+  }
+ ],
+ "activation": [
+  {
+   "isLauncher": false,
+   "isTarget": false,
+   "age": 0.4,
+   "expect": false
+  },
+  {
+   "isLauncher": false,
+   "isTarget": false,
+   "age": 1.49,
+   "expect": false
+  },
+  {
+   "isLauncher": false,
+   "isTarget": false,
+   "age": 1.5,
+   "expect": true
+  },
+  {
+   "isLauncher": true,
+   "isTarget": false,
+   "age": 30,
+   "expect": false
+  },
+  {
+   "isLauncher": false,
+   "isTarget": true,
+   "age": 30,
+   "expect": false
+  }
+ ],
+ "autoPlay": [
+  {
+   "paused": false,
+   "reduceMotion": false,
+   "override": false,
+   "expect": true
+  },
+  {
+   "paused": true,
+   "reduceMotion": false,
+   "override": true,
+   "expect": false
+  },
+  {
+   "paused": false,
+   "reduceMotion": true,
+   "override": false,
+   "expect": false
+  },
+  {
+   "paused": false,
+   "reduceMotion": true,
+   "override": true,
+   "expect": true
+  }
+ ]
+}

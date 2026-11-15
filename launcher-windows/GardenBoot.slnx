@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="GardenBoot.Core/GardenBoot.Core.csproj" />
+  <Project Path="GardenBoot.Core.Tests/GardenBoot.Core.Tests.csproj" />
+  <Project Path="GardenBoot.App/GardenBoot.App.csproj" />
+  <Project Path="GardenBoot.UiChecks/GardenBoot.UiChecks.csproj" />
+  <Project Path="GardenBoot.GuiFixture/GardenBoot.GuiFixture.csproj" />
+</Solution>

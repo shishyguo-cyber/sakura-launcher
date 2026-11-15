@@ -1,0 +1,219 @@
+{
+ "about": "PackRotation.choose, see SCHEDULE-AND-LIBRARY.md §3. expect null = nothing to play.",
+ "choose": [
+  {
+   "name": "fixed-plays-active",
+   "rotation": "fixed",
+   "favorites": [
+    "a"
+   ],
+   "available": [
+    "a",
+    "b",
+    "c"
+   ],
+   "active": "b",
+   "lastPackId": "c",
+   "random": 0.9,
+   "expect": "b"
+  },
+  {
+   "name": "fixed-without-active",
+   "rotation": "fixed",
+   "favorites": [],
+   "available": [
+    "a",
+    "b"
+   ],
+   "active": null,
+   "lastPackId": null,
+   "random": 0.0,
+   "expect": null
+  },
+  {
+   "name": "shuffle-all-first",
+   "rotation": "shuffleAll",
+   "favorites": [],
+   "available": [
+    "a",
+    "b",
+    "c"
+   ],
+   "active": "a",
+   "lastPackId": null,
+   "random": 0.0,
+   "expect": "a"
+  },
+  {
+   "name": "shuffle-all-last",
+   "rotation": "shuffleAll",
+   "favorites": [],
+   "available": [
+    "a",
+    "b",
+    "c"
+   ],
+   "active": "a",
+   "lastPackId": null,
+   "random": 0.99,
+   "expect": "c"
+  },
+  {
+   "name": "shuffle-all-random-one-clamped",
+   "rotation": "shuffleAll",
+   "favorites": [],
+   "available": [
+    "a",
+    "b",
+    "c"
+   ],
+   "active": "a",
+   "lastPackId": null,
+   "random": 1.0,
+   "expect": "c"
+  },
+  {
+   "name": "shuffle-all-avoids-repeat",
+   "rotation": "shuffleAll",
+   "favorites": [],
+   "available": [
+    "a",
+    "b",
+    "c"
+   ],
+   "active": "a",
+   "lastPackId": "a",
+   "random": 0.0,
+   "expect": "b"
+  },
+  {
+   "name": "shuffle-all-avoids-repeat-upper",
+   "rotation": "shuffleAll",
+   "favorites": [],
+   "available": [
+    "a",
+    "b",
+    "c"
+   ],
+   "active": "a",
+   "lastPackId": "b",
+   "random": 0.99,
+   "expect": "c"
+  },
+  {
+   "name": "shuffle-all-single-pack-repeats",
+   "rotation": "shuffleAll",
+   "favorites": [],
+   "available": [
+    "a"
+   ],
+   "active": "a",
+   "lastPackId": "a",
+   "random": 0.5,
+   "expect": "a"
+  },
+  {
+   "name": "shuffle-all-unknown-last",
+   "rotation": "shuffleAll",
+   "favorites": [],
+   "available": [
+    "a",
+    "b"
+   ],
+   "active": "a",
+   "lastPackId": "zz",
+   "random": 0.5,
+   "expect": "b"
+  },
+  {
+   "name": "favorites-keep-available-order",
+   "rotation": "shuffleFavorites",
+   "favorites": [
+    "c",
+    "a"
+   ],
+   "available": [
+    "a",
+    "b",
+    "c"
+   ],
+   "active": "b",
+   "lastPackId": null,
+   "random": 0.5,
+   "expect": "c"
+  },
+  {
+   "name": "favorites-ignore-missing",
+   "rotation": "shuffleFavorites",
+   "favorites": [
+    "c",
+    "x"
+   ],
+   "available": [
+    "a",
+    "b",
+    "c"
+   ],
+   "active": "a",
+   "lastPackId": "c",
+   "random": 0.0,
+   "expect": "c"
+  },
+  {
+   "name": "favorites-empty-falls-back",
+   "rotation": "shuffleFavorites",
+   "favorites": [],
+   "available": [
+    "a",
+    "b"
+   ],
+   "active": "b",
+   "lastPackId": null,
+   "random": 0.0,
+   "expect": "b"
+  },
+  {
+   "name": "favorites-none-available-falls-back",
+   "rotation": "shuffleFavorites",
+   "favorites": [
+    "x"
+   ],
+   "available": [
+    "a",
+    "b"
+   ],
+   "active": "a",
+   "lastPackId": null,
+   "random": 0.0,
+   "expect": "a"
+  },
+  {
+   "name": "favorites-avoid-repeat",
+   "rotation": "shuffleFavorites",
+   "favorites": [
+    "a",
+    "b",
+    "c"
+   ],
+   "available": [
+    "a",
+    "b",
+    "c"
+   ],
+   "active": "a",
+   "lastPackId": "b",
+   "random": 0.5,
+   "expect": "c"
+  },
+  {
+   "name": "nothing-available",
+   "rotation": "shuffleAll",
+   "favorites": [],
+   "available": [],
+   "active": null,
+   "lastPackId": null,
+   "random": 0.3,
+   "expect": null
+  }
+ ]
+}

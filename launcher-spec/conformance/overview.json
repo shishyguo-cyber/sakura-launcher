@@ -1,0 +1,382 @@
+{
+  "cases": [
+    {
+      "name": "ready",
+      "input": {
+        "preparing": false,
+        "playing": false,
+        "preview": false,
+        "hasTarget": true,
+        "targetEnabled": true,
+        "paused": false,
+        "reduceMotion": false,
+        "allowMotion": false,
+        "loginGrace": false,
+        "hidden": false,
+        "snoozed": false,
+        "playedToday": false,
+        "hasPack": true,
+        "failed": false,
+        "running": false
+      },
+      "expect": "ready"
+    },
+    {
+      "name": "preparing",
+      "input": {
+        "preparing": true,
+        "playing": false,
+        "preview": false,
+        "hasTarget": true,
+        "targetEnabled": true,
+        "paused": false,
+        "reduceMotion": false,
+        "allowMotion": false,
+        "loginGrace": false,
+        "hidden": false,
+        "snoozed": false,
+        "playedToday": false,
+        "hasPack": true,
+        "failed": false,
+        "running": false
+      },
+      "expect": "preparing"
+    },
+    {
+      "name": "preview beats pause and loading",
+      "input": {
+        "preparing": true,
+        "playing": true,
+        "preview": true,
+        "hasTarget": true,
+        "targetEnabled": true,
+        "paused": true,
+        "reduceMotion": false,
+        "allowMotion": false,
+        "loginGrace": false,
+        "hidden": false,
+        "snoozed": false,
+        "playedToday": false,
+        "hasPack": true,
+        "failed": false,
+        "running": false
+      },
+      "expect": "preview"
+    },
+    {
+      "name": "actual playback beats policy",
+      "input": {
+        "preparing": false,
+        "playing": true,
+        "preview": false,
+        "hasTarget": true,
+        "targetEnabled": true,
+        "paused": true,
+        "reduceMotion": false,
+        "allowMotion": false,
+        "loginGrace": false,
+        "hidden": false,
+        "snoozed": false,
+        "playedToday": false,
+        "hasPack": true,
+        "failed": false,
+        "running": false
+      },
+      "expect": "playing"
+    },
+    {
+      "name": "preview flag alone is not playback",
+      "input": {
+        "preparing": false,
+        "playing": false,
+        "preview": true,
+        "hasTarget": true,
+        "targetEnabled": true,
+        "paused": false,
+        "reduceMotion": false,
+        "allowMotion": false,
+        "loginGrace": false,
+        "hidden": false,
+        "snoozed": false,
+        "playedToday": false,
+        "hasPack": true,
+        "failed": false,
+        "running": false
+      },
+      "expect": "ready"
+    },
+    {
+      "name": "no configured target",
+      "input": {
+        "preparing": false,
+        "playing": false,
+        "preview": false,
+        "hasTarget": false,
+        "targetEnabled": true,
+        "paused": true,
+        "reduceMotion": false,
+        "allowMotion": false,
+        "loginGrace": false,
+        "hidden": false,
+        "snoozed": false,
+        "playedToday": false,
+        "hasPack": true,
+        "failed": false,
+        "running": false
+      },
+      "expect": "noTargets"
+    },
+    {
+      "name": "disabled target",
+      "input": {
+        "preparing": false,
+        "playing": false,
+        "preview": false,
+        "hasTarget": true,
+        "targetEnabled": false,
+        "paused": false,
+        "reduceMotion": false,
+        "allowMotion": false,
+        "loginGrace": false,
+        "hidden": false,
+        "snoozed": false,
+        "playedToday": false,
+        "hasPack": true,
+        "failed": false,
+        "running": false
+      },
+      "expect": "disabled"
+    },
+    {
+      "name": "pause before snooze",
+      "input": {
+        "preparing": false,
+        "playing": false,
+        "preview": false,
+        "hasTarget": true,
+        "targetEnabled": true,
+        "paused": true,
+        "reduceMotion": false,
+        "allowMotion": false,
+        "loginGrace": false,
+        "hidden": false,
+        "snoozed": true,
+        "playedToday": false,
+        "hasPack": true,
+        "failed": false,
+        "running": false
+      },
+      "expect": "paused"
+    },
+    {
+      "name": "system reduced motion",
+      "input": {
+        "preparing": false,
+        "playing": false,
+        "preview": false,
+        "hasTarget": true,
+        "targetEnabled": true,
+        "paused": false,
+        "reduceMotion": true,
+        "allowMotion": false,
+        "loginGrace": false,
+        "hidden": false,
+        "snoozed": false,
+        "playedToday": false,
+        "hasPack": true,
+        "failed": false,
+        "running": false
+      },
+      "expect": "reduceMotion"
+    },
+    {
+      "name": "explicit motion override",
+      "input": {
+        "preparing": false,
+        "playing": false,
+        "preview": false,
+        "hasTarget": true,
+        "targetEnabled": true,
+        "paused": false,
+        "reduceMotion": true,
+        "allowMotion": true,
+        "loginGrace": false,
+        "hidden": false,
+        "snoozed": false,
+        "playedToday": false,
+        "hasPack": true,
+        "failed": false,
+        "running": false
+      },
+      "expect": "ready"
+    },
+    {
+      "name": "login startup grace",
+      "input": {
+        "preparing": false,
+        "playing": false,
+        "preview": false,
+        "hasTarget": true,
+        "targetEnabled": true,
+        "paused": false,
+        "reduceMotion": false,
+        "allowMotion": false,
+        "loginGrace": true,
+        "hidden": false,
+        "snoozed": false,
+        "playedToday": false,
+        "hasPack": true,
+        "failed": false,
+        "running": false
+      },
+      "expect": "loginGrace"
+    },
+    {
+      "name": "hidden startup",
+      "input": {
+        "preparing": false,
+        "playing": false,
+        "preview": false,
+        "hasTarget": true,
+        "targetEnabled": true,
+        "paused": false,
+        "reduceMotion": false,
+        "allowMotion": false,
+        "loginGrace": false,
+        "hidden": true,
+        "snoozed": false,
+        "playedToday": true,
+        "hasPack": true,
+        "failed": false,
+        "running": false
+      },
+      "expect": "hidden"
+    },
+    {
+      "name": "snooze before daily frequency",
+      "input": {
+        "preparing": false,
+        "playing": false,
+        "preview": false,
+        "hasTarget": true,
+        "targetEnabled": true,
+        "paused": false,
+        "reduceMotion": false,
+        "allowMotion": false,
+        "loginGrace": false,
+        "hidden": false,
+        "snoozed": true,
+        "playedToday": true,
+        "hasPack": true,
+        "failed": false,
+        "running": false
+      },
+      "expect": "snoozed"
+    },
+    {
+      "name": "daily gate before media validation",
+      "input": {
+        "preparing": false,
+        "playing": false,
+        "preview": false,
+        "hasTarget": true,
+        "targetEnabled": true,
+        "paused": false,
+        "reduceMotion": false,
+        "allowMotion": false,
+        "loginGrace": false,
+        "hidden": false,
+        "snoozed": false,
+        "playedToday": true,
+        "hasPack": false,
+        "failed": false,
+        "running": false
+      },
+      "expect": "playedToday"
+    },
+    {
+      "name": "no playable pack",
+      "input": {
+        "preparing": false,
+        "playing": false,
+        "preview": false,
+        "hasTarget": true,
+        "targetEnabled": true,
+        "paused": false,
+        "reduceMotion": false,
+        "allowMotion": false,
+        "loginGrace": false,
+        "hidden": false,
+        "snoozed": false,
+        "playedToday": false,
+        "hasPack": false,
+        "failed": true,
+        "running": false
+      },
+      "expect": "noPack"
+    },
+    {
+      "name": "last media failure",
+      "input": {
+        "preparing": false,
+        "playing": false,
+        "preview": false,
+        "hasTarget": true,
+        "targetEnabled": true,
+        "paused": false,
+        "reduceMotion": false,
+        "allowMotion": false,
+        "loginGrace": false,
+        "hidden": false,
+        "snoozed": false,
+        "playedToday": false,
+        "hasPack": true,
+        "failed": true,
+        "running": true
+      },
+      "expect": "failed"
+    },
+    {
+      "name": "existing process baseline",
+      "input": {
+        "preparing": false,
+        "playing": false,
+        "preview": false,
+        "hasTarget": true,
+        "targetEnabled": true,
+        "paused": false,
+        "reduceMotion": false,
+        "allowMotion": false,
+        "loginGrace": false,
+        "hidden": false,
+        "snoozed": false,
+        "playedToday": false,
+        "hasPack": true,
+        "failed": false,
+        "running": true
+      },
+      "expect": "running"
+    },
+    {
+      "name": "media failure is visible even after daily record",
+      "input": {
+        "preparing": false,
+        "playing": false,
+        "preview": false,
+        "hasTarget": true,
+        "targetEnabled": true,
+        "paused": false,
+        "reduceMotion": false,
+        "allowMotion": false,
+        "loginGrace": false,
+        "hidden": false,
+        "snoozed": false,
+        "playedToday": true,
+        "hasPack": true,
+        "failed": true,
+        "running": false
+      },
+      "expect": "failed"
+    }
+  ]
+}

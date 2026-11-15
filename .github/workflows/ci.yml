@@ -1,0 +1,53 @@
+name: Source checks
+
+'on':
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Public file scope and links
+        run: python3 scripts/check-public-tree.py --strict
+      - name: Export safety tests
+        run: python3 -m unittest discover -s scripts/tests -v
+      - name: Swift core and conformance tests
+        run: swift test --disable-sandbox --build-system native --package-path launcher-macos
+      - name: macOS app build
+        run: bash launcher-macos/scripts/build.sh
+      - name: Bundled public media policy
+        run: python3 launcher-macos/scripts/check-public-media.py --app launcher-macos/build/Sakura.app
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 20
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      DOTNET_NOLOGO: '1'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+      - name: Public file scope and links
+        run: python scripts/check-public-tree.py --strict
+      - name: Export safety tests
+        run: python -m unittest discover -s scripts/tests -v
+      - name: Build Windows solution
+        run: dotnet build launcher-windows/GardenBoot.slnx -c Release
+      - name: Windows core and conformance tests
+        run: dotnet run --project launcher-windows/GardenBoot.Core.Tests -c Release --no-build

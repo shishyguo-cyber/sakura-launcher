@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "demo-garden",
+  "name": "花园 · 占位示例",
+  "segments": {
+    "intro": "intro.mp4",
+    "loop": "loop.mp4",
+    "outro": "outro.mp4"
+  },
+  "fadeDuration": 0.4,
+  "handoffAt": 1.1,
+  "volume": 0.8,
+  "maxWaitSeconds": 6,
+  "loopExit": "cycleEnd",
+  "notice": "NOTICE.md",
+  "cover": "cover.png"
+}

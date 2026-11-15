@@ -1,0 +1,623 @@
+{
+ "about": "OverlayGeometry. Rects are [x, y, width, height]. launchFrame: 72% of visible, max width 1120, size floored, origin rounded half away from zero. videoFit: VideoFit.resolve(mode, frame size, video aspect) -> fill|fit and the sharp video's rect in frame-local coordinates (tolerance 1e-6); see VIDEO-FIT.md.",
+ "launchFrame": [
+  {
+   "visible": [
+    0,
+    0,
+    1512,
+    944
+   ],
+   "aspect": 1.7777777777777777,
+   "expect": [
+    212,
+    166,
+    1088,
+    612
+   ]
+  },
+  {
+   "visible": [
+    0,
+    0,
+    1512,
+    944
+   ],
+   "aspect": 1.3333333333333333,
+   "expect": [
+    303,
+    133,
+    906,
+    679
+   ]
+  },
+  {
+   "visible": [
+    0,
+    0,
+    1512,
+    944
+   ],
+   "aspect": 2.39,
+   "expect": [
+    212,
+    245,
+    1088,
+    455
+   ]
+  },
+  {
+   "visible": [
+    -900,
+    500,
+    700,
+    300
+   ],
+   "aspect": 1.7777777777777777,
+   "expect": [
+    -742,
+    542,
+    384,
+    216
+   ]
+  },
+  {
+   "visible": [
+    -900,
+    500,
+    700,
+    300
+   ],
+   "aspect": 1.3333333333333333,
+   "expect": [
+    -694,
+    542,
+    288,
+    216
+   ]
+  },
+  {
+   "visible": [
+    -900,
+    500,
+    700,
+    300
+   ],
+   "aspect": 2.39,
+   "expect": [
+    -802,
+    545,
+    504,
+    210
+   ]
+  },
+  {
+   "visible": [
+    1512,
+    -200,
+    1080,
+    1920
+   ],
+   "aspect": 1.7777777777777777,
+   "expect": [
+    1664,
+    542,
+    777,
+    437
+   ]
+  },
+  {
+   "visible": [
+    1512,
+    -200,
+    1080,
+    1920
+   ],
+   "aspect": 1.3333333333333333,
+   "expect": [
+    1664,
+    469,
+    777,
+    583
+   ]
+  },
+  {
+   "visible": [
+    1512,
+    -200,
+    1080,
+    1920
+   ],
+   "aspect": 2.39,
+   "expect": [
+    1664,
+    598,
+    777,
+    325
+   ]
+  },
+  {
+   "visible": [
+    0,
+    0,
+    5120,
+    2160
+   ],
+   "aspect": 1.7777777777777777,
+   "expect": [
+    2000,
+    765,
+    1120,
+    630
+   ]
+  },
+  {
+   "visible": [
+    0,
+    0,
+    5120,
+    2160
+   ],
+   "aspect": 1.3333333333333333,
+   "expect": [
+    2000,
+    660,
+    1120,
+    840
+   ]
+  },
+  {
+   "visible": [
+    0,
+    0,
+    5120,
+    2160
+   ],
+   "aspect": 2.39,
+   "expect": [
+    2000,
+    846,
+    1120,
+    468
+   ]
+  },
+  {
+   "visible": [
+    0,
+    0,
+    1366,
+    768
+   ],
+   "aspect": 1.7777777777777777,
+   "expect": [
+    192,
+    108,
+    983,
+    552
+   ]
+  },
+  {
+   "visible": [
+    0,
+    0,
+    1366,
+    768
+   ],
+   "aspect": 1.3333333333333333,
+   "expect": [
+    315,
+    108,
+    737,
+    552
+   ]
+  },
+  {
+   "visible": [
+    0,
+    0,
+    1366,
+    768
+   ],
+   "aspect": 2.39,
+   "expect": [
+    192,
+    179,
+    983,
+    411
+   ]
+  },
+  {
+   "visible": [
+    37,
+    25,
+    1001,
+    701
+   ],
+   "aspect": 1.7777777777777777,
+   "expect": [
+    178,
+    173,
+    720,
+    405
+   ]
+  },
+  {
+   "visible": [
+    37,
+    25,
+    1001,
+    701
+   ],
+   "aspect": 1.3333333333333333,
+   "expect": [
+    202,
+    124,
+    672,
+    504
+   ]
+  },
+  {
+   "visible": [
+    37,
+    25,
+    1001,
+    701
+   ],
+   "aspect": 2.39,
+   "expect": [
+    178,
+    225,
+    720,
+    301
+   ]
+  },
+  {
+   "visible": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "aspect": 1.7777777777777777,
+   "expect": [
+    0,
+    0,
+    0,
+    0
+   ]
+  }
+ ],
+ "follow": [
+  {
+   "current": [
+    100,
+    100,
+    1000,
+    700
+   ],
+   "latest": [
+    100,
+    100,
+    1000,
+    700
+   ],
+   "expect": false
+  },
+  {
+   "current": [
+    100,
+    100,
+    1000,
+    700
+   ],
+   "latest": [
+    101.5,
+    99,
+    1000,
+    700
+   ],
+   "expect": false
+  },
+  {
+   "current": [
+    100,
+    100,
+    1000,
+    700
+   ],
+   "latest": [
+    140,
+    100,
+    1000,
+    700
+   ],
+   "expect": true
+  },
+  {
+   "current": [
+    100,
+    100,
+    1000,
+    700
+   ],
+   "latest": [
+    100,
+    100,
+    1200,
+    700
+   ],
+   "expect": true
+  },
+  {
+   "current": [
+    100,
+    100,
+    1000,
+    700
+   ],
+   "latest": [
+    100,
+    100,
+    1000,
+    703
+   ],
+   "expect": true
+  }
+ ],
+ "ease": [
+  [
+   -1,
+   0
+  ],
+  [
+   0,
+   0
+  ],
+  [
+   0.25,
+   0.15625
+  ],
+  [
+   0.5,
+   0.5
+  ],
+  [
+   0.75,
+   0.84375
+  ],
+  [
+   1,
+   1
+  ],
+  [
+   3,
+   1
+  ]
+ ],
+ "videoFit": [
+  {
+   "name": "same-aspect",
+   "mode": "auto",
+   "frame": [
+    1600,
+    900
+   ],
+   "videoAspect": 1.7777777777777777,
+   "expect": "fill",
+   "content": [
+    0.0,
+    0.0,
+    1600.0,
+    900.0
+   ]
+  },
+  {
+   "name": "16x10-auto-fills",
+   "mode": "auto",
+   "frame": [
+    1440,
+    900
+   ],
+   "videoAspect": 1.7777777777777777,
+   "expect": "fill",
+   "content": [
+    -80.0,
+    0.0,
+    1600.0,
+    900
+   ]
+  },
+  {
+   "name": "3x2-auto-fits",
+   "mode": "auto",
+   "frame": [
+    1200,
+    800
+   ],
+   "videoAspect": 1.7777777777777777,
+   "expect": "fit",
+   "content": [
+    0.0,
+    62.5,
+    1200.0,
+    675.0
+   ]
+  },
+  {
+   "name": "4x3-auto-fits",
+   "mode": "auto",
+   "frame": [
+    1024,
+    768
+   ],
+   "videoAspect": 1.7777777777777777,
+   "expect": "fit",
+   "content": [
+    0.0,
+    96.0,
+    1024.0,
+    576.0
+   ]
+  },
+  {
+   "name": "tall-narrow-auto-fits",
+   "mode": "auto",
+   "frame": [
+    700,
+    900
+   ],
+   "videoAspect": 1.7777777777777777,
+   "expect": "fit",
+   "content": [
+    0.0,
+    253.125,
+    700.0,
+    393.75
+   ]
+  },
+  {
+   "name": "ultrawide-auto-fits",
+   "mode": "auto",
+   "frame": [
+    2560,
+    900
+   ],
+   "videoAspect": 1.7777777777777777,
+   "expect": "fit",
+   "content": [
+    480.0,
+    0.0,
+    1600.0,
+    900
+   ]
+  },
+  {
+   "name": "just-inside-threshold",
+   "mode": "auto",
+   "frame": [
+    1600,
+    1016.949152542373
+   ],
+   "videoAspect": 1.7777777777777777,
+   "expect": "fill",
+   "content": [
+    -103.95480225988706,
+    0.0,
+    1807.9096045197741,
+    1016.949152542373
+   ]
+  },
+  {
+   "name": "just-outside-threshold",
+   "mode": "auto",
+   "frame": [
+    1600,
+    1028.5714285714287
+   ],
+   "videoAspect": 1.7777777777777777,
+   "expect": "fit",
+   "content": [
+    0.0,
+    64.28571428571433,
+    1600.0,
+    900.0
+   ]
+  },
+  {
+   "name": "forced-fill-crops",
+   "mode": "fill",
+   "frame": [
+    1024,
+    768
+   ],
+   "videoAspect": 1.7777777777777777,
+   "expect": "fill",
+   "content": [
+    -170.66666666666663,
+    0.0,
+    1365.3333333333333,
+    768
+   ]
+  },
+  {
+   "name": "forced-fit-same-aspect",
+   "mode": "fit",
+   "frame": [
+    1600,
+    900
+   ],
+   "videoAspect": 1.7777777777777777,
+   "expect": "fit",
+   "content": [
+    0.0,
+    0.0,
+    1600.0,
+    900.0
+   ]
+  },
+  {
+   "name": "forced-fit-tall",
+   "mode": "fit",
+   "frame": [
+    700,
+    900
+   ],
+   "videoAspect": 1.7777777777777777,
+   "expect": "fit",
+   "content": [
+    0.0,
+    253.125,
+    700.0,
+    393.75
+   ]
+  },
+  {
+   "name": "portrait-video-in-wide-window",
+   "mode": "auto",
+   "frame": [
+    1600,
+    900
+   ],
+   "videoAspect": 0.5625,
+   "expect": "fit",
+   "content": [
+    546.875,
+    0.0,
+    506.25,
+    900
+   ]
+  },
+  {
+   "name": "zero-height",
+   "mode": "auto",
+   "frame": [
+    800,
+    0
+   ],
+   "videoAspect": 1.7777777777777777,
+   "expect": "fill",
+   "content": [
+    0,
+    0,
+    800,
+    0
+   ]
+  },
+  {
+   "name": "zero-aspect",
+   "mode": "fit",
+   "frame": [
+    800,
+    600
+   ],
+   "videoAspect": 0,
+   "expect": "fill",
+   "content": [
+    0,
+    0,
+    800,
+    600
+   ]
+  }
+ ]
+}

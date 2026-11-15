@@ -1,0 +1,2350 @@
+{
+  "cases": [
+    {
+      "name": "defaults",
+      "settings": {
+        "schemaVersion": 1,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {}
+      },
+      "valid": true,
+      "expect": {
+        "volume": 0.8,
+        "fadeDuration": 0.4,
+        "maxWaitSeconds": 10,
+        "loopExit": "cycleEnd",
+        "launchCoverage": 0.72,
+        "handoffTime": 9.6
+      }
+    },
+    {
+      "name": "master-volume",
+      "settings": {
+        "schemaVersion": 1,
+        "masterVolume": 0.5,
+        "muted": false,
+        "packs": {}
+      },
+      "valid": true,
+      "expect": {
+        "volume": 0.4,
+        "fadeDuration": 0.4,
+        "maxWaitSeconds": 10,
+        "loopExit": "cycleEnd",
+        "launchCoverage": 0.72,
+        "handoffTime": 9.6
+      }
+    },
+    {
+      "name": "mute",
+      "settings": {
+        "schemaVersion": 1,
+        "masterVolume": 0.5,
+        "muted": true,
+        "packs": {}
+      },
+      "valid": true,
+      "expect": {
+        "volume": 0,
+        "fadeDuration": 0.4,
+        "maxWaitSeconds": 10,
+        "loopExit": "cycleEnd",
+        "launchCoverage": 0.72,
+        "handoffTime": 9.6
+      }
+    },
+    {
+      "name": "per-pack",
+      "settings": {
+        "schemaVersion": 1,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {
+          "a": {
+            "overrides": {
+              "fadeDuration": 1.5,
+              "handoffAt": 100,
+              "maxWaitSeconds": 25,
+              "loopExit": "immediate",
+              "launchCoverage": 0.4
+            },
+            "presets": []
+          }
+        }
+      },
+      "valid": true,
+      "expect": {
+        "volume": 0.8,
+        "fadeDuration": 1.5,
+        "maxWaitSeconds": 25,
+        "loopExit": "immediate",
+        "launchCoverage": 0.4,
+        "handoffTime": 8.5
+      }
+    },
+    {
+      "name": "other-pack-isolated",
+      "settings": {
+        "schemaVersion": 1,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {
+          "b": {
+            "overrides": {
+              "fadeDuration": 2
+            },
+            "presets": []
+          }
+        }
+      },
+      "valid": true,
+      "expect": {
+        "volume": 0.8,
+        "fadeDuration": 0.4,
+        "maxWaitSeconds": 10,
+        "loopExit": "cycleEnd",
+        "launchCoverage": 0.72,
+        "handoffTime": 9.6
+      }
+    },
+    {
+      "name": "negative-volume",
+      "settings": {
+        "schemaVersion": 1,
+        "masterVolume": -0.1,
+        "muted": false,
+        "packs": {}
+      },
+      "valid": false
+    },
+    {
+      "name": "future-schema",
+      "settings": {
+        "schemaVersion": 4,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {}
+      },
+      "valid": false
+    },
+    {
+      "name": "bad-muted-type",
+      "settings": {
+        "schemaVersion": 1,
+        "masterVolume": 1,
+        "muted": 1,
+        "packs": {}
+      },
+      "valid": false
+    },
+    {
+      "name": "coverage-too-small",
+      "settings": {
+        "schemaVersion": 1,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {
+          "a": {
+            "overrides": {
+              "launchCoverage": 0.39
+            },
+            "presets": []
+          }
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "coverage-too-big",
+      "settings": {
+        "schemaVersion": 1,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {
+          "a": {
+            "overrides": {
+              "launchCoverage": 0.91
+            },
+            "presets": []
+          }
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "negative-handoff",
+      "settings": {
+        "schemaVersion": 1,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {
+          "a": {
+            "overrides": {
+              "handoffAt": -1
+            },
+            "presets": []
+          }
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "short-fade",
+      "settings": {
+        "schemaVersion": 1,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {
+          "a": {
+            "overrides": {
+              "fadeDuration": 0.09
+            },
+            "presets": []
+          }
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "long-wait",
+      "settings": {
+        "schemaVersion": 1,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {
+          "a": {
+            "overrides": {
+              "maxWaitSeconds": 61
+            },
+            "presets": []
+          }
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "unknown-loop",
+      "settings": {
+        "schemaVersion": 1,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {
+          "a": {
+            "overrides": {
+              "loopExit": "unknown"
+            },
+            "presets": []
+          }
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "unicode-preset-name",
+      "settings": {
+        "schemaVersion": 1,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {
+          "a": {
+            "overrides": {},
+            "presets": [
+              {
+                "id": "flowers",
+                "name": "🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸",
+                "overrides": {}
+              }
+            ]
+          }
+        }
+      },
+      "valid": true,
+      "expect": {
+        "volume": 0.8,
+        "fadeDuration": 0.4,
+        "maxWaitSeconds": 10,
+        "loopExit": "cycleEnd",
+        "launchCoverage": 0.72,
+        "handoffTime": 9.6
+      }
+    },
+    {
+      "name": "equivalent-unicode-names-duplicate",
+      "settings": {
+        "schemaVersion": 1,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {
+          "a": {
+            "overrides": {},
+            "presets": [
+              {
+                "id": "one",
+                "name": "café",
+                "overrides": {}
+              },
+              {
+                "id": "two",
+                "name": "café",
+                "overrides": {}
+              }
+            ]
+          }
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "v1-migrates-to-v2-defaults",
+      "settings": {
+        "schemaVersion": 1,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {}
+      },
+      "valid": true,
+      "expect": {
+        "volume": 0.8,
+        "fadeDuration": 0.4,
+        "maxWaitSeconds": 10,
+        "loopExit": "cycleEnd",
+        "launchCoverage": 0.72,
+        "handoffTime": 9.6
+      },
+      "expectPlayback": {
+        "frequency": "everyLaunch",
+        "dayStartHour": 4
+      },
+      "expectLibrary": {
+        "rotation": "fixed",
+        "favorites": []
+      }
+    },
+    {
+      "name": "v2-defaults",
+      "settings": {
+        "schemaVersion": 2,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        }
+      },
+      "valid": true,
+      "expect": {
+        "volume": 0.8,
+        "fadeDuration": 0.4,
+        "maxWaitSeconds": 10,
+        "loopExit": "cycleEnd",
+        "launchCoverage": 0.72,
+        "handoffTime": 9.6
+      },
+      "expectPlayback": {
+        "frequency": "everyLaunch",
+        "dayStartHour": 4
+      },
+      "expectLibrary": {
+        "rotation": "fixed",
+        "favorites": []
+      }
+    },
+    {
+      "name": "v2-first-of-day-and-favorites",
+      "settings": {
+        "schemaVersion": 2,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "firstOfDay",
+          "dayStartHour": 0
+        },
+        "library": {
+          "rotation": "shuffleFavorites",
+          "favorites": [
+            "demo-garden",
+            "not-installed-yet"
+          ]
+        }
+      },
+      "valid": true,
+      "expect": {
+        "volume": 0.8,
+        "fadeDuration": 0.4,
+        "maxWaitSeconds": 10,
+        "loopExit": "cycleEnd",
+        "launchCoverage": 0.72,
+        "handoffTime": 9.6
+      },
+      "expectPlayback": {
+        "frequency": "firstOfDay",
+        "dayStartHour": 0
+      },
+      "expectLibrary": {
+        "rotation": "shuffleFavorites",
+        "favorites": [
+          "demo-garden",
+          "not-installed-yet"
+        ]
+      }
+    },
+    {
+      "name": "v2-day-start-23",
+      "settings": {
+        "schemaVersion": 2,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "firstOfDay",
+          "dayStartHour": 23
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        }
+      },
+      "valid": true,
+      "expect": {
+        "volume": 0.8,
+        "fadeDuration": 0.4,
+        "maxWaitSeconds": 10,
+        "loopExit": "cycleEnd",
+        "launchCoverage": 0.72,
+        "handoffTime": 9.6
+      },
+      "expectPlayback": {
+        "frequency": "firstOfDay",
+        "dayStartHour": 23
+      },
+      "expectLibrary": {
+        "rotation": "fixed",
+        "favorites": []
+      }
+    },
+    {
+      "name": "v2-missing-playback",
+      "settings": {
+        "schemaVersion": 2,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "v2-missing-library",
+      "settings": {
+        "schemaVersion": 2,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "v2-unknown-frequency",
+      "settings": {
+        "schemaVersion": 2,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "hourly",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "v2-day-start-24",
+      "settings": {
+        "schemaVersion": 2,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "firstOfDay",
+          "dayStartHour": 24
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "v2-day-start-negative",
+      "settings": {
+        "schemaVersion": 2,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "firstOfDay",
+          "dayStartHour": -1
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "v2-day-start-fraction",
+      "settings": {
+        "schemaVersion": 2,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "firstOfDay",
+          "dayStartHour": 3.5
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "v2-day-start-string",
+      "settings": {
+        "schemaVersion": 2,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "firstOfDay",
+          "dayStartHour": "4"
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "v2-unknown-rotation",
+      "settings": {
+        "schemaVersion": 2,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "roundRobin",
+          "favorites": []
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "v2-bad-favorite-id",
+      "settings": {
+        "schemaVersion": 2,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": [
+            "Bad ID"
+          ]
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "v2-duplicate-favorite",
+      "settings": {
+        "schemaVersion": 2,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": [
+            "a",
+            "a"
+          ]
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "v2-too-many-favorites",
+      "settings": {
+        "schemaVersion": 2,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": [
+            "p0",
+            "p1",
+            "p2",
+            "p3",
+            "p4",
+            "p5",
+            "p6",
+            "p7",
+            "p8",
+            "p9",
+            "p10",
+            "p11",
+            "p12",
+            "p13",
+            "p14",
+            "p15",
+            "p16",
+            "p17",
+            "p18",
+            "p19",
+            "p20",
+            "p21",
+            "p22",
+            "p23",
+            "p24",
+            "p25",
+            "p26",
+            "p27",
+            "p28",
+            "p29",
+            "p30",
+            "p31",
+            "p32",
+            "p33",
+            "p34",
+            "p35",
+            "p36",
+            "p37",
+            "p38",
+            "p39",
+            "p40",
+            "p41",
+            "p42",
+            "p43",
+            "p44",
+            "p45",
+            "p46",
+            "p47",
+            "p48",
+            "p49",
+            "p50",
+            "p51",
+            "p52",
+            "p53",
+            "p54",
+            "p55",
+            "p56",
+            "p57",
+            "p58",
+            "p59",
+            "p60",
+            "p61",
+            "p62",
+            "p63",
+            "p64",
+            "p65",
+            "p66",
+            "p67",
+            "p68",
+            "p69",
+            "p70",
+            "p71",
+            "p72",
+            "p73",
+            "p74",
+            "p75",
+            "p76",
+            "p77",
+            "p78",
+            "p79",
+            "p80",
+            "p81",
+            "p82",
+            "p83",
+            "p84",
+            "p85",
+            "p86",
+            "p87",
+            "p88",
+            "p89",
+            "p90",
+            "p91",
+            "p92",
+            "p93",
+            "p94",
+            "p95",
+            "p96",
+            "p97",
+            "p98",
+            "p99",
+            "p100",
+            "p101",
+            "p102",
+            "p103",
+            "p104",
+            "p105",
+            "p106",
+            "p107",
+            "p108",
+            "p109",
+            "p110",
+            "p111",
+            "p112",
+            "p113",
+            "p114",
+            "p115",
+            "p116",
+            "p117",
+            "p118",
+            "p119",
+            "p120",
+            "p121",
+            "p122",
+            "p123",
+            "p124",
+            "p125",
+            "p126",
+            "p127",
+            "p128",
+            "p129",
+            "p130",
+            "p131",
+            "p132",
+            "p133",
+            "p134",
+            "p135",
+            "p136",
+            "p137",
+            "p138",
+            "p139",
+            "p140",
+            "p141",
+            "p142",
+            "p143",
+            "p144",
+            "p145",
+            "p146",
+            "p147",
+            "p148",
+            "p149",
+            "p150",
+            "p151",
+            "p152",
+            "p153",
+            "p154",
+            "p155",
+            "p156",
+            "p157",
+            "p158",
+            "p159",
+            "p160",
+            "p161",
+            "p162",
+            "p163",
+            "p164",
+            "p165",
+            "p166",
+            "p167",
+            "p168",
+            "p169",
+            "p170",
+            "p171",
+            "p172",
+            "p173",
+            "p174",
+            "p175",
+            "p176",
+            "p177",
+            "p178",
+            "p179",
+            "p180",
+            "p181",
+            "p182",
+            "p183",
+            "p184",
+            "p185",
+            "p186",
+            "p187",
+            "p188",
+            "p189",
+            "p190",
+            "p191",
+            "p192",
+            "p193",
+            "p194",
+            "p195",
+            "p196",
+            "p197",
+            "p198",
+            "p199",
+            "p200"
+          ]
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "v2-200-favorites",
+      "settings": {
+        "schemaVersion": 2,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": [
+            "p0",
+            "p1",
+            "p2",
+            "p3",
+            "p4",
+            "p5",
+            "p6",
+            "p7",
+            "p8",
+            "p9",
+            "p10",
+            "p11",
+            "p12",
+            "p13",
+            "p14",
+            "p15",
+            "p16",
+            "p17",
+            "p18",
+            "p19",
+            "p20",
+            "p21",
+            "p22",
+            "p23",
+            "p24",
+            "p25",
+            "p26",
+            "p27",
+            "p28",
+            "p29",
+            "p30",
+            "p31",
+            "p32",
+            "p33",
+            "p34",
+            "p35",
+            "p36",
+            "p37",
+            "p38",
+            "p39",
+            "p40",
+            "p41",
+            "p42",
+            "p43",
+            "p44",
+            "p45",
+            "p46",
+            "p47",
+            "p48",
+            "p49",
+            "p50",
+            "p51",
+            "p52",
+            "p53",
+            "p54",
+            "p55",
+            "p56",
+            "p57",
+            "p58",
+            "p59",
+            "p60",
+            "p61",
+            "p62",
+            "p63",
+            "p64",
+            "p65",
+            "p66",
+            "p67",
+            "p68",
+            "p69",
+            "p70",
+            "p71",
+            "p72",
+            "p73",
+            "p74",
+            "p75",
+            "p76",
+            "p77",
+            "p78",
+            "p79",
+            "p80",
+            "p81",
+            "p82",
+            "p83",
+            "p84",
+            "p85",
+            "p86",
+            "p87",
+            "p88",
+            "p89",
+            "p90",
+            "p91",
+            "p92",
+            "p93",
+            "p94",
+            "p95",
+            "p96",
+            "p97",
+            "p98",
+            "p99",
+            "p100",
+            "p101",
+            "p102",
+            "p103",
+            "p104",
+            "p105",
+            "p106",
+            "p107",
+            "p108",
+            "p109",
+            "p110",
+            "p111",
+            "p112",
+            "p113",
+            "p114",
+            "p115",
+            "p116",
+            "p117",
+            "p118",
+            "p119",
+            "p120",
+            "p121",
+            "p122",
+            "p123",
+            "p124",
+            "p125",
+            "p126",
+            "p127",
+            "p128",
+            "p129",
+            "p130",
+            "p131",
+            "p132",
+            "p133",
+            "p134",
+            "p135",
+            "p136",
+            "p137",
+            "p138",
+            "p139",
+            "p140",
+            "p141",
+            "p142",
+            "p143",
+            "p144",
+            "p145",
+            "p146",
+            "p147",
+            "p148",
+            "p149",
+            "p150",
+            "p151",
+            "p152",
+            "p153",
+            "p154",
+            "p155",
+            "p156",
+            "p157",
+            "p158",
+            "p159",
+            "p160",
+            "p161",
+            "p162",
+            "p163",
+            "p164",
+            "p165",
+            "p166",
+            "p167",
+            "p168",
+            "p169",
+            "p170",
+            "p171",
+            "p172",
+            "p173",
+            "p174",
+            "p175",
+            "p176",
+            "p177",
+            "p178",
+            "p179",
+            "p180",
+            "p181",
+            "p182",
+            "p183",
+            "p184",
+            "p185",
+            "p186",
+            "p187",
+            "p188",
+            "p189",
+            "p190",
+            "p191",
+            "p192",
+            "p193",
+            "p194",
+            "p195",
+            "p196",
+            "p197",
+            "p198",
+            "p199"
+          ]
+        }
+      },
+      "valid": true,
+      "expect": {
+        "volume": 0.8,
+        "fadeDuration": 0.4,
+        "maxWaitSeconds": 10,
+        "loopExit": "cycleEnd",
+        "launchCoverage": 0.72,
+        "handoffTime": 9.6
+      },
+      "expectPlayback": {
+        "frequency": "everyLaunch",
+        "dayStartHour": 4
+      },
+      "expectLibrary": {
+        "rotation": "fixed",
+        "favorites": [
+          "p0",
+          "p1",
+          "p2",
+          "p3",
+          "p4",
+          "p5",
+          "p6",
+          "p7",
+          "p8",
+          "p9",
+          "p10",
+          "p11",
+          "p12",
+          "p13",
+          "p14",
+          "p15",
+          "p16",
+          "p17",
+          "p18",
+          "p19",
+          "p20",
+          "p21",
+          "p22",
+          "p23",
+          "p24",
+          "p25",
+          "p26",
+          "p27",
+          "p28",
+          "p29",
+          "p30",
+          "p31",
+          "p32",
+          "p33",
+          "p34",
+          "p35",
+          "p36",
+          "p37",
+          "p38",
+          "p39",
+          "p40",
+          "p41",
+          "p42",
+          "p43",
+          "p44",
+          "p45",
+          "p46",
+          "p47",
+          "p48",
+          "p49",
+          "p50",
+          "p51",
+          "p52",
+          "p53",
+          "p54",
+          "p55",
+          "p56",
+          "p57",
+          "p58",
+          "p59",
+          "p60",
+          "p61",
+          "p62",
+          "p63",
+          "p64",
+          "p65",
+          "p66",
+          "p67",
+          "p68",
+          "p69",
+          "p70",
+          "p71",
+          "p72",
+          "p73",
+          "p74",
+          "p75",
+          "p76",
+          "p77",
+          "p78",
+          "p79",
+          "p80",
+          "p81",
+          "p82",
+          "p83",
+          "p84",
+          "p85",
+          "p86",
+          "p87",
+          "p88",
+          "p89",
+          "p90",
+          "p91",
+          "p92",
+          "p93",
+          "p94",
+          "p95",
+          "p96",
+          "p97",
+          "p98",
+          "p99",
+          "p100",
+          "p101",
+          "p102",
+          "p103",
+          "p104",
+          "p105",
+          "p106",
+          "p107",
+          "p108",
+          "p109",
+          "p110",
+          "p111",
+          "p112",
+          "p113",
+          "p114",
+          "p115",
+          "p116",
+          "p117",
+          "p118",
+          "p119",
+          "p120",
+          "p121",
+          "p122",
+          "p123",
+          "p124",
+          "p125",
+          "p126",
+          "p127",
+          "p128",
+          "p129",
+          "p130",
+          "p131",
+          "p132",
+          "p133",
+          "p134",
+          "p135",
+          "p136",
+          "p137",
+          "p138",
+          "p139",
+          "p140",
+          "p141",
+          "p142",
+          "p143",
+          "p144",
+          "p145",
+          "p146",
+          "p147",
+          "p148",
+          "p149",
+          "p150",
+          "p151",
+          "p152",
+          "p153",
+          "p154",
+          "p155",
+          "p156",
+          "p157",
+          "p158",
+          "p159",
+          "p160",
+          "p161",
+          "p162",
+          "p163",
+          "p164",
+          "p165",
+          "p166",
+          "p167",
+          "p168",
+          "p169",
+          "p170",
+          "p171",
+          "p172",
+          "p173",
+          "p174",
+          "p175",
+          "p176",
+          "p177",
+          "p178",
+          "p179",
+          "p180",
+          "p181",
+          "p182",
+          "p183",
+          "p184",
+          "p185",
+          "p186",
+          "p187",
+          "p188",
+          "p189",
+          "p190",
+          "p191",
+          "p192",
+          "p193",
+          "p194",
+          "p195",
+          "p196",
+          "p197",
+          "p198",
+          "p199"
+        ]
+      }
+    },
+    {
+      "name": "video-fit-override",
+      "settings": {
+        "schemaVersion": 2,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {
+          "a": {
+            "overrides": {
+              "videoFit": "fit"
+            },
+            "presets": []
+          }
+        },
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        }
+      },
+      "valid": true,
+      "expect": {
+        "volume": 0.8,
+        "fadeDuration": 0.4,
+        "maxWaitSeconds": 10,
+        "loopExit": "cycleEnd",
+        "launchCoverage": 0.72,
+        "handoffTime": 9.6
+      },
+      "expectVideoFit": "fit"
+    },
+    {
+      "name": "video-fit-inherits-auto",
+      "settings": {
+        "schemaVersion": 2,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {
+          "a": {
+            "overrides": {},
+            "presets": []
+          }
+        },
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        }
+      },
+      "valid": true,
+      "expect": {
+        "volume": 0.8,
+        "fadeDuration": 0.4,
+        "maxWaitSeconds": 10,
+        "loopExit": "cycleEnd",
+        "launchCoverage": 0.72,
+        "handoffTime": 9.6
+      },
+      "expectVideoFit": "auto"
+    },
+    {
+      "name": "video-fit-null-inherits",
+      "settings": {
+        "schemaVersion": 2,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {
+          "a": {
+            "overrides": {
+              "videoFit": null
+            },
+            "presets": []
+          }
+        },
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        }
+      },
+      "valid": true,
+      "expect": {
+        "volume": 0.8,
+        "fadeDuration": 0.4,
+        "maxWaitSeconds": 10,
+        "loopExit": "cycleEnd",
+        "launchCoverage": 0.72,
+        "handoffTime": 9.6
+      },
+      "expectVideoFit": "auto"
+    },
+    {
+      "name": "video-fit-unknown",
+      "settings": {
+        "schemaVersion": 2,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {
+          "a": {
+            "overrides": {
+              "videoFit": "stretch"
+            },
+            "presets": []
+          }
+        },
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "v2-migrates-to-v3-default-target",
+      "settings": {
+        "schemaVersion": 2,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        }
+      },
+      "valid": true,
+      "expect": {
+        "volume": 0.8,
+        "fadeDuration": 0.4,
+        "maxWaitSeconds": 10,
+        "loopExit": "cycleEnd",
+        "launchCoverage": 0.72,
+        "handoffTime": 9.6
+      },
+      "expectPlayback": {
+        "frequency": "everyLaunch",
+        "dayStartHour": 4
+      },
+      "expectLibrary": {
+        "rotation": "fixed",
+        "favorites": []
+      },
+      "expectTargets": [
+        "default-codex"
+      ]
+    },
+    {
+      "name": "v3-two-targets",
+      "settings": {
+        "schemaVersion": 3,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        },
+        "targets": [
+          {
+            "id": "default-codex",
+            "name": "ChatGPT",
+            "enabled": true,
+            "animation": null,
+            "mac": {
+              "bundleId": "com.openai.chat"
+            },
+            "windows": {
+              "package": "OpenAI.Codex",
+              "exe": "app\\ChatGPT.exe"
+            }
+          },
+          {
+            "id": "6f1c2d3e-0000-4000-8000-000000000001",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+            },
+            "mac": {
+              "bundleId": "com.google.Chrome"
+            }
+          }
+        ]
+      },
+      "valid": true,
+      "expect": {
+        "volume": 0.8,
+        "fadeDuration": 0.4,
+        "maxWaitSeconds": 10,
+        "loopExit": "cycleEnd",
+        "launchCoverage": 0.72,
+        "handoffTime": 9.6
+      },
+      "expectTargets": [
+        "default-codex",
+        "6f1c2d3e-0000-4000-8000-000000000001"
+      ]
+    },
+    {
+      "name": "v3-empty-targets",
+      "settings": {
+        "schemaVersion": 3,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        },
+        "targets": []
+      },
+      "valid": true,
+      "expect": {
+        "volume": 0.8,
+        "fadeDuration": 0.4,
+        "maxWaitSeconds": 10,
+        "loopExit": "cycleEnd",
+        "launchCoverage": 0.72,
+        "handoffTime": 9.6
+      },
+      "expectTargets": []
+    },
+    {
+      "name": "v3-foreign-platform-only",
+      "settings": {
+        "schemaVersion": 3,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        },
+        "targets": [
+          {
+            "id": "6f1c2d3e-0000-4000-8000-000000000001",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "mac": {
+              "bundleId": "com.example.only-mac"
+            }
+          }
+        ]
+      },
+      "valid": true,
+      "expect": {
+        "volume": 0.8,
+        "fadeDuration": 0.4,
+        "maxWaitSeconds": 10,
+        "loopExit": "cycleEnd",
+        "launchCoverage": 0.72,
+        "handoffTime": 9.6
+      },
+      "expectTargets": [
+        "6f1c2d3e-0000-4000-8000-000000000001"
+      ]
+    },
+    {
+      "name": "v3-missing-targets",
+      "settings": {
+        "schemaVersion": 3,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "v3-duplicate-id",
+      "settings": {
+        "schemaVersion": 3,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        },
+        "targets": [
+          {
+            "id": "default-codex",
+            "name": "ChatGPT",
+            "enabled": true,
+            "animation": null,
+            "mac": {
+              "bundleId": "com.openai.chat"
+            },
+            "windows": {
+              "package": "OpenAI.Codex",
+              "exe": "app\\ChatGPT.exe"
+            }
+          },
+          {
+            "id": "default-codex",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+            },
+            "mac": {
+              "bundleId": "com.google.Chrome"
+            }
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "v3-bad-id",
+      "settings": {
+        "schemaVersion": 3,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        },
+        "targets": [
+          {
+            "id": "Bad Id",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+            },
+            "mac": {
+              "bundleId": "com.google.Chrome"
+            }
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "v3-empty-name",
+      "settings": {
+        "schemaVersion": 3,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        },
+        "targets": [
+          {
+            "id": "6f1c2d3e-0000-4000-8000-000000000001",
+            "name": "  ",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+            },
+            "mac": {
+              "bundleId": "com.google.Chrome"
+            }
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "v3-long-name",
+      "settings": {
+        "schemaVersion": 3,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        },
+        "targets": [
+          {
+            "id": "6f1c2d3e-0000-4000-8000-000000000001",
+            "name": "名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+            },
+            "mac": {
+              "bundleId": "com.google.Chrome"
+            }
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "v3-40-char-name",
+      "settings": {
+        "schemaVersion": 3,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        },
+        "targets": [
+          {
+            "id": "6f1c2d3e-0000-4000-8000-000000000001",
+            "name": "名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名名",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+            },
+            "mac": {
+              "bundleId": "com.google.Chrome"
+            }
+          }
+        ]
+      },
+      "valid": true,
+      "expect": {
+        "volume": 0.8,
+        "fadeDuration": 0.4,
+        "maxWaitSeconds": 10,
+        "loopExit": "cycleEnd",
+        "launchCoverage": 0.72,
+        "handoffTime": 9.6
+      },
+      "expectTargets": [
+        "6f1c2d3e-0000-4000-8000-000000000001"
+      ]
+    },
+    {
+      "name": "v3-too-many",
+      "settings": {
+        "schemaVersion": 3,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        },
+        "targets": [
+          {
+            "id": "t0",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a0.exe"
+            },
+            "mac": {
+              "bundleId": "x.y0"
+            }
+          },
+          {
+            "id": "t1",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a1.exe"
+            },
+            "mac": {
+              "bundleId": "x.y1"
+            }
+          },
+          {
+            "id": "t2",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a2.exe"
+            },
+            "mac": {
+              "bundleId": "x.y2"
+            }
+          },
+          {
+            "id": "t3",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a3.exe"
+            },
+            "mac": {
+              "bundleId": "x.y3"
+            }
+          },
+          {
+            "id": "t4",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a4.exe"
+            },
+            "mac": {
+              "bundleId": "x.y4"
+            }
+          },
+          {
+            "id": "t5",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a5.exe"
+            },
+            "mac": {
+              "bundleId": "x.y5"
+            }
+          },
+          {
+            "id": "t6",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a6.exe"
+            },
+            "mac": {
+              "bundleId": "x.y6"
+            }
+          },
+          {
+            "id": "t7",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a7.exe"
+            },
+            "mac": {
+              "bundleId": "x.y7"
+            }
+          },
+          {
+            "id": "t8",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a8.exe"
+            },
+            "mac": {
+              "bundleId": "x.y8"
+            }
+          },
+          {
+            "id": "t9",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a9.exe"
+            },
+            "mac": {
+              "bundleId": "x.y9"
+            }
+          },
+          {
+            "id": "t10",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a10.exe"
+            },
+            "mac": {
+              "bundleId": "x.y10"
+            }
+          },
+          {
+            "id": "t11",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a11.exe"
+            },
+            "mac": {
+              "bundleId": "x.y11"
+            }
+          },
+          {
+            "id": "t12",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a12.exe"
+            },
+            "mac": {
+              "bundleId": "x.y12"
+            }
+          },
+          {
+            "id": "t13",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a13.exe"
+            },
+            "mac": {
+              "bundleId": "x.y13"
+            }
+          },
+          {
+            "id": "t14",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a14.exe"
+            },
+            "mac": {
+              "bundleId": "x.y14"
+            }
+          },
+          {
+            "id": "t15",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a15.exe"
+            },
+            "mac": {
+              "bundleId": "x.y15"
+            }
+          },
+          {
+            "id": "t16",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a16.exe"
+            },
+            "mac": {
+              "bundleId": "x.y16"
+            }
+          },
+          {
+            "id": "t17",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a17.exe"
+            },
+            "mac": {
+              "bundleId": "x.y17"
+            }
+          },
+          {
+            "id": "t18",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a18.exe"
+            },
+            "mac": {
+              "bundleId": "x.y18"
+            }
+          },
+          {
+            "id": "t19",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a19.exe"
+            },
+            "mac": {
+              "bundleId": "x.y19"
+            }
+          },
+          {
+            "id": "t20",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a20.exe"
+            },
+            "mac": {
+              "bundleId": "x.y20"
+            }
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "v3-duplicate-mac-bundle",
+      "settings": {
+        "schemaVersion": 3,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        },
+        "targets": [
+          {
+            "id": "default-codex",
+            "name": "ChatGPT",
+            "enabled": true,
+            "animation": null,
+            "mac": {
+              "bundleId": "com.openai.chat"
+            },
+            "windows": {
+              "package": "OpenAI.Codex",
+              "exe": "app\\ChatGPT.exe"
+            }
+          },
+          {
+            "id": "6f1c2d3e-0000-4000-8000-000000000001",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+            },
+            "mac": {
+              "bundleId": "com.openai.chat"
+            }
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "v3-duplicate-windows-path-case",
+      "settings": {
+        "schemaVersion": 3,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        },
+        "targets": [
+          {
+            "id": "6f1c2d3e-0000-4000-8000-000000000001",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+            },
+            "mac": {
+              "bundleId": "com.google.Chrome"
+            }
+          },
+          {
+            "id": "other",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\PROGRAM FILES\\GOOGLE\\CHROME\\APPLICATION\\CHROME.EXE"
+            }
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "v3-duplicate-windows-package",
+      "settings": {
+        "schemaVersion": 3,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        },
+        "targets": [
+          {
+            "id": "default-codex",
+            "name": "ChatGPT",
+            "enabled": true,
+            "animation": null,
+            "mac": {
+              "bundleId": "com.openai.chat"
+            },
+            "windows": {
+              "package": "OpenAI.Codex",
+              "exe": "app\\ChatGPT.exe"
+            }
+          },
+          {
+            "id": "6f1c2d3e-0000-4000-8000-000000000001",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "package": "openai.codex",
+              "exe": "APP\\chatgpt.exe"
+            }
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "v3-windows-path-and-package",
+      "settings": {
+        "schemaVersion": 3,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        },
+        "targets": [
+          {
+            "id": "6f1c2d3e-0000-4000-8000-000000000001",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\a.exe",
+              "package": "A"
+            },
+            "mac": {
+              "bundleId": "com.google.Chrome"
+            }
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "v3-windows-empty-package",
+      "settings": {
+        "schemaVersion": 3,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        },
+        "targets": [
+          {
+            "id": "6f1c2d3e-0000-4000-8000-000000000001",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "package": ""
+            },
+            "mac": {
+              "bundleId": "com.google.Chrome"
+            }
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "v3-relative-windows-path",
+      "settings": {
+        "schemaVersion": 3,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        },
+        "targets": [
+          {
+            "id": "6f1c2d3e-0000-4000-8000-000000000001",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "chrome.exe"
+            },
+            "mac": {
+              "bundleId": "com.google.Chrome"
+            }
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "v3-empty-bundle",
+      "settings": {
+        "schemaVersion": 3,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        },
+        "targets": [
+          {
+            "id": "6f1c2d3e-0000-4000-8000-000000000001",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+            },
+            "mac": {
+              "bundleId": ""
+            }
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "v3-bad-animation",
+      "settings": {
+        "schemaVersion": 3,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        },
+        "targets": [
+          {
+            "id": "6f1c2d3e-0000-4000-8000-000000000001",
+            "name": "Google Chrome",
+            "enabled": true,
+            "animation": "Bad Pack",
+            "windows": {
+              "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+            },
+            "mac": {
+              "bundleId": "com.google.Chrome"
+            }
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "v3-enabled-not-bool",
+      "settings": {
+        "schemaVersion": 3,
+        "masterVolume": 1,
+        "muted": false,
+        "packs": {},
+        "playback": {
+          "frequency": "everyLaunch",
+          "dayStartHour": 4
+        },
+        "library": {
+          "rotation": "fixed",
+          "favorites": []
+        },
+        "targets": [
+          {
+            "id": "6f1c2d3e-0000-4000-8000-000000000001",
+            "name": "Google Chrome",
+            "enabled": "yes",
+            "animation": "night-garden",
+            "windows": {
+              "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+            },
+            "mac": {
+              "bundleId": "com.google.Chrome"
+            }
+          }
+        ]
+      },
+      "valid": false
+    }
+  ],
+  "about": "ExperienceSettings validation and resolution. expectPlayback/expectLibrary compare the decoded schemaVersion-2 sections; v1 input decodes with their defaults. expectVideoFit: resolved videoFit for pack 'a' whose manifest has no videoFit. expectTargets: target ids after decoding (v2 input gains the platform default target 'default-codex')."
+}

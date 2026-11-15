@@ -1,0 +1,27 @@
+name: 问题报告
+description: 报告一个可复现的问题
+body:
+  - type: dropdown
+    id: platform
+    attributes:
+      label: 平台
+      options: [macOS, Windows]
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Sakura 与操作系统版本
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤、预期与实际行为
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 可选证据
+      description: 使用 CC0 示例截图；日志先移除密钥、本机用户名、路径和私人内容。漏洞请按 SECURITY.md 私密报告。

@@ -1,0 +1,244 @@
+{
+ "about": "ScheduleDecision.decide and nextDayStart, see SCHEDULE-AND-LIBRARY.md §2. Times are Unix seconds; offsets are local UTC offsets in seconds.",
+ "decide": [
+  {
+   "name": "every-launch-ignores-recent-play",
+   "frequency": "everyLaunch",
+   "dayStartHour": 4,
+   "state": {
+    "lastAutoPlayAt": 1794639540
+   },
+   "now": 1794639600,
+   "nowOffset": 28800,
+   "lastOffset": 28800,
+   "expect": "play"
+  },
+  {
+   "name": "first-of-day-never-played",
+   "frequency": "firstOfDay",
+   "dayStartHour": 4,
+   "state": {},
+   "now": 1794639600,
+   "nowOffset": 28800,
+   "lastOffset": 28800,
+   "expect": "play"
+  },
+  {
+   "name": "first-of-day-same-day",
+   "frequency": "firstOfDay",
+   "dayStartHour": 4,
+   "state": {
+    "lastAutoPlayAt": 1794618000
+   },
+   "now": 1794639600,
+   "nowOffset": 28800,
+   "lastOffset": 28800,
+   "expect": "playedToday"
+  },
+  {
+   "name": "first-of-day-next-day",
+   "frequency": "firstOfDay",
+   "dayStartHour": 4,
+   "state": {
+    "lastAutoPlayAt": 1794582000
+   },
+   "now": 1794618000,
+   "nowOffset": 28800,
+   "lastOffset": 28800,
+   "expect": "play"
+  },
+  {
+   "name": "before-day-start-counts-as-previous-day",
+   "frequency": "firstOfDay",
+   "dayStartHour": 4,
+   "state": {
+    "lastAutoPlayAt": 1794675600
+   },
+   "now": 1794684600,
+   "nowOffset": 28800,
+   "lastOffset": 28800,
+   "expect": "playedToday"
+  },
+  {
+   "name": "crossing-day-start",
+   "frequency": "firstOfDay",
+   "dayStartHour": 4,
+   "state": {
+    "lastAutoPlayAt": 1794684600
+   },
+   "now": 1794687000,
+   "nowOffset": 28800,
+   "lastOffset": 28800,
+   "expect": "play"
+  },
+  {
+   "name": "late-night-then-after-midnight-before-start",
+   "frequency": "firstOfDay",
+   "dayStartHour": 4,
+   "state": {
+    "lastAutoPlayAt": 1794670200
+   },
+   "now": 1794672600,
+   "nowOffset": 28800,
+   "lastOffset": 28800,
+   "expect": "playedToday"
+  },
+  {
+   "name": "midnight-boundary-hour-zero",
+   "frequency": "firstOfDay",
+   "dayStartHour": 0,
+   "state": {
+    "lastAutoPlayAt": 1794670200
+   },
+   "now": 1794672600,
+   "nowOffset": 28800,
+   "lastOffset": 28800,
+   "expect": "play"
+  },
+  {
+   "name": "clock-moved-back",
+   "frequency": "firstOfDay",
+   "dayStartHour": 4,
+   "state": {
+    "lastAutoPlayAt": 1794643200
+   },
+   "now": 1794639600,
+   "nowOffset": 28800,
+   "lastOffset": 28800,
+   "expect": "play"
+  },
+  {
+   "name": "small-future-skew-same-day",
+   "frequency": "firstOfDay",
+   "dayStartHour": 4,
+   "state": {
+    "lastAutoPlayAt": 1794639720
+   },
+   "now": 1794639600,
+   "nowOffset": 28800,
+   "lastOffset": 28800,
+   "expect": "playedToday"
+  },
+  {
+   "name": "snoozed",
+   "frequency": "everyLaunch",
+   "dayStartHour": 4,
+   "state": {
+    "snoozeUntil": 1794640200
+   },
+   "now": 1794639600,
+   "nowOffset": 28800,
+   "lastOffset": 28800,
+   "expect": "snoozed"
+  },
+  {
+   "name": "snooze-expired",
+   "frequency": "everyLaunch",
+   "dayStartHour": 4,
+   "state": {
+    "snoozeUntil": 1794639599
+   },
+   "now": 1794639600,
+   "nowOffset": 28800,
+   "lastOffset": 28800,
+   "expect": "play"
+  },
+  {
+   "name": "snooze-ends-exactly-now",
+   "frequency": "everyLaunch",
+   "dayStartHour": 4,
+   "state": {
+    "snoozeUntil": 1794639600
+   },
+   "now": 1794639600,
+   "nowOffset": 28800,
+   "lastOffset": 28800,
+   "expect": "play"
+  },
+  {
+   "name": "snooze-wins-over-first-of-day",
+   "frequency": "firstOfDay",
+   "dayStartHour": 4,
+   "state": {
+    "snoozeUntil": 1794640200
+   },
+   "now": 1794639600,
+   "nowOffset": 28800,
+   "lastOffset": 28800,
+   "expect": "snoozed"
+  },
+  {
+   "name": "timezone-change-same-local-day",
+   "frequency": "firstOfDay",
+   "dayStartHour": 4,
+   "state": {
+    "lastAutoPlayAt": 1794618000
+   },
+   "now": 1794672000,
+   "nowOffset": -28800,
+   "lastOffset": 28800,
+   "expect": "playedToday"
+  },
+  {
+   "name": "timezone-change-new-local-day",
+   "frequency": "firstOfDay",
+   "dayStartHour": 4,
+   "state": {
+    "lastAutoPlayAt": 1794618000
+   },
+   "now": 1794747600,
+   "nowOffset": -28800,
+   "lastOffset": 28800,
+   "expect": "play"
+  },
+  {
+   "name": "fractional-seconds",
+   "frequency": "firstOfDay",
+   "dayStartHour": 4,
+   "state": {
+    "lastAutoPlayAt": 1794686399.5
+   },
+   "now": 1794686400.25,
+   "nowOffset": 28800,
+   "lastOffset": 28800,
+   "expect": "play"
+  }
+ ],
+ "nextDayStart": [
+  {
+   "name": "afternoon",
+   "now": 1794639600,
+   "nowOffset": 28800,
+   "dayStartHour": 4,
+   "expect": 1794686400
+  },
+  {
+   "name": "before-start-same-calendar-day",
+   "now": 1794679200,
+   "nowOffset": 28800,
+   "dayStartHour": 4,
+   "expect": 1794686400
+  },
+  {
+   "name": "exactly-at-start",
+   "now": 1794686400,
+   "nowOffset": 28800,
+   "dayStartHour": 4,
+   "expect": 1794772800
+  },
+  {
+   "name": "hour-zero",
+   "now": 1794639600,
+   "nowOffset": 28800,
+   "dayStartHour": 0,
+   "expect": 1794672000
+  },
+  {
+   "name": "negative-offset",
+   "now": 1794672000,
+   "nowOffset": -28800,
+   "dayStartHour": 4,
+   "expect": 1794744000
+  }
+ ]
+}

@@ -1,0 +1,37 @@
+{
+ "about": "PACK-FROM-VIDEO.md: VideoPackRules on both platforms.",
+ "defaultName": [
+  { "fileName": "我的开场.mp4", "expect": "我的开场" },
+  { "fileName": "night_garden-v2.final.MOV", "expect": "night garden v2.final" },
+  { "fileName": "  spaced   out  .m4v", "expect": "spaced out" },
+  { "fileName": ".mp4", "expect": "我的动画" },
+  { "fileName": "___.mp4", "expect": "我的动画" },
+  { "fileName": "一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十多出来.mp4", "expect": "一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十" },
+  { "fileName": "no-extension", "expect": "no extension" }
+ ],
+ "extension": [
+  { "fileName": "a.mp4", "expect": "mp4" },
+  { "fileName": "a.MOV", "expect": "mov" },
+  { "fileName": "a.b.M4V", "expect": "m4v" },
+  { "fileName": "a.avi", "expect": null },
+  { "fileName": "mp4", "expect": null },
+  { "fileName": "a.", "expect": null }
+ ],
+ "validName": [
+  { "name": "花园", "expect": true },
+  { "name": "  花园  ", "expect": true },
+  { "name": "   ", "expect": false },
+  { "name": "", "expect": false },
+  { "name": "a\tb", "expect": false },
+  { "name": "一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十", "expect": true },
+  { "name": "一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十多", "expect": false }
+ ],
+ "makeId": [
+  { "random": 0, "expect": "video-00000000" },
+  { "random": 3735928559, "expect": "video-deadbeef" }
+ ],
+ "notice": [
+  { "name": "我的开场", "sourceFileName": "我的开场.mp4", "date": "2026-11-15",
+    "expect": "# 我的开场\n\n由 Sakura 从本地视频「我的开场.mp4」创建（2026-11-15）。\n创建者确认这个视频是自己制作的，或有权使用它。\n这个动画包只供个人使用；分享或发布前请自行确认素材权利。\n" }
+ ]
+}
