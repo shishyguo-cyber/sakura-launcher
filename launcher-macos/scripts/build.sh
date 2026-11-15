@@ -47,6 +47,8 @@ codesign --force --sign - --identifier local.gardenboot.GardenBoot "$bundle"
 codesign --verify --deep --strict "$bundle"
 
 # Stable path for scripts and docs. Only replace our own generated link or folder.
+# SAKURA_NO_LINK=1 (used by package.sh) leaves the development link pointing at the everyday build.
+if [ "${SAKURA_NO_LINK:-0}" = "1" ]; then echo "$bundle"; exit 0; fi
 link="$package_dir/build/Sakura.app"
 mkdir -p "$(dirname "$link")"
 if [ -L "$link" ]; then rm "$link"; elif [ -d "$link" ]; then rm -rf "${link:?}"; fi

@@ -61,7 +61,7 @@ python3 scripts/export-public.py ../Sakura-public
 
 目标目录必须不存在。导出仅复制 `public-files.txt` 中的文件，不复制 Git 元数据、历史、机器配置或未列出的内容；不会创建远端仓库或推送。导出目录可再运行 `python3 scripts/check-public-tree.py --strict` 验证没有额外文件。
 
-CI 运行范围与桌面验收边界见[验证说明](VERIFICATION.md)。
+CI 运行范围与桌面验收边界见[验证说明](VERIFICATION.md)。发版打包与公开仓库同步见[发版流程](RELEASING.md)。
 
 ## 界面预览
 

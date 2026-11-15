@@ -13,6 +13,7 @@ SECURITY.md
 docs/DEVELOPMENT.md
 docs/MEDIA.md
 docs/PRIVACY.md
+docs/RELEASING.md
 docs/ROADMAP.md
 docs/VERIFICATION.md
 docs/images/overview-dark.png
@@ -22,6 +23,8 @@ docs/images/settings-light.png
 docs/images/targets-dark.png
 docs/images/targets-light.png
 docs/licenses/dragon-codex-boot-MIT.txt
+docs/release/README-macOS.txt
+docs/release/README-windows.txt
 launcher-macos/.gitignore
 launcher-macos/Package.swift
 launcher-macos/README.md
@@ -99,6 +102,7 @@ launcher-macos/scripts/check-originality.py
 launcher-macos/scripts/check-public-media.py
 launcher-macos/scripts/check-settings-model.py
 launcher-macos/scripts/check-video-fit-media.py
+launcher-macos/scripts/package.sh
 launcher-macos/scripts/prepare-p003-check.py
 launcher-macos/scripts/preview-settings.command
 launcher-macos/scripts/tests/test_launch_latency.py
@@ -183,8 +187,13 @@ launcher-windows/GardenBoot.slnx
 launcher-windows/README.md
 launcher-windows/scripts/check-gui.ps1
 launcher-windows/scripts/measure-idle.ps1
+launcher-windows/scripts/publish-release.ps1
 public-files.txt
 scripts/check-public-tree.py
 scripts/export-public.py
+scripts/package-release.py
+scripts/package_tools.py
 scripts/release_tools.py
+scripts/sync-public.py
+scripts/tests/test_packaging.py
 scripts/tests/test_public_release.py
