@@ -12,6 +12,8 @@ internal sealed class Settings
     public bool Paused { get; set; }
     public bool WelcomeDismissed { get; set; }
     public bool PlayDespiteReduceMotion { get; set; }
+    /// <summary>Featured built-in packs already offered once; a removed one is not reinstalled.</summary>
+    public List<string> FeaturedInstalled { get; set; } = [];
 
     public static Settings Load(string root, EventLog log)
     {

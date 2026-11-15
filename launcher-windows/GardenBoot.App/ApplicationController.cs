@@ -75,6 +75,35 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
         _ = InstallBundled(bundled);
     }
 
+    /// <summary>
+    /// Installs the bundled featured pack once per user; becomes current when the user never chose one. Isolated test
+    /// roots skip it unless --test-featured, so controlled checks keep using the demo pack.
+    /// </summary>
+    private async Task InstallFeatured()
+    {
+        if (options.TestRoot is not null && !options.TestFeatured) return;
+        var folder = Path.Combine(AppContext.BaseDirectory, "featured-pack");
+        InstalledPack bundled;
+        try { bundled = PackLibrary.Load(folder); }
+        catch (Exception e) when (e is PackException or IOException) { return; }
+        if (settings.FeaturedInstalled.Contains(bundled.Id)) return;
+        libraryBusy = true;
+        try
+        {
+            var installed = await library.InstallIfMissing(folder, Probe, ImageProbe);
+            // Persist "offered once" before reporting, so a quit right after installing never reinstalls it.
+            settings.FeaturedInstalled.Add(bundled.Id);
+            var madeCurrent = settings.ActivePackId is null;
+            if (madeCurrent) settings.ActivePackId = bundled.Id;
+            SaveSettings();
+            if (installed is not null) log.Write($"pack-installed id={installed.Id} featured=true");
+            if (madeCurrent) log.Write($"featured-made-current id={bundled.Id}");
+        }
+        catch (Exception e) when (e is PackException or IOException or UnauthorizedAccessException or OperationCanceledException)
+        { if (!disposed) log.Write($"featured-pack-error type={e.GetType().Name}"); }
+        finally { libraryBusy = false; }
+    }
+
     private async Task InstallBundled(string bundled)
     {
         libraryBusy = true;
@@ -86,6 +115,8 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
         catch (Exception e) when (e is PackException or IOException or UnauthorizedAccessException or OperationCanceledException)
         { if (!disposed) log.Write($"bundled-pack-error type={e.GetType().Name}"); }
         finally { libraryBusy = false; }
+        if (disposed) return;
+        await InstallFeatured();
         if (disposed) return;
         ReloadPacks();
         if (player is null) status = settings.Paused ? "自动播放已暂停" : Waiting();

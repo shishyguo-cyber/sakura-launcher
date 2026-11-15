@@ -168,6 +168,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
                     }
                 } catch { Support.log("bundled-pack-error=\(error.localizedDescription)") }
             }
+            await self.installFeaturedPack()
             do {
                 if let migrated = try await Support.library.migrateLegacyVideo(Support.media, probe: PackMedia.probe) {
                     Support.log("legacy-migrated id=\(migrated.id)")
@@ -477,6 +478,30 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
             var next = playbackState; next.snoozeUntil = nil
             try savePlaybackState(next); refreshMenu()
         }
+    }
+
+    // MARK: Featured built-in animation (launcher-spec/PACK-FORMAT.md, "内置动画")
+
+    /// Installs the bundled featured pack once per user. A user who removes it does not get it back on the next
+    /// launch; a user who never chose a current animation gets it as the current one. Isolated test roots skip it
+    /// unless `--test-featured` is given, so controlled checks keep using the demo pack.
+    private func installFeaturedPack() async {
+        guard argument(after: "--test-root") == nil || CommandLine.arguments.contains("--test-featured"),
+              let folder = Bundle.main.resourceURL?.appendingPathComponent(Support.featuredResource, isDirectory: true),
+              let bundled = try? PackLibrary.load(directory: folder) else { return }
+        var installed = Support.defaults.stringArray(forKey: "featuredInstalled") ?? []
+        guard !installed.contains(bundled.id) else { return }
+        do {
+            let pack = try await Support.library.installIfMissing(bundled: folder, probe: PackMedia.probe, imageProbe: PackMedia.imageProbe)
+            // Persist "offered once" before reporting, so a quit right after installing never reinstalls it.
+            installed.append(bundled.id)
+            Support.defaults.set(installed, forKey: "featuredInstalled")
+            let madeCurrent = Support.defaults.string(forKey: "activePackID") == nil
+            if madeCurrent { Support.defaults.set(bundled.id, forKey: "activePackID") }
+            Support.defaults.synchronize()
+            if let pack { Support.log("pack-installed id=\(pack.id) featured=true") }
+            if madeCurrent { Support.log("featured-made-current id=\(bundled.id)") }
+        } catch { Support.log("featured-pack-error=\(error.localizedDescription)") }
     }
 
     // MARK: "测试一下" (COMPATIBILITY.md §1)

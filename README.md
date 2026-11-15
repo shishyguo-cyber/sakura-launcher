@@ -10,11 +10,11 @@ Sakura is a native macOS and Windows companion that plays a customizable animati
 
 <!-- 发新版时更新这里的版本号（见 docs/RELEASING.md） -->
 <h3 align="center">
-  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.3/Sakura-0.2.0-preview.3-macOS.zip">⬇ 下载 macOS 版</a>
+  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.4/Sakura-0.2.0-preview.4-macOS.zip">⬇ 下载 macOS 版</a>
   &nbsp;&nbsp;·&nbsp;&nbsp;
-  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.3/Sakura-0.2.0-preview.3-windows-x64.zip">⬇ 下载 Windows 版</a>
+  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.4/Sakura-0.2.0-preview.4-windows-x64.zip">⬇ 下载 Windows 版</a>
 </h3>
-<p align="center">v0.2.0-preview.3 开发者预览版 · <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/tag/v0.2.0-preview.3">所有下载、更新说明与校验值</a></p>
+<p align="center">v0.2.0-preview.4 开发者预览版 · <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/tag/v0.2.0-preview.4">所有下载、更新说明与校验值</a></p>
 
 **第一次打开**
 
@@ -61,7 +61,7 @@ Sakura 借鉴的是“应用启动时播放一段动画”这个创意（来源�
 
 Sakura 是通用的“应用启动动画”工具：任何从已安装列表选出的应用都可以有自己的动画。ChatGPT / Codex 桌面应用是默认示例和最常用的场景；以后只与 Codex 相关的功能会做成可选模块，不影响给其他应用使用。
 
-内置动画是 CC0 的原创几何示例，用于验证播放流程。第三方角色动画、模型与私人制作素材不随软件提供。
+Sakura 内置两段动画：原创几何示例（CC0），以及默认使用的同人动画「雷电将军 · 花园」（仅供个人非商业使用，说明见其 [NOTICE](launcher-macos/featured-pack/NOTICE.md)）。私人制作工程与模型不随软件提供。
 
 ## 开始使用
 
@@ -94,8 +94,8 @@ Sakura 是通用的“应用启动动画”工具：任何从已安装列表选�
 
 ## 许可与来源
 
-自有代码采用 [MIT](LICENSE)，几何示例媒体采用独立的 [CC0 声明](launcher-macos/demo-pack/NOTICE.md)。第三方素材与用户导入内容的权利不会因程序采用 MIT 而改变，详见[媒体政策](docs/MEDIA.md)。
+自有代码采用 [MIT](LICENSE)，几何示例媒体采用独立的 [CC0 声明](launcher-macos/demo-pack/NOTICE.md)。内置同人动画「雷电将军 · 花园」**不适用 MIT 或 CC0**：仅供个人非商业使用，权利方要求时会立即下架，见其 [NOTICE](launcher-macos/featured-pack/NOTICE.md)。第三方素材与用户导入内容的权利不会因程序采用 MIT 而改变，详见[媒体政策](docs/MEDIA.md)。
 
-创意灵感来自 [dragon-codex-boot](https://github.com/yushua0808-cpu/dragon-codex-boot)。来源说明见 [NOTICE](NOTICE.md)。Sakura 是独立的社区项目，与 OpenAI、米哈游无隶属或背书关系。ChatGPT、Codex 是 OpenAI 的商标；本项目提到它们只是为了说明可以配合哪些应用使用，不使用其标志。
+创意灵感来自 [dragon-codex-boot](https://github.com/yushua0808-cpu/dragon-codex-boot)。来源说明见 [NOTICE](NOTICE.md)。Sakura 是独立的社区项目，与 OpenAI、米哈游无隶属或背书关系。雷电将军是米哈游《原神》中的角色，版权归米哈游所有。ChatGPT、Codex 是 OpenAI 的商标；软件本身提到它们只是为了说明可以配合哪些应用使用，内置同人动画结尾模仿的 ChatGPT 界面也只用于说明适配对象。
 
 欢迎通过[贡献指南](CONTRIBUTING.md)参与；涉及隐私或漏洞请先阅读[安全说明](SECURITY.md)。

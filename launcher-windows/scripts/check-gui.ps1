@@ -305,6 +305,21 @@ try {
         if (Get-ChildItem (Join-Path $OutputRoot 'video-pack-bad\Packs') -Directory -Filter 'video-*') { throw 'Corrupt video entered the library' }
         $report.createPackFromVideo=$created
         Stop-Owned $watcher
+
+        # Featured built-in pack: installed once, made current when nothing was chosen; removal is respected.
+        Prepare-Pack 'featured' 6
+        Remove-Item (Join-Path $OutputRoot 'featured\settings.json')
+        $watcher=Start-Watcher 'featured' @('--test-featured')
+        Wait-Until { (Read-Events 'featured').Contains('featured-made-current id=raiden-garden') } 'featured install' 60
+        Wait-Until { (Read-Events 'featured').Contains('active=raiden-garden') } 'featured becomes current' 20
+        if (-not (Test-Path (Join-Path $OutputRoot 'featured\Packs\raiden-garden\manifest.json'))) { throw 'Featured pack missing' }
+        Stop-Owned $watcher
+        Remove-Item (Join-Path $OutputRoot 'featured\Packs\raiden-garden') -Recurse -Force
+        $watcher=Start-Watcher 'featured' @('--test-featured')
+        Start-Sleep -Seconds 4
+        if (([regex]::Matches((Read-Events 'featured'), 'featured=true')).Count -ne 1) { throw 'Removed featured pack came back' }
+        $report.featuredInstalledOnce=$true
+        Stop-Owned $watcher
     }
     $report.status='passed'; $report.passed=$true
 } catch {

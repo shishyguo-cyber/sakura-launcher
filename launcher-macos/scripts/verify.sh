@@ -65,6 +65,7 @@ done_with unit-tests
 begin plist;        plutil -lint "$bundle/Contents/Info.plist";                         done_with plist
 begin signature;    codesign --verify --deep --strict "$bundle";                         done_with signature
 begin bundled-demo; test -s "$bundle/Contents/Resources/demo-pack/manifest.json";        done_with bundled-demo
+begin featured;     test -s "$bundle/Contents/Resources/featured-pack/manifest.json";    done_with featured
 begin public-media; python3 "$package_dir/scripts/check-public-media.py" --app "$bundle"; done_with public-media
 
 begin settings-model

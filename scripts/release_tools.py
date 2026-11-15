@@ -12,6 +12,10 @@ PRIVATE = {".agents", ".collab", ".superpowers", "assets", "handoff", "node_modu
 TEXT = {".md", ".txt", ".py", ".sh", ".command", ".json", ".yml", ".yaml", ".swift", ".cs", ".csproj", ".slnx", ".ps1", ".xaml", ".plist", ".manifest"}
 CREDENTIAL = re.compile(r"(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9_-]{20,}|-----BEGIN (?:OPENSSH|RSA|EC|DSA) PRIVATE KEY-----)")
 PERSONAL = re.compile(r"/Users/[A-Za-z0-9_.-]+/|[A-Za-z]:\\Users\\[A-Za-z0-9_.-]+\\")
+# Media allowed in the public tree: the CC0 demo, and the featured pack its owner confirmed for bundling (docs/MEDIA.md).
+APPROVED_MEDIA = {"launcher-macos/demo-pack/intro.mp4", "launcher-macos/demo-pack/loop.mp4", "launcher-macos/demo-pack/outro.mp4",
+                  "launcher-macos/featured-pack/intro.mp4", "launcher-macos/featured-pack/loop.mov",
+                  "launcher-macos/featured-pack/outro.mp4"}
 LINK = re.compile(r"!?\[[^\]\n]*\]\((<[^>]+>|[^\s)]+)(?:\s+\"[^\"]*\")?\)")
 
 
@@ -30,7 +34,7 @@ def public_paths(root):
             raise ValueError("unsafe manifest path")
         if set(p.parts) & (PRIVATE | GENERATED) or "remote.local.env" in name or name.endswith("/remote.sh") or "superpowers" in p.parts or re.search(r"P-\d+-plan\.md$", name):
             raise ValueError("private/generated path in public list: " + name)
-        if p.suffix.lower() in {".mp4", ".mov", ".wav", ".mp3", ".blend", ".zip"} and name not in {"launcher-macos/demo-pack/intro.mp4", "launcher-macos/demo-pack/loop.mp4", "launcher-macos/demo-pack/outro.mp4"}:
+        if p.suffix.lower() in {".mp4", ".mov", ".wav", ".mp3", ".blend", ".zip"} and name not in APPROVED_MEDIA:
             raise ValueError("unapproved media path: " + name)
         if name in paths:
             raise ValueError("duplicate manifest path: " + name)

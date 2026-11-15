@@ -21,6 +21,8 @@ enum Support {
     static let media = root.appendingPathComponent("startup.mp4")
     static let library = PackLibrary(root: root.appendingPathComponent("Packs", isDirectory: true))
     static let demoID = "demo-garden"
+    /// Resources folder of the featured built-in animation (installed once; removable, unlike the demo).
+    static let featuredResource = "featured-pack"
     static let events = EventLog(directory: root)
 
     static func log(_ event: String) {

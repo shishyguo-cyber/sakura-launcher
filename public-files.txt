@@ -93,6 +93,11 @@ launcher-macos/demo-pack/loop.mp4
 launcher-macos/demo-pack/manifest.json
 launcher-macos/demo-pack/outro.mp4
 launcher-macos/docs/PACK-FORMAT.md
+launcher-macos/featured-pack/NOTICE.md
+launcher-macos/featured-pack/intro.mp4
+launcher-macos/featured-pack/loop.mov
+launcher-macos/featured-pack/manifest.json
+launcher-macos/featured-pack/outro.mp4
 launcher-macos/scripts/build.sh
 launcher-macos/scripts/check-design-model.py
 launcher-macos/scripts/check-design-render.py

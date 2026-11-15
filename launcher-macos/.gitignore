@@ -3,7 +3,8 @@ build/
 .DS_Store
 __pycache__/
 
-# Media never enters the public repository, except the original demo pack.
+# Media never enters the public repository, except the bundled packs (demo, and the featured pack the owner approved
+# for bundling on 2026-11-15 after confirming its rights).
 *.mp4
 *.m4v
 *.mov
@@ -12,6 +13,8 @@ __pycache__/
 !demo-pack/*.mp4
 !demo-pack/*.m4v
 !demo-pack/*.mov
+!featured-pack/*.mp4
+!featured-pack/*.mov
 
 # Isolated sandbox-safe build and verification output.
 .work/

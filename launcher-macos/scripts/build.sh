@@ -41,6 +41,12 @@ cp "$package_dir/Resources/Info.plist" "$contents/Info.plist"
 rm -rf "${contents:?}/Resources"
 mkdir -p "$contents/Resources"
 cp -R "$package_dir/demo-pack" "$contents/Resources/demo-pack"
+if [ -d "$package_dir/featured-pack" ]; then
+  mkdir -p "$contents/Resources/featured-pack"
+  for file in manifest.json NOTICE.md intro.mp4 loop.mov outro.mp4; do
+    cp "$package_dir/featured-pack/$file" "$contents/Resources/featured-pack/$file"
+  done
+fi
 
 xattr -cr "$bundle"
 codesign --force --sign - --identifier local.gardenboot.GardenBoot "$bundle"

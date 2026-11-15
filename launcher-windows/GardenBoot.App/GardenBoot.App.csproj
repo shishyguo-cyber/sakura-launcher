@@ -8,7 +8,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>Sakura</AssemblyName>
     <Product>Sakura</Product>
-    <Version>0.2.0-preview.3</Version>
+    <Version>0.2.0-preview.4</Version>
     <AssemblyTitle>Sakura</AssemblyTitle>
     <RootNamespace>GardenBoot.App</RootNamespace>
   </PropertyGroup>
@@ -19,6 +19,12 @@
     <ProjectReference Include="../GardenBoot.Core/GardenBoot.Core.csproj" />
     <Content Include="../../launcher-macos/demo-pack/manifest.json;../../launcher-macos/demo-pack/NOTICE.md;../../launcher-macos/demo-pack/*.mp4;../../launcher-macos/demo-pack/*.png">
       <Link>demo-pack/%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <!-- Featured built-in animation, installed once per user (launcher-spec/PACK-FORMAT.md "内置动画"). -->
+    <Content Include="../../launcher-macos/featured-pack/manifest.json;../../launcher-macos/featured-pack/NOTICE.md;../../launcher-macos/featured-pack/*.mp4;../../launcher-macos/featured-pack/*.mov" Condition="Exists('../../launcher-macos/featured-pack/manifest.json')">
+      <Link>featured-pack/%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>

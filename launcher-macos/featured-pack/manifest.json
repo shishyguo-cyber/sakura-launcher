@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "raiden-garden",
+  "name": "雷电将军 · 花园",
+  "segments": {
+    "intro": "intro.mp4",
+    "loop": "loop.mov",
+    "outro": "outro.mp4"
+  },
+  "handoffAt": 8.75,
+  "fadeDuration": 0.45,
+  "volume": 0.8,
+  "maxWaitSeconds": 10,
+  "loopExit": "immediate",
+  "notice": "NOTICE.md"
+}

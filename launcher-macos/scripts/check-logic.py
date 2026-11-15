@@ -18,12 +18,13 @@ PROJECT = Path(__file__).resolve().parents[1]
 GUI_SERVICES = ("com.apple.coreservices.launchservicesd", "com.apple.lsd.mapdb",
                 "com.apple.hiservices-xpcservice", "com.apple.windowserver.active")
 GUI_LOGS = ("native-logic", "delayed-window", "window-timeout", "preview", "unconfigured", "two-targets", "two-targets-disabled",
-            "quiet", "reappear", "reappear-ignored", "compat-good", "compat-running", "video-pack", "video-pack-bad")
+            "quiet", "reappear", "reappear-ignored", "compat-good", "compat-running", "video-pack", "video-pack-bad",
+            "featured", "featured-again")
 GUI_CASES = ["existing-process baseline", "cold-launch deduplication", "exit/relaunch",
              "no player in logic-only mode", "delayed window intro/loop/outro",
              "no-window timeout", "manual preview", "warm/cold first-frame and invisible-before-show", "unconfigured pack", "two targets: independent packs/daily records, busy and disabled",
              "quiet skip", "reappear plays", "minimize/hide ignored", "compat good / alreadyRunning",
-             "create pack from video (good and corrupt)"]
+             "create pack from video (good and corrupt)", "featured pack installed once and made current"]
 
 
 class KnownGUIGap(Exception):
@@ -398,6 +399,27 @@ def main():
             assert not list((root / "video-pack-bad/Packs").glob("video-*")), "corrupt video must not enter the library"
             stop(watcher)
             report["videoPack"] = {"created": created.group(1), "corruptRejected": True}
+
+            # Featured built-in pack: installed once, made current when nothing was chosen; removal is respected.
+            watcher = start_watcher("featured", "-paused", "YES", "--test-featured")
+            wait_for(lambda: "featured-made-current" in events("featured") or "featured-pack-error" in events("featured"), "featured install", 60)
+            assert "pack-installed id=raiden-garden featured=true" in events("featured"), events("featured")
+            assert (root / "featured/Packs/raiden-garden/manifest.json").is_file()
+            wait_for(lambda: "active=raiden-garden" in events("featured"), "featured becomes current", 20)
+            stop(watcher)
+            shutil.rmtree(root / "featured/Packs/raiden-garden")
+            logs["featured-again"] = root / "featured/events.log"
+            before = events("featured").count("monitor-started")
+            p = subprocess.Popen([str(binary), "--test-target", identifier, "--test-root", str(root / "featured"),
+                                  "-paused", "YES", "--test-featured"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            children.append(p)
+            wait_for(lambda: events("featured").count("monitor-started") > before, "second launch")
+            # The library is reloaded after the startup install step; that line follows the second monitor-started.
+            wait_for(lambda: "packs-loaded" in events("featured").rsplit("monitor-started", 1)[-1], "library reloaded after second launch", 20)
+            assert events("featured").count("featured=true") == 1, "removed featured pack must not come back"
+            assert not (root / "featured/Packs/raiden-garden").exists()
+            stop(p)
+            report["featuredPack"] = {"installedOnce": True, "madeCurrent": True, "removalRespected": True}
 
             # Preserve v1's unconfigured-media case: genuinely resource-less app + empty test root.
             empty_app = root / "Empty.app"
