@@ -115,8 +115,10 @@ def scan_archive(path):
             findings.append({"entry": "", "problem": "duplicate entries"})
         for info in archive.infolist():
             name = info.filename
+            # On Windows, zipfile rewrites "\\" to "/" when reading; the stored name keeps what other tools will see.
+            stored = info.orig_filename
             parts = PurePosixPath(name).parts
-            if name.startswith("/") or "\\" in name or ".." in parts:
+            if stored.startswith("/") or "\\" in stored or ".." in parts:
                 findings.append({"entry": name, "problem": "unsafe path"})
             if any(p in FORBIDDEN_PARTS or p.startswith("._") for p in parts):
                 findings.append({"entry": name, "problem": "metadata or private entry"})

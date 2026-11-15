@@ -10,6 +10,8 @@ MODULE = Path(__file__).resolve().parents[1] / "package_tools.py"
 # Built by concatenation so this test file itself never contains a real-looking personal path.
 HOME_MAC = "/Us" + "ers/someone/project/a.swift"
 HOME_WIN = "C:" + "\\Us" + "ers\\someone\\obj\\a.pdb"
+# Windows file systems have no executable bit; those assertions only apply where packages are built (macOS/Linux).
+POSIX = os.name != "nt"
 
 
 class PackagingTests(unittest.TestCase):
@@ -40,7 +42,8 @@ class PackagingTests(unittest.TestCase):
             self.assertEqual(sorted(names), ["Pkg/App.app/Contents/MacOS/Tool", "Pkg/App.app/Contents/Resources/说明.txt",
                                              "Pkg/使用说明.txt"])
             tool = z.getinfo("Pkg/App.app/Contents/MacOS/Tool")
-            self.assertTrue((tool.external_attr >> 16) & stat.S_IXUSR)
+            if POSIX:
+                self.assertTrue((tool.external_attr >> 16) & stat.S_IXUSR)
             self.assertTrue(z.getinfo("Pkg/使用说明.txt").flag_bits & 0x800)
         self.assertEqual(self.tools.scan_archive(out), [])
 
@@ -73,7 +76,10 @@ class PackagingTests(unittest.TestCase):
         bad = self.base / "bad.zip"
         with zipfile.ZipFile(bad, "w") as z:
             z.writestr("__MACOSX/._x", "x")
-            z.writestr("Sakura\\README.txt", "x")
+            # ZipInfo turns os.sep into "/" on Windows; set the raw name afterwards so the bad sample stays bad.
+            info = zipfile.ZipInfo("placeholder")
+            info.filename = "Sakura\\README.txt"
+            z.writestr(info, "x")
         problems = {f["problem"] for f in self.tools.scan_archive(bad)}
         self.assertEqual(problems, {"metadata or private entry", "unsafe path"})
 
@@ -88,12 +94,14 @@ class PackagingTests(unittest.TestCase):
         (exported / "run.sh").chmod(0o755)
         repo = self.tree("repo", {"README.md": "old", "old/gone.md": "x", ".git/HEAD": "ref", "run.sh": "#!/bin/sh\n"})
         plan = self.tools.sync_plan(exported, repo)
-        self.assertEqual(plan, {"added": ["docs/a.md"], "changed": ["README.md", "run.sh"], "removed": ["old/gone.md"]})
+        changed = ["README.md", "run.sh"] if POSIX else ["README.md"]
+        self.assertEqual(plan, {"added": ["docs/a.md"], "changed": changed, "removed": ["old/gone.md"]})
         self.tools.apply_sync(exported, repo, plan)
         self.assertEqual(self.tools.sync_plan(exported, repo), {"added": [], "changed": [], "removed": []})
         self.assertFalse((repo / "old").exists())
         self.assertEqual((repo / ".git/HEAD").read_text(), "ref")
-        self.assertTrue((repo / "run.sh").stat().st_mode & stat.S_IXUSR)
+        if POSIX:
+            self.assertTrue((repo / "run.sh").stat().st_mode & stat.S_IXUSR)
 
     def test_apply_refuses_a_folder_that_is_not_a_repository(self):
         exported = self.tree("export", {"a": "a"})
