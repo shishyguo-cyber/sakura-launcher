@@ -6,6 +6,23 @@ Sakura is a native macOS and Windows companion that plays a customizable animati
 
 **开发者预览版** · macOS 13+ · Windows 11 / .NET 10 · MIT
 
+## 下载
+
+<!-- 发新版时更新这里的版本号（见 docs/RELEASING.md） -->
+<h3 align="center">
+  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.3/Sakura-0.2.0-preview.3-macOS.zip">⬇ 下载 macOS 版</a>
+  &nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.3/Sakura-0.2.0-preview.3-windows-x64.zip">⬇ 下载 Windows 版</a>
+</h3>
+<p align="center">v0.2.0-preview.3 开发者预览版 · <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/tag/v0.2.0-preview.3">所有下载、更新说明与校验值</a></p>
+
+**第一次打开**
+
+- **Mac**（macOS 13+，Apple 芯片与 Intel 通用）：解压后把 Sakura.app 拖进“应用程序”。预览版没有 Apple 开发者签名，第一次打开会被拦下，请到“系统设置 → 隐私与安全性”，在页面下方点“仍要打开”。
+- **Windows**（Windows 11 x64）：先安装 [.NET 10 桌面运行时](https://dotnet.microsoft.com/download/dotnet/10.0)，把整个 Sakura 文件夹解压到固定位置，再双击 Sakura.exe。如果出现“Windows 已保护你的电脑”，点“更多信息 → 仍要运行”。
+
+打开后菜单栏或托盘会出现花朵图标，设置窗口会自动弹出，按“概览”的三步引导选择应用、选择动画、预览并保存即可。
+
 Sakura 在菜单栏或系统托盘运行。你可以从已安装应用中选择目标，为每个应用指定动画，并调节音量、过渡、画面适配和播放频率。它保留应用原有的启动入口。
 
 ![Sakura macOS 概览与三步引导的浅色界面](docs/images/overview-light.png)
@@ -48,9 +65,9 @@ Sakura 是通用的“应用启动动画”工具：任何从已安装列表选�
 
 ## 开始使用
 
-首次公开发布前，本仓库提供源码构建入口；不将本地开发产物描述为已签名的正式安装包。
+普通用户请直接从上面的[下载](#下载)安装。想自己从源码编译的开发者，见下表：
 
-| 平台 | 构建与使用 |
+| 平台 | 从源码构建 |
 | --- | --- |
 | macOS | [Mac 说明](launcher-macos/README.md) |
 | Windows | [Windows 说明](launcher-windows/README.md) |
