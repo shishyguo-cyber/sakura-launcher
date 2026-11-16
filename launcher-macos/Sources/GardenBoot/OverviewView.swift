@@ -21,8 +21,16 @@ struct OverviewView: View {
                 }
             }
             if editor.overviewActive {
-                TimelineView(.periodic(from: .now, by: 1)) { _ in status(editor.overview(targetID: targetID)) }
-            } else { status(editor.overview(targetID: targetID)) }
+                TimelineView(.periodic(from: .now, by: 1)) { _ in
+                    VStack(spacing: 18) {
+                        status(editor.overview(targetID: targetID))
+                        updates(editor.updateOverview())
+                    }
+                }
+            } else {
+                status(editor.overview(targetID: targetID))
+                updates(editor.updateOverview())
+            }
             if !editor.welcomeDismissed { guide }
             if editor.isDirty {
                 Text("你有未保存的修改。上方状态仍依据已保存设置；草稿可以先预览。")
@@ -31,6 +39,47 @@ struct OverviewView: View {
                     .accessibilityIdentifier("overview-draft-note")
             }
         }.accessibilityIdentifier("overview-page")
+    }
+
+    private func updates(_ snapshot: UpdateOverview) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .center, spacing: 16) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("版本与更新").font(.system(size: 15, weight: .semibold))
+                    Text("Sakura \(snapshot.version)").font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                }
+                Spacer(minLength: 0)
+                Button(snapshot.checking ? "正在检查…" : "检查更新") { editor.checkForUpdates() }
+                    .buttonStyle(GardenButtonStyle(kind: .secondary, small: true))
+                    .disabled(!snapshot.connected || snapshot.checking)
+                    .accessibilityIdentifier("overview-check-updates")
+            }
+            HStack(spacing: 12) {
+                Text(snapshot.checking ? "正在检查更新…" : snapshot.message)
+                    .font(.system(size: 12)).foregroundStyle(snapshot.availableVersion == nil ? Theme.textSecondary : Theme.success)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("overview-update-result")
+                if snapshot.connected, snapshot.availableVersion != nil {
+                    Spacer(minLength: 0)
+                    Button("下载新版本") { editor.openUpdateDownload() }
+                        .buttonStyle(GardenButtonStyle(kind: .primary, small: true))
+                        .accessibilityIdentifier("overview-download-update")
+                }
+            }
+            Rectangle().fill(Theme.divider).frame(height: 1)
+            Toggle(isOn: Binding(get: { editor.updateOverview().automatic }, set: { editor.setAutomaticUpdates($0) })) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("自动检查更新").font(.system(size: 13))
+                    Text("每周检查一次，发现新版本时提醒你。")
+                        .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                }
+            }.toggleStyle(.switch).disabled(!snapshot.connected)
+                .accessibilityLabel("自动检查更新")
+                .accessibilityIdentifier("overview-auto-updates")
+        }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.border))
+            .accessibilityIdentifier("overview-updates")
     }
 
     private func status(_ snapshot: OverviewSnapshot) -> some View {

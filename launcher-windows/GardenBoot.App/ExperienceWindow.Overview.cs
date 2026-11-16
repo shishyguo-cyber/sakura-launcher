@@ -19,6 +19,9 @@ internal sealed partial class ExperienceWindow
     private Button? overviewActionButton, overviewReopenGuide;
     private FrameworkElement? overviewHero;
     private DispatcherTimer? overviewTimer;
+    private readonly TextBlock updateVersion = Secondary(""), updateResult = Secondary("");
+    private readonly CheckBox automaticUpdates = new() { Content = "自动检查更新" };
+    private Button? checkUpdatesButton, downloadUpdateButton;
 
     private FrameworkElement BuildOverviewPage()
     {
@@ -51,6 +54,8 @@ internal sealed partial class ExperienceWindow
         var surface = new Border { CornerRadius = new(14), Padding = new(18), Child = summary, Margin = new(0, 0, 0, 18) };
         surface.SetResourceReference(Border.BackgroundProperty, "Hero"); page.Children.Add(surface);
 
+        page.Children.Add(BuildUpdateOverview());
+
         var guideHeading = new DockPanel();
         var dismiss = Small("我已了解", () => SetWelcome(true), "关闭使用引导");
         DockPanel.SetDock(dismiss, Dock.Right); guideHeading.Children.Add(dismiss);
@@ -78,6 +83,55 @@ internal sealed partial class ExperienceWindow
         };
         Closed += (_, _) => { overviewTimer?.Stop(); overviewTimer = null; };
         return page;
+    }
+
+    private FrameworkElement BuildUpdateOverview()
+    {
+        var body = new StackPanel();
+        var heading = new DockPanel();
+        checkUpdatesButton = Small("检查更新", () => Guard(() => { runtime?.CheckForUpdatesFromSettings(); RefreshOverview(); }), "检查更新", "SmallButton");
+        DockPanel.SetDock(checkUpdatesButton, Dock.Right); heading.Children.Add(checkUpdatesButton);
+        var title = new StackPanel();
+        var label = Text("版本与更新", 15); label.FontWeight = FontWeights.SemiBold; title.Children.Add(label);
+        updateVersion.Margin = new(0, 4, 0, 0); title.Children.Add(updateVersion);
+        heading.Children.Add(title); body.Children.Add(heading);
+        var result = new DockPanel { Margin = new(0, 12, 0, 12) };
+        downloadUpdateButton = Small("下载新版本", () => runtime?.OpenUpdateDownload(), "下载新版本", "PrimaryButton");
+        DockPanel.SetDock(downloadUpdateButton, Dock.Right); result.Children.Add(downloadUpdateButton);
+        updateResult.VerticalAlignment = VerticalAlignment.Center;
+        updateResult.TextWrapping = TextWrapping.Wrap;
+        AutomationProperties.SetAutomationId(updateResult, "overview-update-result");
+        result.Children.Add(updateResult); body.Children.Add(result);
+        var line = new Border { Height = 1, Margin = new(0, 0, 0, 12) };
+        line.SetResourceReference(Border.BackgroundProperty, "Divider"); body.Children.Add(line);
+        AutomationProperties.SetName(automaticUpdates, "自动检查更新");
+        void ChangedUpdate(object sender, RoutedEventArgs e)
+        {
+            if (refreshingOverview || runtime is null) return;
+            Guard(() => { runtime.SetAutomaticUpdates(automaticUpdates.IsChecked == true); RefreshOverview(); });
+        }
+        automaticUpdates.Checked += ChangedUpdate; automaticUpdates.Unchecked += ChangedUpdate;
+        body.Children.Add(automaticUpdates);
+        var hint = Secondary("每周检查一次，发现新版本时提醒你。"); hint.Margin = new(0, 4, 0, 0); body.Children.Add(hint);
+        var surface = new Border { CornerRadius = new(12), Padding = new(16), BorderThickness = new(1), Child = body, Margin = new(0, 0, 0, 18) };
+        surface.SetResourceReference(Border.BackgroundProperty, "Surface"); surface.SetResourceReference(Border.BorderBrushProperty, "Border");
+        AutomationProperties.SetAutomationId(surface, "overview-updates");
+        return surface;
+    }
+
+    private void RefreshUpdates()
+    {
+        if (checkUpdatesButton is null || downloadUpdateButton is null) return;
+        var state = runtime?.UpdateOverview() ?? new UpdateOverview(ApplicationController.ReleaseVersion, false,
+            Message: "正式运行 Sakura 后，可在这里检查更新。", Connected: false);
+        updateVersion.Text = "Sakura " + state.Version;
+        updateResult.Text = state.Checking ? "正在检查更新…" : state.Message;
+        updateResult.SetResourceReference(TextBlock.ForegroundProperty, state.AvailableVersion is null ? "TextSecondary" : "Success");
+        checkUpdatesButton.Content = state.Checking ? "正在检查…" : "检查更新";
+        checkUpdatesButton.IsEnabled = state.Connected && !state.Checking;
+        downloadUpdateButton.Visibility = state.Connected && state.AvailableVersion is not null ? Visibility.Visible : Visibility.Collapsed;
+        automaticUpdates.IsEnabled = state.Connected;
+        automaticUpdates.IsChecked = state.Automatic;
     }
 
     private Button OverviewPreview(string title)
@@ -122,6 +176,7 @@ internal sealed partial class ExperienceWindow
             if (overviewReopenGuide is not null) overviewReopenGuide.Visibility = welcomeDismissed ? Visibility.Visible : Visibility.Collapsed;
             overviewDraft.Visibility = dirty ? Visibility.Visible : Visibility.Collapsed;
             foreach (var button in overviewPreviews) button.IsEnabled = pack is not null;
+            RefreshUpdates();
         }
         finally { refreshingOverview = false; }
     }

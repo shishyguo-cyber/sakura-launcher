@@ -53,6 +53,16 @@ final class ExperienceEditor: ObservableObject {
         return OverviewSnapshot(targets: targets, selectedID: targets.first(where: { $0.id == targetID })?.id ?? targets.first?.id,
                                 reason: .ready, connected: false)
     }
+    func updateOverview() -> UpdateOverview {
+        runtime?.updateOverview() ?? UpdateOverview(version: Support.releaseVersion, automatic: false,
+            message: "正式运行 Sakura 后，可在这里检查更新。", connected: false)
+    }
+    func checkForUpdates() { runtime?.checkForUpdatesFromSettings(); objectWillChange.send() }
+    func setAutomaticUpdates(_ value: Bool) {
+        do { try runtime?.setAutomaticUpdates(value); objectWillChange.send() }
+        catch { message = "更新偏好未保存，请稍后重试。" }
+    }
+    func openUpdateDownload() { runtime?.openUpdateDownload() }
     func setWelcomeDismissed(_ value: Bool) {
         do { try runtime?.setWelcomeDismissed(value); welcomeDismissed = value }
         catch { message = "引导偏好未保存，请稍后重试。" }

@@ -387,6 +387,12 @@ internal static class Program
     private sealed class OverviewStub : App.IOverviewRuntime
     {
         public bool WelcomeDismissed { get; private set; }
+        public App.UpdateOverview UpdateState { get; set; } = new("0.2.0-preview.5", true, false, "尚未检查更新");
+        public int UpdateChecks, UpdateDownloads;
+        public App.UpdateOverview UpdateOverview() => UpdateState;
+        public void CheckForUpdatesFromSettings() { if (!UpdateState.Checking) { UpdateChecks++; UpdateState = UpdateState with { Checking = true }; } }
+        public void SetAutomaticUpdates(bool enabled) => UpdateState = UpdateState with { Automatic = enabled };
+        public void OpenUpdateDownload() => UpdateDownloads++;
         public bool NoPack { get; set; }
         public List<string> Calls { get; } = [];
         public void SetWelcomeDismissed(bool value) => WelcomeDismissed = value;
@@ -422,6 +428,19 @@ internal static class Program
             Require(Controls<TextBlock>(window).Any(x => x.Text == "今天已经播放过"), "Daily status is per target");
             ClickNamed(window, "关闭使用引导"); Require(runtime.WelcomeDismissed && saved is null, "Dismissing guide does not save draft");
             ClickNamed(window, "查看使用引导"); Require(!runtime.WelcomeDismissed && saved is null, "Guide can reopen without saving draft");
+            var autoUpdate = Named<CheckBox>(window, "自动检查更新");
+            Require(autoUpdate.IsChecked == true, "Update switch shows the runtime preference");
+            autoUpdate.IsChecked = false;
+            Require(!runtime.UpdateState.Automatic && saved is null, "Update switch applies immediately without saving the parameter draft");
+            ClickNamed(window, "检查更新");
+            Require(runtime.UpdateChecks == 1 && !Named<Button>(window, "检查更新").IsEnabled && saved is null, "Window checks updates once and disables repeated checks without saving the draft");
+            runtime.UpdateState = runtime.UpdateState with { Checking = false, Message = "暂时无法检查更新，请稍后再试。" };
+            window.ShowPage("overview");
+            Require(Named<Button>(window, "检查更新").IsEnabled && Controls<TextBlock>(window).Any(t => t.Text.Contains("暂时无法检查更新")), "Failed checks show an inline message and allow retry");
+            runtime.UpdateState = runtime.UpdateState with { AvailableVersion = "0.2.0-preview.6", Message = "发现新版本 0.2.0-preview.6" };
+            window.ShowPage("overview"); ClickNamed(window, "下载新版本");
+            Require(runtime.UpdateDownloads == 1 && saved is null, "New release download is visible and does not save the draft");
+            checks.Add("overview-update-controls-runtime-state-and-draft-isolation");
             ClickNamed(window, "引导 选择应用");
             Require(Controls<RadioButton>(window).Single(x => Equals(x.Content, "应用")).IsChecked == true, "Guide navigates to apps");
             window.ShowPage("overview"); ClickNamed(window, "引导 选择动画");

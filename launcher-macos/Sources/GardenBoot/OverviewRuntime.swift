@@ -9,7 +9,20 @@ struct OverviewSnapshot {
     var connected = true
 }
 
+struct UpdateOverview {
+    var version: String
+    var automatic: Bool
+    var checking = false
+    var message = "尚未检查更新"
+    var availableVersion: String?
+    var connected = true
+}
+
 @MainActor protocol OverviewRuntime: AnyObject {
+    func updateOverview() -> UpdateOverview
+    func checkForUpdatesFromSettings()
+    func setAutomaticUpdates(_ value: Bool) throws
+    func openUpdateDownload()
     var welcomeDismissed: Bool { get }
     func setWelcomeDismissed(_ value: Bool) throws
     func overview(targetID: String?) -> OverviewSnapshot

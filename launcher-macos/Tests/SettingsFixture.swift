@@ -2,6 +2,12 @@ import AppKit
 import GardenBootCore
 
 @MainActor final class OverviewStub: OverviewRuntime {
+    var updateState = UpdateOverview(version: "0.2.0-preview.5", automatic: true, message: "尚未检查更新")
+    var updateChecks = 0, updateDownloads = 0
+    func updateOverview() -> UpdateOverview { updateState }
+    func checkForUpdatesFromSettings() { if !updateState.checking { updateChecks += 1; updateState.checking = true } }
+    func setAutomaticUpdates(_ enabled: Bool) throws { updateState.automatic = enabled }
+    func openUpdateDownload() { updateDownloads += 1 }
     var welcomeDismissed = false
     var actions: [String] = []
     var reason: PlaybackStatusReason = .paused
@@ -140,6 +146,16 @@ MainActor.assumeIsolated {
     overview.setWelcomeDismissed(false)
     precondition(!runtime.welcomeDismissed && !overview.welcomeDismissed)
     overview.performOverviewAction("unpause")
+    overview.checkForUpdates()
+    precondition(overview.updateOverview().checking && runtime.updateChecks == 1 && overviewSaves == 0 && overview.isDirty)
+    overview.setAutomaticUpdates(false)
+    precondition(!overview.updateOverview().automatic && overviewSaves == 0 && overview.isDirty)
+    runtime.updateState.checking = false
+    runtime.updateState.message = "暂时无法检查更新，请稍后再试。"
+    precondition(overview.updateOverview().message.contains("暂时无法"))
+    runtime.updateState.availableVersion = "0.2.0-preview.6"
+    overview.openUpdateDownload()
+    precondition(runtime.updateDownloads == 1 && overviewSaves == 0)
     precondition(runtime.actions == ["unpause"] && overview.overview(targetID: nil).reason == .ready && overviewSaves == 0)
     overview.preview()
     precondition(overviewPreviews == 1 && overviewSaves == 0 && overview.draft == beforeGuide)

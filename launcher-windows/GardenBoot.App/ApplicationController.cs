@@ -398,6 +398,7 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
         }
     }
 
+    private string updateMessage = "尚未检查更新";
     private bool AutoUpdateEnabled => settings.AutoCheckUpdates ?? (options.TestRoot is null || options.TestCheckUpdate);
 
     /// <summary>A newer version found earlier; dropped once this build is at least that version.</summary>
@@ -431,12 +432,13 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
         return UpdateRules.DecodeReleases(await response.Content.ReadAsStringAsync());
     }
 
-    private async Task CheckForUpdates(bool manual)
+    private async Task CheckForUpdates(bool manual, bool showAlert = true)
     {
         if (updateChecking || disposed) return;
         if (!manual && (!AutoUpdateEnabled || !UpdateRules.IsDue(settings.UpdateLastCheckAt, UnixNow()))) return;
         var source = manual ? "manual" : "auto";
         updateChecking = true;
+        updateMessage = "正在检查更新…";
         try
         {
             var releases = await FetchReleases();
@@ -450,27 +452,35 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
             {
                 log.Write($"update-check source={source} result=newer latest={newer.Version}");
                 log.Write($"update-available latest={newer.Version}");
-                if (manual && MessageBox.Show($"有新版本 {newer.Version}（当前 {ReleaseVersion}）。下载后退出 Sakura，替换旧版即可，设置会保留。\n\n现在打开下载页吗？",
+                updateMessage = $"发现新版本 {newer.Version}";
+                if (manual && showAlert && MessageBox.Show($"有新版本 {newer.Version}（当前 {ReleaseVersion}）。下载后退出 Sakura，替换旧版即可，设置会保留。\n\n现在打开下载页吗？",
                         "检查更新", MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes) OpenUpdatePage(newer.Url);
             }
             else
             {
                 log.Write($"update-check source={source} result=current latest=none");
-                if (manual) MessageBox.Show($"已是最新版本（{ReleaseVersion}）。", "检查更新", MessageBoxButton.OK, MessageBoxImage.Information);
+                updateMessage = $"已是最新版本（{ReleaseVersion}）。";
+                if (manual && showAlert) MessageBox.Show($"已是最新版本（{ReleaseVersion}）。", "检查更新", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
         catch (Exception e) when (e is System.Net.Http.HttpRequestException or TaskCanceledException or System.Text.Json.JsonException or IOException or UnauthorizedAccessException)
         {
             if (disposed) return;
             log.Write($"update-check source={source} result=failed latest=none error={e.GetType().Name}");
-            if (manual) MessageBox.Show("暂时无法检查更新，请稍后再试。", "检查更新", MessageBoxButton.OK, MessageBoxImage.Warning);
+            updateMessage = "暂时无法检查更新，请稍后再试。";
+            if (manual && showAlert) MessageBox.Show("暂时无法检查更新，请稍后再试。", "检查更新", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         finally { updateChecking = false; }
     }
 
-    private void ToggleAutoUpdate()
+    public UpdateOverview UpdateOverview() => new(ReleaseVersion, AutoUpdateEnabled, updateChecking,
+        updateMessage == "尚未检查更新" && AvailableUpdate() is { } newer ? $"发现新版本 {newer.Version}" : updateMessage, AvailableUpdate()?.Version);
+    public void CheckForUpdatesFromSettings() => _ = CheckForUpdates(manual: true, showAlert: false);
+    public void OpenUpdateDownload() { if (AvailableUpdate() is { } newer) OpenUpdatePage(newer.Url); }
+    private void ToggleAutoUpdate() => SetAutomaticUpdates(!AutoUpdateEnabled);
+    public void SetAutomaticUpdates(bool value)
     {
-        settings.AutoCheckUpdates = !AutoUpdateEnabled;
+        settings.AutoCheckUpdates = value;
         SaveSettings();
         log.Write($"auto-update-check enabled={AutoUpdateEnabled.ToString().ToLowerInvariant()}");
     }

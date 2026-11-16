@@ -794,6 +794,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
     private let autoUpdateItem = NSMenuItem(title: "自动检查更新", action: #selector(toggleAutoUpdate), keyEquivalent: "")
     private var updateTimer: Timer?
     private var updateTask: Task<Void, Never>?
+    private var updateMessage = "尚未检查更新"
     private var autoUpdateEnabled: Bool {
         // Isolated test roots never go online by default.
         let fallback = argument(after: "--test-root") == nil || CommandLine.arguments.contains("--test-check-update")
@@ -840,13 +841,14 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
         return try UpdateRules.decodeReleases(data)
     }
 
-    private func checkForUpdates(manual: Bool) {
+    private func checkForUpdates(manual: Bool, showAlert: Bool = true) {
         guard updateTask == nil else { return }
         if !manual {
             let last = Support.defaults.object(forKey: "updateLastCheckAt") as? Double
             guard autoUpdateEnabled, UpdateRules.isDue(lastCheckAt: last, now: Date().timeIntervalSince1970) else { return }
         }
         let source = manual ? "manual" : "auto"
+        updateMessage = "正在检查更新…"
         updateTask = Task { [weak self] in
             let result: Result<[UpdateRules.Release], Error>
             do { result = .success(try await self?.fetchReleases() ?? []) } catch { result = .failure(error) }
@@ -855,19 +857,22 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
             switch result {
             case .failure(let error):
                 Support.log("update-check source=\(source) result=failed latest=none error=\(type(of: error))")
-                if manual { self.updateAlert("暂时无法检查更新，请稍后再试。", button: nil, url: nil) }
+                self.updateMessage = "暂时无法检查更新，请稍后再试。"
+                if manual && showAlert { self.updateAlert(self.updateMessage, button: nil, url: nil) }
             case .success(let releases):
                 Support.defaults.set(Date().timeIntervalSince1970, forKey: "updateLastCheckAt")
                 if let newer = UpdateRules.newest(releases, current: Support.releaseVersion) {
                     Support.defaults.set(newer.version, forKey: "updateAvailableVersion")
                     Support.defaults.set(newer.url, forKey: "updateAvailableURL")
                     Support.log("update-check source=\(source) result=newer latest=\(newer.version)")
-                    if manual { self.updateAlert("有新版本 \(newer.version)（当前 \(Support.releaseVersion)）。下载后退出 Sakura，替换旧版即可，设置会保留。", button: "打开下载页", url: newer.url) }
+                    self.updateMessage = "发现新版本 \(newer.version)"
+                    if manual && showAlert { self.updateAlert("有新版本 \(newer.version)（当前 \(Support.releaseVersion)）。下载后退出 Sakura，替换旧版即可，设置会保留。", button: "打开下载页", url: newer.url) }
                 } else {
                     Support.defaults.removeObject(forKey: "updateAvailableVersion")
                     Support.defaults.removeObject(forKey: "updateAvailableURL")
                     Support.log("update-check source=\(source) result=current latest=none")
-                    if manual { self.updateAlert("已是最新版本（\(Support.releaseVersion)）。", button: nil, url: nil) }
+                    self.updateMessage = "已是最新版本（\(Support.releaseVersion)）。"
+                    if manual && showAlert { self.updateAlert("已是最新版本（\(Support.releaseVersion)）。", button: nil, url: nil) }
                 }
                 self.refreshUpdateItem()
             }
@@ -887,8 +892,19 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
     }
 
     @objc private func checkForUpdatesManually() { checkForUpdates(manual: true) }
-    @objc private func toggleAutoUpdate() {
-        Support.defaults.set(!autoUpdateEnabled, forKey: "autoCheckUpdates")
+    func updateOverview() -> UpdateOverview {
+        let newer = Support.defaults.string(forKey: "updateAvailableVersion").flatMap {
+            (UpdateRules.compare($0, Support.releaseVersion) ?? 0) > 0 ? $0 : nil
+        }
+        let message = updateMessage == "尚未检查更新" ? newer.map { "发现新版本 \($0)" } ?? updateMessage : updateMessage
+        return UpdateOverview(version: Support.releaseVersion, automatic: autoUpdateEnabled,
+            checking: updateTask != nil, message: message, availableVersion: newer)
+    }
+    func checkForUpdatesFromSettings() { checkForUpdates(manual: true, showAlert: false) }
+    func openUpdateDownload() { openUpdatePage() }
+    @objc private func toggleAutoUpdate() { setAutomaticUpdates(!autoUpdateEnabled) }
+    func setAutomaticUpdates(_ value: Bool) {
+        Support.defaults.set(value, forKey: "autoCheckUpdates")
         refreshUpdateItem()
         Support.log("auto-update-check enabled=\(autoUpdateEnabled)")
     }
