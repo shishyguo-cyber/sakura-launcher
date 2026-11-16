@@ -33,13 +33,30 @@ dotnet run --project launcher-windows/GardenBoot.Core.Tests -c Release
 
 核心测试是自带控制台测试程序，应使用 `dotnet run`，不以一次空的 `dotnet test` 代替测试结果。WPF 界面检查需要已登录桌面会话；仅通过 SSH 编译不能证明托盘或播放器行为。
 
-普通构建需要目标电脑安装 .NET 10 Windows Desktop Runtime。若希望分发时自带运行时，可另行验证：
+普通 `dotnet build` 仍依赖目标机器的 .NET 10 Windows Desktop Runtime。分发用脚本改为 **win-x64 自包含目录**，用户无需另装 .NET；保留整个目录及动画资源，不裁剪（WPF 不支持 trimming），不合并为单文件 EXE。
+
+### 准备离线运行时包
+
+1. 先确定要发布的 .NET 10 服务版本，使用包含所需 Windows Desktop targeting pack 和 win-x64 app-host pack 的 .NET 10 SDK；记录 `dotnet --info`。每次构建显式传 `-RuntimeVersion <10.0.patch>`，避免 SDK 更新后悄悄换包。
+2. 在**仓库外**建立本机 NuGet 包源目录（例如构建工作区旁的 `nuget-offline`，不提交）。下载前确认该次连接（包括重定向/CDN）的实际出口不走 IPE；无法确认就停止。不要修改代理、认证或全局 NuGet 配置来完成下载。
+3. 从 NuGet 的微软官方包页面选定相同版本的以下两个包，用 “Download package” 保存完整 `.nupkg` 到该目录：
+   - [Microsoft.NETCore.App.Runtime.win-x64](https://www.nuget.org/packages/Microsoft.NETCore.App.Runtime.win-x64)
+   - [Microsoft.WindowsDesktop.App.Runtime.win-x64](https://www.nuget.org/packages/Microsoft.WindowsDesktop.App.Runtime.win-x64)
+4. 如果 SDK 安装的 app-host pack 服务版本与 `-RuntimeVersion` 不同，还需在此目录准备同版本 [Microsoft.NETCore.App.Host.win-x64](https://www.nuget.org/packages/Microsoft.NETCore.App.Host.win-x64)；脚本会先检查并提示缺包。不要为了省包而固定到过期服务版本。
+5. SDK 也可能预下载无关的传递框架运行时包；当前 .NET SDK 10.0.401 还要求同版本 [Microsoft.AspNetCore.App.Runtime.win-x64](https://www.nuget.org/packages/Microsoft.AspNetCore.App.Runtime.win-x64)。它仅供构建还原，不会成为 Sakura 的运行依赖；缺包时按离线错误准备，禁止改成联网回退。
+6. 文件名保留 `<包名>.<版本>.nupkg`（大小写不敏感），记录来源、实际线路、文件大小和 SHA-256；不要解压代替包文件。这些包不需要加入项目的 PackageReference。若 SDK 自带的 reference pack 不全，须另行准备匹配的 SDK，不能将离线失败改成联网重试。
+
+从仓库根目录在 Windows PowerShell 运行（占位值先替换）：
 
 ```powershell
-dotnet publish launcher-windows/GardenBoot.App -c Release -r win-x64 --self-contained true -o artifacts/windows-x64
+powershell -ExecutionPolicy Bypass -File launcher-windows\scripts\publish-release.ps1 -Output <全新发布目录> -RuntimeVersion <10.0.patch> -Offline -OfflineSource <仓库外的本机包目录>
 ```
 
-自包含与单文件是不同选项。动画包资源需随发布目录保留；本轮不承诺单 EXE 发布已经兼容。正式附件应另行完成许可、签名与安装测试。
+脚本以此目录为唯一包源，禁用 NuGet 审计联网，使用发布目录旁的一次性空缓存，完整重建后无还原发布；缺包直接失败，不回退到网络。SDK 和源码已有的本地文件仍是构建前提。省略 `-Offline` 会正常联网还原，执行前也须确认实际出口。
+
+脚本核对运行时文件与版本、清除 PDB 并扫描构建机路径，输出发布目录总字节。之后用 `scripts/package-release.py` 生成附件并扫描 ZIP。已安装 .NET 的开发机不能证明“无需运行时”，还须执行[干净 Windows 验收清单](ACCEPTANCE-WINDOWS.md)。
+
+自包含运行时**不会**随目标机器的共享 .NET 更新得到安全补丁。维护者需跟随 [.NET 服务更新](https://learn.microsoft.com/en-us/dotnet/core/deploying/)更新 SDK/包与 `RuntimeVersion`，重新构建、验证和发布 Sakura；每次记录实际包含的运行时版本。代码签名与完整安装验收仍是独立事项。
 
 ## 示例媒体
 

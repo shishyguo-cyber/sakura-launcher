@@ -8,7 +8,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>Sakura</AssemblyName>
     <Product>Sakura</Product>
-    <Version>0.2.0-preview.6</Version>
+    <Version>0.2.0-preview.7</Version>
     <AssemblyTitle>Sakura</AssemblyTitle>
     <RootNamespace>GardenBoot.App</RootNamespace>
   </PropertyGroup>

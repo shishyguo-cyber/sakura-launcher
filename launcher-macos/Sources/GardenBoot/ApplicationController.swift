@@ -488,7 +488,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
     // MARK: Featured built-in animation (launcher-spec/PACK-FORMAT.md, "内置动画")
 
     /// Installs the bundled featured pack once per user. A user who removes it does not get it back on the next
-    /// launch; a user who never chose a current animation gets it as the current one. Isolated test roots skip it
+    /// launch; users without a current choice select it, while existing choices are preserved. Test roots skip it
     /// unless `--test-featured` is given, so controlled checks keep using the demo pack.
     private func installFeaturedPack() async {
         guard argument(after: "--test-root") == nil || CommandLine.arguments.contains("--test-featured"),
@@ -501,11 +501,12 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
             // Persist "offered once" before reporting, so a quit right after installing never reinstalls it.
             installed.append(bundled.id)
             Support.defaults.set(installed, forKey: "featuredInstalled")
-            let madeCurrent = Support.defaults.string(forKey: "activePackID") == nil
-            if madeCurrent { Support.defaults.set(bundled.id, forKey: "activePackID") }
+            let previousID = Support.defaults.string(forKey: "activePackID")
+            let preferredID = PackLibrary.preferredAfterFirstFeaturedInstall(preferredID: previousID, featuredID: bundled.id)
+            if previousID == nil { Support.defaults.set(preferredID, forKey: "activePackID") }
             Support.defaults.synchronize()
             if let pack { Support.log("pack-installed id=\(pack.id) featured=true") }
-            if madeCurrent { Support.log("featured-made-current id=\(bundled.id)") }
+            if previousID == nil { Support.log("featured-made-current id=\(bundled.id)") }
         } catch { Support.log("featured-pack-error=\(error.localizedDescription)") }
     }
 

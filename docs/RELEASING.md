@@ -21,10 +21,10 @@ macOS（通用版、去掉调试信息、ad-hoc 签名；工作目录默认 `~/L
 bash <导出目录>/launcher-macos/scripts/package.sh
 ```
 
-Windows x64（完整重建、不带调试信息、离线还原；在 Windows 上运行）：
+Windows x64（自包含目录、完整重建、不带调试信息；先按[开发指南](DEVELOPMENT.md)准备仓库外的本机包源与匹配 SDK，下载前核实实际出口；在 Windows 上运行）：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File launcher-windows\scripts\publish-release.ps1 -Output <新目录> -Offline
+powershell -ExecutionPolicy Bypass -File launcher-windows\scripts\publish-release.ps1 -Output <新目录> -RuntimeVersion <10.0.patch> -Offline -OfflineSource <本机包目录>
 ```
 
 两个脚本都会在发现开发机用户目录路径时直接失败。
@@ -37,6 +37,8 @@ python3 scripts/package-release.py --version <版本> \
 ```
 
 生成 macOS、Windows、源码三个 ZIP，以及 `SHA256SUMS.txt`、`inventory.json`。安装说明来自 `docs/release/README-*.txt`（`{version}` 会被替换）。ZIP 内容固定时间戳、统一用 `/` 分隔、中文文件名标记 UTF-8、保留可执行权限，不含 `__MACOSX`、`._*`、`.DS_Store` 或 `.pdb`。最后逐文件扫描个人路径（ASCII 与 UTF-16）、私钥和令牌；有任何发现就中止，不留下半成品。
+
+扫描器对微软 .NET 10.0.15 原版 `System.Private.CoreLib.dll` 的语言区域名称表有一个已核实的令牌误报例外，同时绑定文件名、整个文件 SHA-256 与误报片段 SHA-256；不跳过该文件的路径/私钥或其他内容检查。更换 .NET 服务版本后若出现类似误报，需重新对照官方包确认，不能按文件名或供应商整体放行。
 
 ## 4. 同步到公开仓库
 

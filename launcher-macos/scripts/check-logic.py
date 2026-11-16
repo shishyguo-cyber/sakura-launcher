@@ -24,7 +24,7 @@ GUI_CASES = ["existing-process baseline", "cold-launch deduplication", "exit/rel
              "no player in logic-only mode", "delayed window intro/loop/outro",
              "no-window timeout", "manual preview", "warm/cold first-frame and invisible-before-show", "unconfigured pack", "two targets: independent packs/daily records, busy and disabled",
              "quiet skip", "reappear plays", "minimize/hide ignored", "compat good / alreadyRunning",
-             "create pack from video (good and corrupt)", "featured pack installed once and made current",
+             "create pack from video (good and corrupt)", "featured pack installed once, becomes current only without an existing choice",
              "update check: newer found and remembered, current"]
 
 
@@ -180,6 +180,9 @@ def main():
 
         def start_watcher(name, *args, executable_path=binary, settings_targets=False):
             state = root / name
+            # Foundation standardizes /private/tmp differently before a directory exists.
+            # Create it first so the isolated UserDefaults suite is stable across restarts.
+            state.mkdir(parents=True, exist_ok=True)
             logs[name] = state / "events.log"
             target_args = [] if settings_targets else ["--test-target", identifier]
             p = subprocess.Popen([str(executable_path), *target_args, "--test-root", str(state),
@@ -401,12 +404,14 @@ def main():
             stop(watcher)
             report["videoPack"] = {"created": created.group(1), "corruptRejected": True}
 
-            # Featured built-in pack: installed once, made current when nothing was chosen; removal is respected.
+            # Featured built-in pack: the first install selects it for a user without a choice; removal is respected.
             watcher = start_watcher("featured", "-paused", "YES", "--test-featured")
-            wait_for(lambda: "featured-made-current" in events("featured") or "featured-pack-error" in events("featured"), "featured install", 60)
+            wait_for(lambda: "pack-installed id=raiden-garden featured=true" in events("featured") or "featured-pack-error" in events("featured"), "featured install", 60)
             assert "pack-installed id=raiden-garden featured=true" in events("featured"), events("featured")
             assert (root / "featured/Packs/raiden-garden/manifest.json").is_file()
-            wait_for(lambda: "active=raiden-garden" in events("featured"), "featured becomes current", 20)
+            wait_for(lambda: "active=raiden-garden" in events("featured").rsplit("featured=true", 1)[-1], "featured becomes current", 20)
+            assert "featured-made-current id=raiden-garden" in events("featured")
+            assert (root / "featured/Packs/demo-garden/manifest.json").is_file()
             stop(watcher)
             shutil.rmtree(root / "featured/Packs/raiden-garden")
             logs["featured-again"] = root / "featured/events.log"
@@ -419,8 +424,9 @@ def main():
             wait_for(lambda: "packs-loaded" in events("featured").rsplit("monitor-started", 1)[-1], "library reloaded after second launch", 20)
             assert events("featured").count("featured=true") == 1, "removed featured pack must not come back"
             assert not (root / "featured/Packs/raiden-garden").exists()
+            assert "active=demo-garden" in events("featured").rsplit("monitor-started", 1)[-1]
             stop(p)
-            report["featuredPack"] = {"installedOnce": True, "madeCurrent": True, "removalRespected": True}
+            report["featuredPack"] = {"installedOnce": True, "defaultFeatured": True, "removalRespected": True}
 
             # Update check (UPDATES.md): a newer release is found from a local feed and remembered without going online.
             feed = root / "releases.json"

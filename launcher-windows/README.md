@@ -11,7 +11,7 @@ dotnet build launcher-windows/GardenBoot.slnx -c Release
 dotnet run --project launcher-windows/GardenBoot.Core.Tests -c Release
 ```
 
-输出位于 `launcher-windows/GardenBoot.App/bin/Release/net10.0-windows/`。运行 `Sakura.exe` 时需保留同目录的依赖及 `demo-pack`，不要只搬走 EXE。普通构建还需要目标机器安装 .NET 10 Windows Desktop Runtime；自包含发布方案见[开发指南](../docs/DEVELOPMENT.md)。
+输出位于 `launcher-windows/GardenBoot.App/bin/Release/net10.0-windows/`。运行 `Sakura.exe` 时需保留同目录的依赖及 `demo-pack`，不要只搬走 EXE。普通构建还需要目标机器安装 .NET 10 Windows Desktop Runtime；分发脚本使用自包含目录，无需用户安装 .NET；离线包准备与发布步骤见[开发指南](../docs/DEVELOPMENT.md)。
 
 ## 使用
 

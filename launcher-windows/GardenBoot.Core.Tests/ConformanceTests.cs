@@ -213,6 +213,28 @@ public static class ConformanceTests
     }
 
     [Test]
+    public static void BuiltInSelection()
+    {
+        foreach (var c in Load("library.json").GetProperty("resolveActive").EnumerateArray())
+        {
+            var packs = c.GetProperty("available").EnumerateArray().Select(x =>
+            {
+                var id = x.GetString()!;
+                var manifest = new PackManifest(1, id, id, new Dictionary<PackSegment, string> { [PackSegment.Video] = "video.mp4" });
+                return new InstalledPack(manifest, manifest.ValidatedLayout(), Path.Combine("fixture", id));
+            }).ToList();
+            var preferred = OptionalText(c, "preferred");
+            if (OptionalText(c, "justInstalledFeatured") is { } featured)
+            {
+                preferred = PackLibrary.PreferredAfterFirstFeaturedInstall(preferred, featured);
+                Check.Equal(OptionalText(c, "expectPreferred"), preferred, c.GetProperty("name").GetString()!);
+            }
+            Check.Equal(OptionalText(c, "expect"), PackLibrary.ResolveActive(preferred, packs, "demo-garden")?.Id,
+                        c.GetProperty("name").GetString()!);
+        }
+    }
+
+    [Test]
     public static void Library()
     {
         var spec = Load("library.json");

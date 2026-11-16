@@ -81,7 +81,7 @@ my-pack/
 
 程序附带两个包，首次运行时安装到动画库：
 
-- `demo-garden`（`launcher-macos/demo-pack/`，CC0 几何示例）：每次启动都确保存在；没有可用动画时作为回退；不能移除。
-- 精选动画（`launcher-macos/featured-pack/`，目前为 `raiden-garden`）：每个用户只安装一次，记录在本机偏好（macOS `featuredInstalled`，Windows `settings.json` 的 `FeaturedInstalled`）。用户移除后不再自动装回。若用户还没有选择过当前动画，安装后设为当前动画，日志 `featured-made-current id=<id>`；已有选择的不改。
+- `demo-garden`（`launcher-macos/demo-pack/`，CC0 几何示例）：每次启动都确保存在；当前选择不可用时的回退；不能移除。
+- 精选动画（`launcher-macos/featured-pack/`，目前为 `raiden-garden`）：每个用户只安装一次，记录在本机偏好（macOS `featuredInstalled`，Windows `settings.json` 的 `FeaturedInstalled`）。用户移除后不再自动装回。首次成功安装后，仅在用户还没有当前选择时设为当前动画，日志 `featured-made-current id=<id>`；新安装默认使用「雷电将军 · 花园」，与 preview.6 一致。已有选择（包括几何示例或个人包）的用户升级保持原选择；已安装过精选但尚未写入当前选择的用户也不会因升级被重新设为精选。精选缺失或安装失败时仍使用几何示例回退，不能为了恢复默认值清空已安装标记。
 - 独立测试目录（`--test-root`）默认不安装精选动画，`--test-featured` 时才安装，保证受控检查仍只用几何示例。
 

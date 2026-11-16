@@ -160,6 +160,10 @@ public sealed class PackLibrary(string root)
         }
     }
 
+    /// <summary>Only after the first successful featured installation: preserve a choice, otherwise select featured.
+    /// The app's offered-once marker prevents removed packs from reaching this step again.</summary>
+    public static string PreferredAfterFirstFeaturedInstall(string? preferredId, string featuredId) => preferredId ?? featuredId;
+
     /// <summary>The pack to play: the user's choice if still installed, else <paramref name="fallbackId"/>, else the first.</summary>
     public static InstalledPack? ResolveActive(string? preferredId, IReadOnlyList<InstalledPack> packs, string fallbackId) =>
         packs.FirstOrDefault(p => p.Id == preferredId) ?? packs.FirstOrDefault(p => p.Id == fallbackId) ?? packs.FirstOrDefault();

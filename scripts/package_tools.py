@@ -31,6 +31,16 @@ PAYLOAD_PATTERNS = [(label, re.compile(expression)) for label, expression in _PA
 ]
 
 
+# .NET 10.0.15 win-x64: an ASCII culture-name table in Microsoft's unmodified CoreLib
+# contains a token-shaped substring. Verified against Microsoft.NETCore.App.Runtime.win-x64
+# 10.0.15 from NuGet. Exempt only that match in that exact file; all other scans still run.
+# A service update, rename, added credential, or any byte change requires fresh verification.
+REVIEWED_VENDOR_TOKEN_MATCHES = {
+    ("System.Private.CoreLib.dll", "983f5c8957437aa38fcd239606e60dc2a4a6f551605311591a72e5b285eae957"):
+        {"2c824f99075a502f2a79a83bc9142a77d094f6cd3c797d6d30490ee5392f89d6"},
+}
+
+
 def sha256(path):
     digest = hashlib.sha256()
     with open(path, "rb") as f:
@@ -129,6 +139,10 @@ def scan_archive(path):
             data = archive.read(name)
             for label, expression in PAYLOAD_PATTERNS:
                 count = len(expression.findall(data))
+                if count and label == "token":
+                    reviewed = REVIEWED_VENDOR_TOKEN_MATCHES.get((PurePosixPath(name).name, hashlib.sha256(data).hexdigest()), set())
+                    if reviewed:
+                        count = sum(hashlib.sha256(m.group()).hexdigest() not in reviewed for m in expression.finditer(data))
                 if count:
                     findings.append({"entry": name, "problem": label, "count": count})
     return findings

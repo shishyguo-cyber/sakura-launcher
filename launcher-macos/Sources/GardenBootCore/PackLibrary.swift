@@ -161,6 +161,12 @@ public struct PackLibrary: Sendable {
         return try await importPack(from: staging, probe: probe)
     }
 
+    /// Called only after the featured pack's first successful installation. Existing choices are preserved;
+    /// the app's offered-once marker prevents a removed pack from reaching this step again.
+    public static func preferredAfterFirstFeaturedInstall(preferredID: String?, featuredID: String) -> String {
+        preferredID ?? featuredID
+    }
+
     /// The pack to play: the user's choice if still installed, else `fallbackID`, else the first by name.
     public static func resolveActive(preferredID: String?, packs: [InstalledPack], fallbackID: String) -> InstalledPack? {
         if let preferredID, let pack = packs.first(where: { $0.id == preferredID }) { return pack }

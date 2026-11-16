@@ -4,7 +4,7 @@
 
 Sakura is a native macOS and Windows companion that plays a customizable animation when a selected application starts.
 
-**开发者预览版** · macOS 13+ · Windows 11 / .NET 10 · MIT
+**开发者预览版** · macOS 13+ · Windows 11 x64 · MIT
 
 ## 下载
 
@@ -19,7 +19,9 @@ Sakura is a native macOS and Windows companion that plays a customizable animati
 **第一次打开**
 
 - **Mac**（macOS 13+，Apple 芯片与 Intel 通用）：解压后把 Sakura.app 拖进“应用程序”。预览版没有 Apple 开发者签名，第一次打开会被拦下，请到“系统设置 → 隐私与安全性”，在页面下方点“仍要打开”。
-- **Windows**（Windows 11 x64）：先安装 [.NET 10 桌面运行时](https://dotnet.microsoft.com/download/dotnet/10.0)，把整个 Sakura 文件夹解压到固定位置，再双击 Sakura.exe。如果出现“Windows 已保护你的电脑”，点“更多信息 → 仍要运行”。
+- **Windows**（Windows 11 x64）：把整个 Sakura 文件夹解压到固定位置，再双击 Sakura.exe。如果出现“Windows 已保护你的电脑”，点“更多信息 → 仍要运行”。
+
+源码中的下一次 Windows 发布改为自带 .NET 运行时，无需另装；上方仍链接已发布的 preview.6，旧包的运行要求请看其随包说明。新包尚待干净 Windows 验收。
 
 打开后菜单栏或托盘会出现花朵图标，设置窗口会自动弹出，按“概览”的三步引导选择应用、选择动画、预览并保存即可。
 
@@ -72,7 +74,7 @@ Sakura 借鉴的是“应用启动时播放一段动画”这个创意（来源�
 
 Sakura 是通用的“应用启动动画”工具：任何从已安装列表选出的应用都可以有自己的动画。ChatGPT / Codex 桌面应用是默认示例和最常用的场景；以后只与 Codex 相关的功能会做成可选模块，不影响给其他应用使用。
 
-Sakura 内置两段动画：原创几何示例（CC0），以及默认使用的同人动画「雷电将军 · 花园」（仅供个人非商业使用，说明见其 [NOTICE](launcher-macos/featured-pack/NOTICE.md)）。私人制作工程与模型不随软件提供。
+Sakura 内置两段动画：原创几何示例（CC0），以及新安装默认使用的同人动画「雷电将军 · 花园」（仅供个人非商业使用，说明见其 [NOTICE](launcher-macos/featured-pack/NOTICE.md)）。已有用户升级保持当前动画选择。移除精选动画后不会自动装回。私人制作工程与模型不随软件提供。
 
 ## 开始使用
 

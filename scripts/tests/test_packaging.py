@@ -1,8 +1,10 @@
+import hashlib
 import importlib.util
 import os
 import stat
 import tempfile
 import unittest
+from unittest.mock import patch
 import zipfile
 from pathlib import Path
 
@@ -82,6 +84,36 @@ class PackagingTests(unittest.TestCase):
             z.writestr(info, "x")
         problems = {f["problem"] for f in self.tools.scan_archive(bad)}
         self.assertEqual(problems, {"metadata or private entry", "unsafe path"})
+
+    def test_token_looking_culture_data_is_not_generically_exempted(self):
+        data = b"culture-table-" + b"sk" + b"-" + b"language" * 8
+        out = self.tools.write_zip(self.base / "unreviewed.zip", [], [("Sakura/System.Private.CoreLib.dll", data)])
+        self.assertEqual([f["problem"] for f in self.tools.scan_archive(out)], ["token"])
+
+    def test_reviewed_vendor_exception_requires_file_name_file_hash_and_match_hash(self):
+        data = b"culture-table-" + b"sk" + b"-" + b"language" * 8
+        match = next(p for label, p in self.tools.PAYLOAD_PATTERNS if label == "token").search(data).group()
+        key = ("System.Private.CoreLib.dll", hashlib.sha256(data).hexdigest())
+        reviewed = {key: {hashlib.sha256(match).hexdigest()}}
+        secret = b"sk" + b"-" + b"secret" * 8
+        cases = [("known", "System.Private.CoreLib.dll", data, False),
+                 ("renamed", "App.dll", data, True),
+                 ("modified", "System.Private.CoreLib.dll", data + b"\0" + secret, True)]
+        with patch.object(self.tools, "REVIEWED_VENDOR_TOKEN_MATCHES", reviewed, create=True):
+            for name, file_name, content, flagged in cases:
+                out = self.tools.write_zip(self.base / (name + ".zip"), [], [("Sakura/" + file_name, content)])
+                self.assertEqual(any(f["problem"] == "token" for f in self.tools.scan_archive(out)), flagged, name)
+        with patch.object(self.tools, "REVIEWED_VENDOR_TOKEN_MATCHES", {key: {"wrong-match-hash"}}, create=True):
+            out = self.tools.write_zip(self.base / "wrong-match.zip", [], [("Sakura/System.Private.CoreLib.dll", data)])
+            self.assertTrue(any(f["problem"] == "token" for f in self.tools.scan_archive(out)))
+
+    def test_vendor_token_exception_keeps_path_and_private_key_scans(self):
+        data = b"sk" + b"-" + b"language" * 8 + b"\0" + HOME_WIN.encode() + b"\0" + ("-----BEGIN OPENSSH " + "PRIVATE KEY-----").encode()
+        match = next(p for label, p in self.tools.PAYLOAD_PATTERNS if label == "token").search(data).group()
+        reviewed = {("System.Private.CoreLib.dll", hashlib.sha256(data).hexdigest()): {hashlib.sha256(match).hexdigest()}}
+        with patch.object(self.tools, "REVIEWED_VENDOR_TOKEN_MATCHES", reviewed, create=True):
+            out = self.tools.write_zip(self.base / "other-findings.zip", [], [("Sakura/System.Private.CoreLib.dll", data)])
+            self.assertEqual({f["problem"] for f in self.tools.scan_archive(out)}, {"windows-user-path", "private-key"})
 
     def test_checksums_and_windows_text(self):
         a = self.base / "a.zip"; a.write_bytes(b"a")

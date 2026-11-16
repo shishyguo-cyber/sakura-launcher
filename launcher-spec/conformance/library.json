@@ -1,5 +1,5 @@
 {
- "about": "PackRotation.choose, see SCHEDULE-AND-LIBRARY.md §3. expect null = nothing to play.",
+ "about": "PackRotation.choose, see SCHEDULE-AND-LIBRARY.md §3. expect null = nothing to play. resolveActive covers persisted choice and the first successful featured install; omitted justInstalledFeatured means no new installation (including removed/already offered).",
  "choose": [
   {
    "name": "fixed-plays-active",
@@ -213,6 +213,96 @@
    "active": null,
    "lastPackId": null,
    "random": 0.3,
+   "expect": null
+  }
+ ],
+ "resolveActive": [
+  {
+   "name": "first-featured-install-selects-raiden",
+   "preferred": null,
+   "available": [
+    "raiden-garden",
+    "demo-garden"
+   ],
+   "expect": "raiden-garden",
+   "justInstalledFeatured": "raiden-garden",
+   "expectPreferred": "raiden-garden"
+  },
+  {
+   "name": "upgrade-keeps-featured-selection",
+   "preferred": "raiden-garden",
+   "available": [
+    "demo-garden",
+    "raiden-garden"
+   ],
+   "expect": "raiden-garden",
+   "justInstalledFeatured": "raiden-garden",
+   "expectPreferred": "raiden-garden"
+  },
+  {
+   "name": "upgrade-keeps-custom-selection",
+   "preferred": "personal",
+   "available": [
+    "demo-garden",
+    "raiden-garden",
+    "personal"
+   ],
+   "expect": "personal",
+   "justInstalledFeatured": "raiden-garden",
+   "expectPreferred": "personal"
+  },
+  {
+   "name": "upgrade-keeps-demo-selection",
+   "preferred": "demo-garden",
+   "available": [
+    "raiden-garden",
+    "demo-garden"
+   ],
+   "expect": "demo-garden",
+   "justInstalledFeatured": "raiden-garden",
+   "expectPreferred": "demo-garden"
+  },
+  {
+   "name": "missing-selection-falls-back-to-cc0",
+   "preferred": "removed",
+   "available": [
+    "raiden-garden",
+    "demo-garden"
+   ],
+   "expect": "demo-garden"
+  },
+  {
+   "name": "first-featured-install-does-not-replace-missing-user-choice",
+   "preferred": "personal-removed",
+   "justInstalledFeatured": "raiden-garden",
+   "expectPreferred": "personal-removed",
+   "available": [
+    "raiden-garden",
+    "demo-garden"
+   ],
+   "expect": "demo-garden"
+  },
+  {
+   "name": "removed-featured-stays-absent-falls-back-to-cc0",
+   "preferred": "raiden-garden",
+   "available": [
+    "demo-garden"
+   ],
+   "expect": "demo-garden"
+  },
+  {
+   "name": "cc0-user-already-offered-featured-keeps-choice-on-upgrade",
+   "preferred": null,
+   "available": [
+    "raiden-garden",
+    "demo-garden"
+   ],
+   "expect": "demo-garden"
+  },
+  {
+   "name": "empty-library-remains-empty",
+   "preferred": null,
+   "available": [],
    "expect": null
   }
  ]

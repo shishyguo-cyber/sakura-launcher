@@ -12,6 +12,14 @@ body:
     id: version
     attributes:
       label: Sakura 与操作系统版本
+      placeholder: 例如 Sakura 版本号、Windows 11 构建号或 macOS 版本
+    validations:
+      required: true
+  - type: input
+    id: target
+    attributes:
+      label: 目标应用及版本
+      description: 请说明从哪里启动、启动前是否已在后台运行；不要填写带有个人用户名的完整路径。
     validations:
       required: true
   - type: textarea
@@ -24,4 +32,4 @@ body:
     id: evidence
     attributes:
       label: 可选证据
-      description: 使用 CC0 示例截图；日志先移除密钥、本机用户名、路径和私人内容。漏洞请按 SECURITY.md 私密报告。
+      description: 可选附截图或相关 events.log 片段；日志位于 macOS 的 ~/Library/Application Support/GardenBoot/ 或 Windows 的 %LOCALAPPDATA%/GardenBoot/。提交前移除密钥、本机用户名、私人路径、目标身份和其他隐私；请勿上传整个数据目录。截图优先使用 CC0 示例。漏洞请按 SECURITY.md 私密报告。

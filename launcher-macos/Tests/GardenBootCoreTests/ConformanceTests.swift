@@ -255,6 +255,24 @@ extension ConformanceTests {
         }
     }
 
+    func testBuiltInSelectionCases() throws {
+        for c in try load("library.json")["resolveActive"] as! [[String: Any]] {
+            let packs = try (c["available"] as! [String]).map { id -> InstalledPack in
+                let manifest = PackManifest(id: id, name: id, segments: [.video: "video.mp4"])
+                return InstalledPack(manifest: manifest, layout: try manifest.validatedLayout(),
+                                     directory: URL(fileURLWithPath: "/fixture/" + id))
+            }
+            var preferred = c["preferred"] as? String
+            if let featured = c["justInstalledFeatured"] as? String {
+                preferred = PackLibrary.preferredAfterFirstFeaturedInstall(preferredID: preferred, featuredID: featured)
+                XCTAssertEqual(preferred, c["expectPreferred"] as? String, c["name"] as! String)
+            }
+            XCTAssertEqual(PackLibrary.resolveActive(preferredID: preferred, packs: packs,
+                                                     fallbackID: "demo-garden")?.id,
+                           c["expect"] as? String, c["name"] as! String)
+        }
+    }
+
     func testLibraryCases() throws {
         for c in try load("library.json")["choose"] as! [[String: Any]] {
             XCTAssertEqual(PackRotation.choose(rotation: PackRotation(rawValue: c["rotation"] as! String)!,

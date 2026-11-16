@@ -77,7 +77,7 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
     }
 
     /// <summary>
-    /// Installs the bundled featured pack once per user; becomes current when the user never chose one. Isolated test
+    /// Installs the bundled featured pack once per user; selects it only when no current choice exists. Test
     /// roots skip it unless --test-featured, so controlled checks keep using the demo pack.
     /// </summary>
     private async Task InstallFeatured()
@@ -94,11 +94,12 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
             var installed = await library.InstallIfMissing(folder, Probe, ImageProbe);
             // Persist "offered once" before reporting, so a quit right after installing never reinstalls it.
             settings.FeaturedInstalled.Add(bundled.Id);
-            var madeCurrent = settings.ActivePackId is null;
-            if (madeCurrent) settings.ActivePackId = bundled.Id;
+            var previousId = settings.ActivePackId;
+            var preferredId = PackLibrary.PreferredAfterFirstFeaturedInstall(previousId, bundled.Id);
+            if (previousId is null) settings.ActivePackId = preferredId;
             SaveSettings();
             if (installed is not null) log.Write($"pack-installed id={installed.Id} featured=true");
-            if (madeCurrent) log.Write($"featured-made-current id={bundled.Id}");
+            if (previousId is null) log.Write($"featured-made-current id={bundled.Id}");
         }
         catch (Exception e) when (e is PackException or IOException or UnauthorizedAccessException or OperationCanceledException)
         { if (!disposed) log.Write($"featured-pack-error type={e.GetType().Name}"); }

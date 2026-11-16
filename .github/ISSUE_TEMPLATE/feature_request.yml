@@ -1,6 +1,9 @@
 name: 功能建议
 description: 说明你希望改善的实际使用场景
 body:
+  - type: markdown
+    attributes:
+      value: 请描述实际使用场景和预期效果；勿贴密钥、私人路径或其他隐私。提交由你主动操作，应用不会自动上报。
   - type: textarea
     id: problem
     attributes:
