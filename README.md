@@ -10,11 +10,11 @@ Sakura is a native macOS and Windows companion that plays a customizable animati
 
 <!-- 发新版时更新这里的版本号（见 docs/RELEASING.md） -->
 <h3 align="center">
-  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.5/Sakura-0.2.0-preview.5-macOS.zip">⬇ 下载 macOS 版</a>
+  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.6/Sakura-0.2.0-preview.6-macOS.zip">⬇ 下载 macOS 版</a>
   &nbsp;&nbsp;·&nbsp;&nbsp;
-  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.5/Sakura-0.2.0-preview.5-windows-x64.zip">⬇ 下载 Windows 版</a>
+  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.6/Sakura-0.2.0-preview.6-windows-x64.zip">⬇ 下载 Windows 版</a>
 </h3>
-<p align="center">v0.2.0-preview.5 开发者预览版 · <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/tag/v0.2.0-preview.5">所有下载、更新说明与校验值</a></p>
+<p align="center">v0.2.0-preview.6 开发者预览版 · <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/tag/v0.2.0-preview.6">所有下载、更新说明与校验值</a></p>
 
 **第一次打开**
 
