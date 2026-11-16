@@ -10,18 +10,18 @@ Sakura is a native macOS and Windows companion that plays a customizable animati
 
 <!-- 发新版时更新这里的版本号（见 docs/RELEASING.md） -->
 <h3 align="center">
-  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.6/Sakura-0.2.0-preview.6-macOS.zip">⬇ 下载 macOS 版</a>
+  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.7/Sakura-0.2.0-preview.7-macOS.zip">⬇ 下载 macOS 版</a>
   &nbsp;&nbsp;·&nbsp;&nbsp;
-  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.6/Sakura-0.2.0-preview.6-windows-x64.zip">⬇ 下载 Windows 版</a>
+  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.7/Sakura-0.2.0-preview.7-windows-x64.zip">⬇ 下载 Windows 版</a>
 </h3>
-<p align="center">v0.2.0-preview.6 开发者预览版 · <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/tag/v0.2.0-preview.6">所有下载、更新说明与校验值</a></p>
+<p align="center">v0.2.0-preview.7 开发者预览版 · <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/tag/v0.2.0-preview.7">所有下载、更新说明与校验值</a></p>
 
 **第一次打开**
 
 - **Mac**（macOS 13+，Apple 芯片与 Intel 通用）：解压后把 Sakura.app 拖进“应用程序”。预览版没有 Apple 开发者签名，第一次打开会被拦下，请到“系统设置 → 隐私与安全性”，在页面下方点“仍要打开”。
 - **Windows**（Windows 11 x64）：把整个 Sakura 文件夹解压到固定位置，再双击 Sakura.exe。如果出现“Windows 已保护你的电脑”，点“更多信息 → 仍要运行”。
 
-源码中的下一次 Windows 发布改为自带 .NET 运行时，无需另装；上方仍链接已发布的 preview.6，旧包的运行要求请看其随包说明。新包尚待干净 Windows 验收。
+从 preview.7 起，Windows 下载包已自带 .NET 10.0.15 运行时，无需另装；尚未在未安装 .NET 的干净 Windows 上验收。
 
 打开后菜单栏或托盘会出现花朵图标，设置窗口会自动弹出，按“概览”的三步引导选择应用、选择动画、预览并保存即可。
 
