@@ -320,6 +320,27 @@ try {
         if (([regex]::Matches((Read-Events 'featured'), 'featured=true')).Count -ne 1) { throw 'Removed featured pack came back' }
         $report.featuredInstalledOnce=$true
         Stop-Owned $watcher
+
+        # Update check (UPDATES.md): newer release from a local feed, remembered without going online, then current.
+        $feed=Join-Path $OutputRoot 'releases.json'
+        [IO.File]::WriteAllText($feed, '[{"tag_name":"v0.2.0-preview.9","html_url":"https://example.test/9","draft":false,"prerelease":true},{"tag_name":"v9.0.0-preview.1","html_url":"https://example.test/d","draft":true,"prerelease":true}]', [Text.UTF8Encoding]::new($false))
+        Prepare-Pack 'update' 6
+        $watcher=Start-Watcher 'update' @('--test-check-update','--test-update-feed',('"'+$feed+'"'))
+        Wait-Until { (Read-Events 'update').Contains('update-check source=auto result=newer latest=0.2.0-preview.9') } 'newer release found' 15
+        Stop-Owned $watcher
+        $checks=([regex]::Matches((Read-Events 'update'), 'update-check')).Count
+        $watcher=Start-Watcher 'update' @('--test-check-update','--test-update-feed',('"'+$feed+'"'))
+        Wait-Until { ([regex]::Matches((Read-Events 'update'), 'update-available latest=0.2.0-preview.9')).Count -ge 2 } 'remembered after restart' 15
+        Start-Sleep -Seconds 2
+        if (([regex]::Matches((Read-Events 'update'), 'update-check')).Count -ne $checks) { throw 'A check within 7 days went online again' }
+        Stop-Owned $watcher
+        [IO.File]::WriteAllText($feed, '[{"tag_name":"v0.2.0-preview.1","html_url":"https://example.test/1","draft":false,"prerelease":true}]', [Text.UTF8Encoding]::new($false))
+        Prepare-Pack 'update-current' 6
+        $watcher=Start-Watcher 'update-current' @('--test-check-update','--test-update-feed',('"'+$feed+'"'))
+        Wait-Until { (Read-Events 'update-current').Contains('update-check source=auto result=current latest=none') } 'already current' 15
+        if ((Read-Events 'update-current').Contains('update-available')) { throw 'Older release reported as an update' }
+        $report.updateCheck=$true
+        Stop-Owned $watcher
     }
     $report.status='passed'; $report.passed=$true
 } catch {

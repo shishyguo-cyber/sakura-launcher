@@ -21,6 +21,8 @@ enum Support {
     static let media = root.appendingPathComponent("startup.mp4")
     static let library = PackLibrary(root: root.appendingPathComponent("Packs", isDirectory: true))
     static let demoID = "demo-garden"
+    /// Full release version (e.g. 0.2.0-preview.5); CFBundleShortVersionString cannot carry the preview suffix.
+    static var releaseVersion: String { Bundle.main.object(forInfoDictionaryKey: "SakuraReleaseVersion") as? String ?? "0.0.0" }
     /// Resources folder of the featured built-in animation (installed once; removable, unlike the demo).
     static let featuredResource = "featured-pack"
     static let events = EventLog(directory: root)

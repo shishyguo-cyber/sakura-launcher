@@ -67,6 +67,7 @@ launcher-macos/Sources/GardenBootCore/PlaybackOverview.swift
 launcher-macos/Sources/GardenBootCore/PlaybackRules.swift
 launcher-macos/Sources/GardenBootCore/PlaybackSchedule.swift
 launcher-macos/Sources/GardenBootCore/PlaybackState.swift
+launcher-macos/Sources/GardenBootCore/Updates.swift
 launcher-macos/Sources/GardenBootCore/VideoFit.swift
 launcher-macos/Sources/GardenBootCore/VideoPack.swift
 launcher-macos/Sources/GardenBootCore/WindowPicker.swift
@@ -124,6 +125,7 @@ launcher-spec/README.md
 launcher-spec/RESOURCES.md
 launcher-spec/SCHEDULE-AND-LIBRARY.md
 launcher-spec/TARGETS.md
+launcher-spec/UPDATES.md
 launcher-spec/VIDEO-FIT.md
 launcher-spec/conformance/compatibility.json
 launcher-spec/conformance/experience.json
@@ -135,6 +137,7 @@ launcher-spec/conformance/playback.json
 launcher-spec/conformance/policy.json
 launcher-spec/conformance/schedule.json
 launcher-spec/conformance/targets.json
+launcher-spec/conformance/updates.json
 launcher-spec/conformance/video-pack.json
 launcher-windows/.gitignore
 launcher-windows/GardenBoot.App/AppPickerWindow.cs
@@ -182,6 +185,7 @@ launcher-windows/GardenBoot.Core/Rotation.cs
 launcher-windows/GardenBoot.Core/Schedule.cs
 launcher-windows/GardenBoot.Core/TargetSession.cs
 launcher-windows/GardenBoot.Core/Targets.cs
+launcher-windows/GardenBoot.Core/Updates.cs
 launcher-windows/GardenBoot.Core/VideoFit.cs
 launcher-windows/GardenBoot.Core/VideoPack.cs
 launcher-windows/GardenBoot.GuiFixture/GardenBoot.GuiFixture.csproj

@@ -110,6 +110,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
         menu.delegate = self
         statusItem = item
         menu.addItem(NSMenuItem(title: "Sakura", action: nil, keyEquivalent: ""))
+        updateItem.target = self; updateItem.isHidden = true; menu.addItem(updateItem)
         menu.addItem(autoStatusItem)
         menu.addItem(currentItem)
         menu.addItem(.separator())
@@ -129,6 +130,9 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
         menu.addItem(.separator())
         loginItem.target = self
         menu.addItem(loginItem)
+        add("检查更新…", action: #selector(checkForUpdatesManually))
+        autoUpdateItem.target = self; menu.addItem(autoUpdateItem)
+        autoUpdateItem.toolTip = "每周最多联网一次，只读取 GitHub 上的公开版本列表；不下载、不安装。"
         add("打开日志", action: #selector(openLog))
         menu.addItem(.separator())
         add("退出 Sakura", action: #selector(quit), key: "q")
@@ -140,6 +144,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
             activePack = try? PackLibrary.load(directory: bundled)
         }
         startMonitoring()
+        startUpdateChecks()
         refreshWarmup()
         // P-012: every 2 s with slack so the system can batch the wakeup; a launch re-checks freshness itself
         // (takeWarmPlayback compares the full preparation key), so this only affects how soon a re-warm happens.
@@ -783,6 +788,116 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
         }
     }
 
+    // MARK: Update check (launcher-spec/UPDATES.md)
+
+    private let updateItem = NSMenuItem(title: "", action: #selector(openUpdatePage), keyEquivalent: "")
+    private let autoUpdateItem = NSMenuItem(title: "自动检查更新", action: #selector(toggleAutoUpdate), keyEquivalent: "")
+    private var updateTimer: Timer?
+    private var updateTask: Task<Void, Never>?
+    private var autoUpdateEnabled: Bool {
+        // Isolated test roots never go online by default.
+        let fallback = argument(after: "--test-root") == nil || CommandLine.arguments.contains("--test-check-update")
+        return Support.defaults.object(forKey: "autoCheckUpdates") as? Bool ?? fallback
+    }
+
+    private func startUpdateChecks() {
+        refreshUpdateItem()
+        let first = CommandLine.arguments.contains("--test-check-update") ? 0.5 : 60
+        DispatchQueue.main.asyncAfter(deadline: .now() + first) { [weak self] in self?.checkForUpdates(manual: false) }
+        let timer = Timer(timeInterval: 6 * 3600, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.checkForUpdates(manual: false) }
+        }
+        timer.tolerance = 600
+        RunLoop.main.add(timer, forMode: .common)
+        updateTimer = timer
+    }
+
+    /// Stored result from an earlier check; cleared once this build is at least that version.
+    private func refreshUpdateItem() {
+        autoUpdateItem.state = autoUpdateEnabled ? .on : .off
+        guard let version = Support.defaults.string(forKey: "updateAvailableVersion"),
+              (UpdateRules.compare(version, Support.releaseVersion) ?? 0) > 0 else {
+            Support.defaults.removeObject(forKey: "updateAvailableVersion")
+            Support.defaults.removeObject(forKey: "updateAvailableURL")
+            updateItem.isHidden = true
+            return
+        }
+        updateItem.title = "有新版本 \(version) · 下载…"
+        if updateItem.isHidden { Support.log("update-available latest=\(version)") }
+        updateItem.isHidden = false
+    }
+
+    private func fetchReleases() async throws -> [UpdateRules.Release] {
+        if let feed = argument(after: "--test-update-feed") {
+            return try UpdateRules.decodeReleases(Data(contentsOf: URL(fileURLWithPath: feed)))
+        }
+        guard argument(after: "--test-root") == nil else { throw URLError(.notConnectedToInternet) }
+        var request = URLRequest(url: UpdateRules.releasesURL, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
+        request.setValue("Sakura/\(Support.releaseVersion)", forHTTPHeaderField: "User-Agent")
+        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw URLError(.badServerResponse) }
+        return try UpdateRules.decodeReleases(data)
+    }
+
+    private func checkForUpdates(manual: Bool) {
+        guard updateTask == nil else { return }
+        if !manual {
+            let last = Support.defaults.object(forKey: "updateLastCheckAt") as? Double
+            guard autoUpdateEnabled, UpdateRules.isDue(lastCheckAt: last, now: Date().timeIntervalSince1970) else { return }
+        }
+        let source = manual ? "manual" : "auto"
+        updateTask = Task { [weak self] in
+            let result: Result<[UpdateRules.Release], Error>
+            do { result = .success(try await self?.fetchReleases() ?? []) } catch { result = .failure(error) }
+            guard let self else { return }
+            self.updateTask = nil
+            switch result {
+            case .failure(let error):
+                Support.log("update-check source=\(source) result=failed latest=none error=\(type(of: error))")
+                if manual { self.updateAlert("暂时无法检查更新，请稍后再试。", button: nil, url: nil) }
+            case .success(let releases):
+                Support.defaults.set(Date().timeIntervalSince1970, forKey: "updateLastCheckAt")
+                if let newer = UpdateRules.newest(releases, current: Support.releaseVersion) {
+                    Support.defaults.set(newer.version, forKey: "updateAvailableVersion")
+                    Support.defaults.set(newer.url, forKey: "updateAvailableURL")
+                    Support.log("update-check source=\(source) result=newer latest=\(newer.version)")
+                    if manual { self.updateAlert("有新版本 \(newer.version)（当前 \(Support.releaseVersion)）。下载后退出 Sakura，替换旧版即可，设置会保留。", button: "打开下载页", url: newer.url) }
+                } else {
+                    Support.defaults.removeObject(forKey: "updateAvailableVersion")
+                    Support.defaults.removeObject(forKey: "updateAvailableURL")
+                    Support.log("update-check source=\(source) result=current latest=none")
+                    if manual { self.updateAlert("已是最新版本（\(Support.releaseVersion)）。", button: nil, url: nil) }
+                }
+                self.refreshUpdateItem()
+            }
+        }
+    }
+
+    private func updateAlert(_ text: String, button: String?, url: String?) {
+        Support.requestFocus()
+        let alert = NSAlert()
+        alert.messageText = "检查更新"
+        alert.informativeText = text
+        if let button { alert.addButton(withTitle: button) }
+        alert.addButton(withTitle: button == nil ? "好" : "以后再说")
+        if alert.runModal() == .alertFirstButtonReturn, button != nil, let url, let target = URL(string: url) {
+            NSWorkspace.shared.open(target)
+        }
+    }
+
+    @objc private func checkForUpdatesManually() { checkForUpdates(manual: true) }
+    @objc private func toggleAutoUpdate() {
+        Support.defaults.set(!autoUpdateEnabled, forKey: "autoCheckUpdates")
+        refreshUpdateItem()
+        Support.log("auto-update-check enabled=\(autoUpdateEnabled)")
+    }
+    @objc private func openUpdatePage() {
+        guard let url = Support.defaults.string(forKey: "updateAvailableURL").flatMap(URL.init(string:)),
+              url.scheme == "https" else { return }
+        NSWorkspace.shared.open(url)
+    }
+
     private func refreshMenu() {
         pauseItem.state = paused ? .on : .off
         snoozeTomorrowItem.title = "暂停到明天 \(experience.playback.dayStartHour):00"
@@ -849,7 +964,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
 
     func applicationWillTerminate(_ notification: Notification) {
         terminating = true
-        compatTimer?.invalidate(); reappearTimer?.invalidate()
+        compatTimer?.invalidate(); reappearTimer?.invalidate(); updateTimer?.invalidate(); updateTask?.cancel()
         warmPoll?.invalidate(); warmPoll = nil
         if let wakeWatch { NSWorkspace.shared.notificationCenter.removeObserver(wakeWatch) }
         discardWarmup()

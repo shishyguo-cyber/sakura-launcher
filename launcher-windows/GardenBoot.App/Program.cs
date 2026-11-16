@@ -60,6 +60,10 @@ internal sealed record AppOptions(string DataRoot, string? TestRoot, string? Tes
     public string? TestCompat { get; init; }
     /// <summary>Isolated checks: also install the featured pack (normally skipped under --test-root).</summary>
     public bool TestFeatured { get; init; }
+    /// <summary>Isolated checks: check for updates right away (0.5 s) instead of after 60 s.</summary>
+    public bool TestCheckUpdate { get; init; }
+    /// <summary>Isolated checks: read the release list from this local JSON file; never go online.</summary>
+    public string? TestUpdateFeed { get; init; }
     /// <summary>Isolated checks: create a pack from this video with its default name (no dialogs).</summary>
     public string? TestCreateVideo { get; init; }
     public double? TestCompatSeconds { get; init; }
@@ -67,9 +71,9 @@ internal sealed record AppOptions(string DataRoot, string? TestRoot, string? Tes
     public static AppOptions Parse(string[] args)
     {
         string? root = null, target = null;
-        bool login = false, preview = false, openSettings = false, testReappear = false, testFeatured = false;
+        bool login = false, preview = false, openSettings = false, testReappear = false, testFeatured = false, testCheckUpdate = false;
         QuietState? testQuiet = null;
-        string? testCompat = null, testCreateVideo = null; double? testCompatSeconds = null;
+        string? testCompat = null, testCreateVideo = null, testUpdateFeed = null; double? testCompatSeconds = null;
         for (int i = 0; i < args.Length; i++)
         {
             switch (args[i])
@@ -81,6 +85,8 @@ internal sealed record AppOptions(string DataRoot, string? TestRoot, string? Tes
                 case "--settings": openSettings = true; break;
                 case "--test-reappear": testReappear = true; break;
                 case "--test-featured": testFeatured = true; break;
+                case "--test-check-update": testCheckUpdate = true; break;
+                case "--test-update-feed": testUpdateFeed = FullPath(Value(args, ref i)); break;
                 case "--test-compat": testCompat = Value(args, ref i); break;
                 case "--test-create-video": testCreateVideo = FullPath(Value(args, ref i)); break;
                 case "--test-compat-seconds": testCompatSeconds = double.Parse(Value(args, ref i), System.Globalization.CultureInfo.InvariantCulture); break;
@@ -93,7 +99,7 @@ internal sealed record AppOptions(string DataRoot, string? TestRoot, string? Tes
             }
         }
         return new(root ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GardenBoot"),
-                   root, target, login, preview, openSettings) { ManualLaunch = args.Length == 0, TestReappear = testReappear, TestQuiet = testQuiet, TestCompat = testCompat, TestCompatSeconds = testCompatSeconds, TestCreateVideo = testCreateVideo, TestFeatured = testFeatured };
+                   root, target, login, preview, openSettings) { ManualLaunch = args.Length == 0, TestReappear = testReappear, TestQuiet = testQuiet, TestCompat = testCompat, TestCompatSeconds = testCompatSeconds, TestCreateVideo = testCreateVideo, TestFeatured = testFeatured, TestCheckUpdate = testCheckUpdate, TestUpdateFeed = testUpdateFeed };
     }
 
     private static string Value(string[] args, ref int i) => ++i < args.Length ? args[i] : throw new ArgumentException("参数缺少路径");

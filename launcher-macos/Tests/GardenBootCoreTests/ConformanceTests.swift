@@ -357,3 +357,32 @@ extension ConformanceTests {
         XCTAssertThrowsError(try VideoPackRules.build(video: video, name: " ", existingIDs: [], in: root))
     }
 }
+
+extension ConformanceTests {
+    func testUpdateCases() throws {
+        let spec = try load("updates.json")
+        for c in spec["compare"] as! [[String: Any]] {
+            let got = UpdateRules.compare(c["a"] as! String, c["b"] as! String)
+            XCTAssertEqual(got, (c["expect"] as? NSNumber)?.intValue, "\(c["a"]!) vs \(c["b"]!)")
+        }
+        for c in spec["newest"] as! [[String: Any]] {
+            let releases = (c["releases"] as! [[String: Any]]).map {
+                UpdateRules.Release(tag: $0["tag"] as! String, url: $0["url"] as! String, draft: $0["draft"] as! Bool, prerelease: $0["prerelease"] as! Bool)
+            }
+            let got = UpdateRules.newest(releases, current: c["current"] as! String)
+            let expect = (c["expect"] as? [String: String]).map { UpdateRules.Available(version: $0["version"]!, url: $0["url"]!) }
+            XCTAssertEqual(got, expect, c["name"] as! String)
+        }
+        for c in spec["isDue"] as! [[String: Any]] {
+            XCTAssertEqual(UpdateRules.isDue(lastCheckAt: (c["lastCheckAt"] as? NSNumber)?.doubleValue, now: (c["now"] as! NSNumber).doubleValue),
+                           c["expect"] as! Bool, c["name"] as! String)
+        }
+    }
+
+    func testReleaseListDecoding() throws {
+        let json = #"[{"tag_name":"v0.2.0-preview.5","html_url":"https://github.com/x/y/releases/tag/v0.2.0-preview.5","draft":false,"prerelease":true},{"tag_name":"v9","html_url":"javascript:alert(1)"},{"name":"no tag"}]"#
+        let releases = try UpdateRules.decodeReleases(Data(json.utf8))
+        XCTAssertEqual(releases, [UpdateRules.Release(tag: "v0.2.0-preview.5", url: "https://github.com/x/y/releases/tag/v0.2.0-preview.5", draft: false, prerelease: true)])
+        XCTAssertThrowsError(try UpdateRules.decodeReleases(Data(#"{"message":"rate limited"}"#.utf8)))
+    }
+}

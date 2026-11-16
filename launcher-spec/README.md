@@ -7,6 +7,7 @@ macOS 版（`launcher-macos/`，Swift）与 Windows 版（`launcher-windows/`，
 - `COMPATIBILITY.md`：测试一下（适配结论）、窗口重新出现时也播放、全屏/演示时不播。
 - `PACK-FROM-VIDEO.md`：从一个本地视频创建单视频动画包（名称规则、权利确认、NOTICE 内容）。
 - `RESOURCES.md`：空闲资源占用预算、测量方法与记录。
+- `UPDATES.md`：检查更新（只提醒不安装、每周一次、可关闭、版本比较规则与隐私）。
 - `TARGETS.md`：多目标应用（每个应用单独选动画、识别进程、按应用记录状态、同一时间只播一个、已安装应用列表）。
 - `DESIGN.md`：两端共用的界面设计规范（颜色、字体、布局、菜单措辞、图标、评审方式）。
 - `LAUNCH-LATENCY.md`：开场在首帧前不露面、按段就绪、热备与首帧时间日志。
@@ -21,6 +22,7 @@ macOS 版（`launcher-macos/`，Swift）与 Windows 版（`launcher-windows/`，
   - `experience.json`：个人参数合并、静音、边界、包隔离与 Unicode 方案；v1→v2 升级与播放/动画库偏好校验。
   - `schedule.json`：播放频率判断（每天首次、新的一天起点、时区变化、时钟回拨、临时暂停）与“明天”的时间点。
   - `compatibility.json`：适配结论、重新出现判断、安静时段。
+  - `updates.json`：版本比较、选出更新的版本、是否到了检查时间。
   - `video-pack.json`：从视频创建时的默认名称、扩展名、名称校验、包 id 与说明文本。
   - `targets.json`：Windows 进程匹配、按应用选包与回退、playback-state v1/v2 读取。
   - `library.json`：轮换选包（固定、全部随机、收藏随机、避免连续重复）。

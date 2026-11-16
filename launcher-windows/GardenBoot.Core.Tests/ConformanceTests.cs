@@ -340,4 +340,33 @@ public static class ConformanceTests
         }
         finally { Directory.Delete(root, true); }
     }
+    [Test]
+    public static void Updates()
+    {
+        var spec = Load("updates.json");
+        foreach (var c in spec.GetProperty("compare").EnumerateArray())
+        {
+            var expect = c.GetProperty("expect").ValueKind == JsonValueKind.Null ? (int?)null : c.GetProperty("expect").GetInt32();
+            Check.Equal(expect, UpdateRules.Compare(c.GetProperty("a").GetString()!, c.GetProperty("b").GetString()!),
+                        c.GetProperty("a").GetString() + " vs " + c.GetProperty("b").GetString());
+        }
+        foreach (var c in spec.GetProperty("newest").EnumerateArray())
+        {
+            var releases = c.GetProperty("releases").EnumerateArray().Select(r => new UpdateRules.Release(r.GetProperty("tag").GetString()!,
+                r.GetProperty("url").GetString()!, r.GetProperty("draft").GetBoolean(), r.GetProperty("prerelease").GetBoolean())).ToList();
+            var got = UpdateRules.Newest(releases, c.GetProperty("current").GetString()!);
+            var e = c.GetProperty("expect");
+            var expect = e.ValueKind == JsonValueKind.Null ? null : new UpdateRules.Available(e.GetProperty("version").GetString()!, e.GetProperty("url").GetString()!);
+            Check.Equal(expect, got, c.GetProperty("name").GetString()!);
+        }
+        foreach (var c in spec.GetProperty("isDue").EnumerateArray())
+            Check.Equal(c.GetProperty("expect").GetBoolean(), UpdateRules.IsDue(OptionalDouble(c, "lastCheckAt"), c.GetProperty("now").GetDouble()),
+                        c.GetProperty("name").GetString()!);
+        var decoded = UpdateRules.DecodeReleases("""[{"tag_name":"v0.2.0-preview.5","html_url":"https://github.com/x/y","draft":false,"prerelease":true},{"tag_name":"v9","html_url":"javascript:alert(1)"},{"name":"x"}]""");
+        Check.Equal(1, decoded.Count, "decoded entries");
+        Check.Equal(new UpdateRules.Release("v0.2.0-preview.5", "https://github.com/x/y", false, true), decoded[0], "decoded release");
+        var threw = false;
+        try { UpdateRules.DecodeReleases("""{"message":"rate limited"}"""); } catch (JsonException) { threw = true; }
+        Check.True(threw, "non-list rejected");
+    }
 }

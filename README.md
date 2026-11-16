@@ -10,11 +10,11 @@ Sakura is a native macOS and Windows companion that plays a customizable animati
 
 <!-- 发新版时更新这里的版本号（见 docs/RELEASING.md） -->
 <h3 align="center">
-  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.4/Sakura-0.2.0-preview.4-macOS.zip">⬇ 下载 macOS 版</a>
+  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.5/Sakura-0.2.0-preview.5-macOS.zip">⬇ 下载 macOS 版</a>
   &nbsp;&nbsp;·&nbsp;&nbsp;
-  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.4/Sakura-0.2.0-preview.4-windows-x64.zip">⬇ 下载 Windows 版</a>
+  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.5/Sakura-0.2.0-preview.5-windows-x64.zip">⬇ 下载 Windows 版</a>
 </h3>
-<p align="center">v0.2.0-preview.4 开发者预览版 · <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/tag/v0.2.0-preview.4">所有下载、更新说明与校验值</a></p>
+<p align="center">v0.2.0-preview.5 开发者预览版 · <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/tag/v0.2.0-preview.5">所有下载、更新说明与校验值</a></p>
 
 **第一次打开**
 
@@ -22,6 +22,17 @@ Sakura is a native macOS and Windows companion that plays a customizable animati
 - **Windows**（Windows 11 x64）：先安装 [.NET 10 桌面运行时](https://dotnet.microsoft.com/download/dotnet/10.0)，把整个 Sakura 文件夹解压到固定位置，再双击 Sakura.exe。如果出现“Windows 已保护你的电脑”，点“更多信息 → 仍要运行”。
 
 打开后菜单栏或托盘会出现花朵图标，设置窗口会自动弹出，按“概览”的三步引导选择应用、选择动画、预览并保存即可。
+
+**如何更新**
+
+从 0.2.0-preview.5 起，Sakura 每周会检查一次新版本：有新版本时，菜单栏/托盘菜单最上方会出现“有新版本 … · 下载…”，也可以随时点菜单里的“检查更新…”。更新方法：
+
+1. 下载新版本的 zip 并解压；
+2. 从菜单退出正在运行的 Sakura；
+3. Mac：用新的 Sakura.app 替换“应用程序”里的旧版；Windows：用新的 Sakura 文件夹替换旧文件夹；
+4. 重新打开。个人设置、动画库和播放记录都保存在单独的位置，不会丢失。
+
+更早版本（0.2.0-preview.5 及以前）没有检查更新功能，需要手动来这里下载一次新版；之后就能自动收到提醒。
 
 Sakura 在菜单栏或系统托盘运行。你可以从已安装应用中选择目标，为每个应用指定动画，并调节音量、过渡、画面适配和播放频率。它保留应用原有的启动入口。
 
@@ -90,7 +101,7 @@ Sakura 内置两段动画：原创几何示例（CC0），以及默认使用的�
 
 设置、动画和事件日志在本机处理。应用根据所选目标的进程和窗口状态决定何时播放；不需要 OpenAI 账号或 API 密钥。数据位置、日志内容与删除方法见[隐私说明](docs/PRIVACY.md)。
 
-当前版本没有项目推荐目录、通用插件安装器、云同步或自动更新器；这些不属于已实现功能。
+当前版本没有项目推荐目录、通用插件安装器或云同步。“检查更新”只读取 GitHub 上的公开版本列表、每周最多一次、可关闭，不会自动下载或安装，详见[隐私说明](docs/PRIVACY.md)。
 
 ## 许可与来源
 

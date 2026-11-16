@@ -73,6 +73,7 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
         if (!monitor.Start()) log.Write("foreground-hook-unavailable");
         log.Write($"monitor-started targets={string.Join(",", monitor.TargetIds)} baseline={monitor.TargetIds.Sum(id => monitor.SessionOf(id).Processes.Count)} at-login={options.AtLogin}");
         _ = InstallBundled(bundled);
+        StartUpdateChecks();
     }
 
     /// <summary>
@@ -380,6 +381,107 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
         { log.Write($"packs-load-failed type={e.GetType().Name}"); status = "无法读取动画文件夹"; }
     }
 
+    // ---------- Update check (launcher-spec/UPDATES.md) ----------
+
+    private static readonly System.Net.Http.HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(10) };
+    private System.Windows.Threading.DispatcherTimer? updateTimer;
+    private bool updateChecking;
+
+    internal static string ReleaseVersion
+    {
+        get
+        {
+            var info = typeof(ApplicationController).Assembly
+                .GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
+                .OfType<System.Reflection.AssemblyInformationalVersionAttribute>().FirstOrDefault()?.InformationalVersion ?? "0.0.0";
+            return info.Split('+')[0];
+        }
+    }
+
+    private bool AutoUpdateEnabled => settings.AutoCheckUpdates ?? (options.TestRoot is null || options.TestCheckUpdate);
+
+    /// <summary>A newer version found earlier; dropped once this build is at least that version.</summary>
+    private UpdateRules.Available? AvailableUpdate()
+    {
+        if (settings.UpdateAvailableVersion is { } version && settings.UpdateAvailableUrl is { } url
+            && (UpdateRules.Compare(version, ReleaseVersion) ?? 0) > 0) return new(version, url);
+        return null;
+    }
+
+    private void StartUpdateChecks()
+    {
+        if (AvailableUpdate() is { } known) log.Write($"update-available latest={known.Version}");
+        var first = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(options.TestCheckUpdate ? 0.5 : 60) };
+        first.Tick += (_, _) => { first.Stop(); _ = CheckForUpdates(manual: false); };
+        first.Start();
+        updateTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromHours(6) };
+        updateTimer.Tick += (_, _) => _ = CheckForUpdates(manual: false);
+        updateTimer.Start();
+    }
+
+    private async Task<IReadOnlyList<UpdateRules.Release>> FetchReleases()
+    {
+        if (options.TestUpdateFeed is { } feed) return UpdateRules.DecodeReleases(await File.ReadAllTextAsync(feed));
+        if (options.TestRoot is not null) throw new System.Net.Http.HttpRequestException("network disabled in isolated test roots");
+        using var request = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, UpdateRules.ReleasesUrl);
+        request.Headers.UserAgent.ParseAdd("Sakura/" + ReleaseVersion);
+        request.Headers.Accept.ParseAdd("application/vnd.github+json");
+        using var response = await Http.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        return UpdateRules.DecodeReleases(await response.Content.ReadAsStringAsync());
+    }
+
+    private async Task CheckForUpdates(bool manual)
+    {
+        if (updateChecking || disposed) return;
+        if (!manual && (!AutoUpdateEnabled || !UpdateRules.IsDue(settings.UpdateLastCheckAt, UnixNow()))) return;
+        var source = manual ? "manual" : "auto";
+        updateChecking = true;
+        try
+        {
+            var releases = await FetchReleases();
+            if (disposed) return;
+            settings.UpdateLastCheckAt = UnixNow();
+            var newer = UpdateRules.Newest(releases, ReleaseVersion);
+            settings.UpdateAvailableVersion = newer?.Version;
+            settings.UpdateAvailableUrl = newer?.Url;
+            SaveSettings();
+            if (newer is not null)
+            {
+                log.Write($"update-check source={source} result=newer latest={newer.Version}");
+                log.Write($"update-available latest={newer.Version}");
+                if (manual && MessageBox.Show($"有新版本 {newer.Version}（当前 {ReleaseVersion}）。下载后退出 Sakura，替换旧版即可，设置会保留。\n\n现在打开下载页吗？",
+                        "检查更新", MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes) OpenUpdatePage(newer.Url);
+            }
+            else
+            {
+                log.Write($"update-check source={source} result=current latest=none");
+                if (manual) MessageBox.Show($"已是最新版本（{ReleaseVersion}）。", "检查更新", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+        catch (Exception e) when (e is System.Net.Http.HttpRequestException or TaskCanceledException or System.Text.Json.JsonException or IOException or UnauthorizedAccessException)
+        {
+            if (disposed) return;
+            log.Write($"update-check source={source} result=failed latest=none error={e.GetType().Name}");
+            if (manual) MessageBox.Show("暂时无法检查更新，请稍后再试。", "检查更新", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+        finally { updateChecking = false; }
+    }
+
+    private void ToggleAutoUpdate()
+    {
+        settings.AutoCheckUpdates = !AutoUpdateEnabled;
+        SaveSettings();
+        log.Write($"auto-update-check enabled={AutoUpdateEnabled.ToString().ToLowerInvariant()}");
+    }
+
+    private void OpenUpdatePage(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps) return;
+        try { Process.Start(new ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true }); }
+        catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException) { log.Write($"update-open-failed type={e.GetType().Name}"); }
+    }
+
     private IReadOnlyList<TrayEntry> BuildMenu()
     {
         if (!libraryBusy) ReloadPacks();
@@ -397,8 +499,11 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
             new($"暂停到明天 {hour}:00", () => { var now = UnixNow(); Snooze(ScheduleDecision.NextDayStart(now, Offset(now), hour)); }, !settings.Paused),
         };
         if (snooze is not null) snoozeEntries.Add(new("恢复自动播放", () => Snooze(null)));
+        var update = AvailableUpdate();
         return [
-            new("Sakura", Enabled: false), new(shown, Enabled: false),
+            new("Sakura", Enabled: false),
+            .. (update is { } u ? new[] { new TrayEntry($"有新版本 {u.Version} · 下载…", () => OpenUpdatePage(u.Url)) } : []),
+            new(shown, Enabled: false),
             new($"当前动画：{activePack?.Manifest.Name ?? "无"}", Enabled: false), new(Separator: true),
             new("调节启动体验…", OpenSettings, !libraryBusy && activePack is not null),
             new("预览当前动画", () => { log.Write("preview-requested"); Play(true); }, !libraryBusy && activePack is not null),
@@ -413,6 +518,8 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
                 Checked: settings.PlayDespiteReduceMotion),
             new(Separator: true),
             new("开机自动运行", () => ToggleLogin(!login), Enabled: options.TestRoot is null && options.TestTargetExe is null, Checked: login),
+            new("检查更新…", () => _ = CheckForUpdates(manual: true)),
+            new("自动检查更新", ToggleAutoUpdate, Checked: AutoUpdateEnabled),
             new("打开日志", OpenLog), new(Separator: true), new("退出 Sakura", () => { if (experienceWindow?.RequestClose() != false) Application.Current.Shutdown(); }),
         ];
     }
@@ -690,6 +797,7 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
     {
         if (disposed) return;
         disposed = true;
+        updateTimer?.Stop();
         SystemEvents.PowerModeChanged -= PowerModeChanged;
         warmClip?.Dispose();
         warmClip = null;

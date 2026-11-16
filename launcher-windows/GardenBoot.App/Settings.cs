@@ -14,6 +14,11 @@ internal sealed class Settings
     public bool PlayDespiteReduceMotion { get; set; }
     /// <summary>Featured built-in packs already offered once; a removed one is not reinstalled.</summary>
     public List<string> FeaturedInstalled { get; set; } = [];
+    /// <summary>"自动检查更新" (launcher-spec/UPDATES.md); null = default (on, except in isolated test roots).</summary>
+    public bool? AutoCheckUpdates { get; set; }
+    public double? UpdateLastCheckAt { get; set; }
+    public string? UpdateAvailableVersion { get; set; }
+    public string? UpdateAvailableUrl { get; set; }
 
     public static Settings Load(string root, EventLog log)
     {

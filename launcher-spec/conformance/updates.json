@@ -1,0 +1,77 @@
+{
+ "about": "UPDATES.md: compare = sign of UpdateRules.compare(a, b) (null when either is invalid); newest = UpdateRules.newest(releases, current); isDue = UpdateRules.isDue(lastCheckAt, now).",
+ "compare": [
+  { "a": "0.2.0-preview.4", "b": "0.2.0-preview.5", "expect": -1 },
+  { "a": "0.2.0-preview.10", "b": "0.2.0-preview.9", "expect": 1 },
+  { "a": "v0.2.0-preview.4", "b": "0.2.0-preview.4", "expect": 0 },
+  { "a": "0.2.0", "b": "0.2.0-preview.9", "expect": 1 },
+  { "a": "0.10.0", "b": "0.9.9", "expect": 1 },
+  { "a": "1.0.0-alpha", "b": "1.0.0-alpha.1", "expect": -1 },
+  { "a": "1.0.0-alpha.1", "b": "1.0.0-alpha.beta", "expect": -1 },
+  { "a": "1.0.0-beta.11", "b": "1.0.0-rc.1", "expect": -1 },
+  { "a": "1.0.0", "b": "1.0.1", "expect": -1 },
+  { "a": "1.0", "b": "1.0.0", "expect": null },
+  { "a": "latest", "b": "1.0.0", "expect": null },
+  { "a": "01.0.0", "b": "1.0.0", "expect": null }
+ ],
+ "newest": [
+  {
+   "name": "newer-prerelease-for-prerelease-user",
+   "current": "0.2.0-preview.4",
+   "releases": [
+    { "tag": "v0.2.0-preview.3", "url": "https://example.test/3", "draft": false, "prerelease": true },
+    { "tag": "v0.2.0-preview.5", "url": "https://example.test/5", "draft": false, "prerelease": true },
+    { "tag": "v0.2.0-preview.4", "url": "https://example.test/4", "draft": false, "prerelease": true }
+   ],
+   "expect": { "version": "0.2.0-preview.5", "url": "https://example.test/5" }
+  },
+  {
+   "name": "drafts-ignored",
+   "current": "0.2.0-preview.4",
+   "releases": [
+    { "tag": "v0.2.0-preview.6", "url": "https://example.test/6", "draft": true, "prerelease": true },
+    { "tag": "v0.2.0-preview.4", "url": "https://example.test/4", "draft": false, "prerelease": true }
+   ],
+   "expect": null
+  },
+  {
+   "name": "stable-beats-its-previews",
+   "current": "0.2.0-preview.5",
+   "releases": [
+    { "tag": "v0.2.0", "url": "https://example.test/stable", "draft": false, "prerelease": false },
+    { "tag": "v0.2.0-preview.6", "url": "https://example.test/6", "draft": false, "prerelease": true }
+   ],
+   "expect": { "version": "0.2.0", "url": "https://example.test/stable" }
+  },
+  {
+   "name": "stable-user-ignores-prereleases",
+   "current": "0.2.0",
+   "releases": [
+    { "tag": "v0.3.0-preview.1", "url": "https://example.test/p", "draft": false, "prerelease": true },
+    { "tag": "v0.2.0", "url": "https://example.test/stable", "draft": false, "prerelease": false }
+   ],
+   "expect": null
+  },
+  {
+   "name": "invalid-tags-ignored",
+   "current": "0.2.0-preview.4",
+   "releases": [
+    { "tag": "nightly", "url": "https://example.test/n", "draft": false, "prerelease": true },
+    { "tag": "v0.2.0-preview.4", "url": "https://example.test/4", "draft": false, "prerelease": true }
+   ],
+   "expect": null
+  },
+  {
+   "name": "empty-list",
+   "current": "0.2.0-preview.4",
+   "releases": [],
+   "expect": null
+  }
+ ],
+ "isDue": [
+  { "name": "never-checked", "lastCheckAt": null, "now": 1000, "expect": true },
+  { "name": "six-days", "lastCheckAt": 1000, "now": 519400, "expect": false },
+  { "name": "seven-days", "lastCheckAt": 1000, "now": 605800, "expect": true },
+  { "name": "clock-moved-back", "lastCheckAt": 605800, "now": 1000, "expect": true }
+ ]
+}

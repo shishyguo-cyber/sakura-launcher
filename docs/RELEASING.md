@@ -4,7 +4,7 @@ Sakura 的公开仓库只放 `public-files.txt` 列出的文件，并有自己�
 
 ## 1. 准备
 
-- 改版本号：`launcher-macos/Resources/Info.plist`（`CFBundleShortVersionString`、`CFBundleVersion`）、`launcher-windows/GardenBoot.App/GardenBoot.App.csproj`（`<Version>`）、`CHANGELOG.md`。
+- 改版本号：`launcher-macos/Resources/Info.plist`（`CFBundleShortVersionString`、`CFBundleVersion`，以及“检查更新”使用的完整版本 `SakuraReleaseVersion`，例如 `0.2.0-preview.5`）、`launcher-windows/GardenBoot.App/GardenBoot.App.csproj`（`<Version>`）、`CHANGELOG.md`。
 - 两端测试与桌面检查通过（见 [验证说明](VERIFICATION.md)）。
 - 导出公开源码并做严格检查：
 

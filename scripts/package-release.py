@@ -12,6 +12,8 @@ It never uploads, tags or publishes anything.
 """
 import argparse
 import json
+import plistlib
+import re
 import shutil
 import subprocess
 import sys
@@ -36,6 +38,18 @@ def mac_checks(app):
     return {"signature": "ad-hoc, verified", "architectures": sorted(archs)}
 
 
+def declared_versions(mac_app):
+    """The release version each artifact declares; all must equal --version or update checks would misjudge."""
+    found = {}
+    plist = mac_app / "Contents/Info.plist"
+    found["mac app SakuraReleaseVersion"] = plistlib.loads(plist.read_bytes()).get("SakuraReleaseVersion")
+    found["Info.plist SakuraReleaseVersion"] = plistlib.loads(
+        (ROOT / "launcher-macos/Resources/Info.plist").read_bytes()).get("SakuraReleaseVersion")
+    match = re.search(r"<Version>([^<]+)</Version>", (ROOT / "launcher-windows/GardenBoot.App/GardenBoot.App.csproj").read_text())
+    found["GardenBoot.App.csproj Version"] = match.group(1) if match else None
+    return found
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--version", required=True)
@@ -50,6 +64,9 @@ def main():
         parser.error("--mac-app must be a built Sakura.app")
     if not (args.windows_dir / "Sakura.exe").is_file():
         parser.error("--windows-dir must contain Sakura.exe")
+    mismatched = {k: v for k, v in declared_versions(args.mac_app).items() if v != version}
+    if mismatched:
+        parser.error("version mismatch with --version " + version + ": " + json.dumps(mismatched, ensure_ascii=False))
     if any(args.windows_dir.rglob("*.pdb")):
         parser.error("--windows-dir contains .pdb files; publish with launcher-windows/scripts/publish-release.ps1")
 

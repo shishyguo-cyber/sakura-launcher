@@ -19,12 +19,13 @@ GUI_SERVICES = ("com.apple.coreservices.launchservicesd", "com.apple.lsd.mapdb",
                 "com.apple.hiservices-xpcservice", "com.apple.windowserver.active")
 GUI_LOGS = ("native-logic", "delayed-window", "window-timeout", "preview", "unconfigured", "two-targets", "two-targets-disabled",
             "quiet", "reappear", "reappear-ignored", "compat-good", "compat-running", "video-pack", "video-pack-bad",
-            "featured", "featured-again")
+            "featured", "featured-again", "update-newer", "update-current")
 GUI_CASES = ["existing-process baseline", "cold-launch deduplication", "exit/relaunch",
              "no player in logic-only mode", "delayed window intro/loop/outro",
              "no-window timeout", "manual preview", "warm/cold first-frame and invisible-before-show", "unconfigured pack", "two targets: independent packs/daily records, busy and disabled",
              "quiet skip", "reappear plays", "minimize/hide ignored", "compat good / alreadyRunning",
-             "create pack from video (good and corrupt)", "featured pack installed once and made current"]
+             "create pack from video (good and corrupt)", "featured pack installed once and made current",
+             "update check: newer found and remembered, current"]
 
 
 class KnownGUIGap(Exception):
@@ -420,6 +421,30 @@ def main():
             assert not (root / "featured/Packs/raiden-garden").exists()
             stop(p)
             report["featuredPack"] = {"installedOnce": True, "madeCurrent": True, "removalRespected": True}
+
+            # Update check (UPDATES.md): a newer release is found from a local feed and remembered without going online.
+            feed = root / "releases.json"
+            feed.write_text(json.dumps([
+                {"tag_name": "v0.2.0-preview.9", "html_url": "https://example.test/9", "draft": False, "prerelease": True},
+                {"tag_name": "v9.0.0-preview.1", "html_url": "https://example.test/draft", "draft": True, "prerelease": True}]))
+            watcher = start_watcher("update-newer", "-paused", "YES", "--test-check-update", "--test-update-feed", str(feed))
+            wait_for(lambda: "update-check source=auto result=newer latest=0.2.0-preview.9" in events("update-newer"), "newer release found", 15)
+            assert "update-available latest=0.2.0-preview.9" in events("update-newer")
+            stop(watcher)
+            before = events("update-newer").count("update-check")
+            p = subprocess.Popen([str(binary), "--test-target", identifier, "--test-root", str(root / "update-newer"), "-paused", "YES",
+                                  "--test-check-update", "--test-update-feed", str(feed)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            children.append(p)
+            wait_for(lambda: events("update-newer").count("update-available latest=0.2.0-preview.9") == 2, "remembered after restart", 15)
+            time.sleep(2)
+            assert events("update-newer").count("update-check") == before, "a check within 7 days must not go online again"
+            stop(p)
+            feed.write_text(json.dumps([{"tag_name": "v0.2.0-preview.1", "html_url": "https://example.test/1", "draft": False, "prerelease": True}]))
+            watcher = start_watcher("update-current", "-paused", "YES", "--test-check-update", "--test-update-feed", str(feed))
+            wait_for(lambda: "update-check source=auto result=current latest=none" in events("update-current"), "already current", 15)
+            assert "update-available" not in events("update-current")
+            stop(watcher)
+            report["updateCheck"] = {"newerFound": True, "rememberedOffline": True, "notDueNoRecheck": True, "current": True}
 
             # Preserve v1's unconfigured-media case: genuinely resource-less app + empty test root.
             empty_app = root / "Empty.app"
