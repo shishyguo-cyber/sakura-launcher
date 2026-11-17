@@ -62,7 +62,8 @@ final class ExperienceEditor: ObservableObject {
         do { try runtime?.setAutomaticUpdates(value); objectWillChange.send() }
         catch { message = "更新偏好未保存，请稍后重试。" }
     }
-    func openUpdateDownload() { runtime?.openUpdateDownload() }
+    func openUpdateDownload() { runtime?.openUpdateDownload(); objectWillChange.send() }
+    func openUpdateFallback() { runtime?.openUpdateFallback() }
     func setWelcomeDismissed(_ value: Bool) {
         do { try runtime?.setWelcomeDismissed(value); welcomeDismissed = value }
         catch { message = "引导偏好未保存，请稍后重试。" }

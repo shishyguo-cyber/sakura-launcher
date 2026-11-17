@@ -132,6 +132,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
         menu.addItem(loginItem)
         add("检查更新…", action: #selector(checkForUpdatesManually))
         autoUpdateItem.target = self; menu.addItem(autoUpdateItem)
+        add("在 GitHub 查看", action: #selector(openUpdatePage))
         autoUpdateItem.toolTip = "每周最多联网一次，只读取 GitHub 上的公开版本列表；不下载、不安装。"
         add("打开日志", action: #selector(openLog))
         menu.addItem(.separator())
@@ -197,6 +198,8 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
                 Support.log("settings-opened-on-launch")
                 self.openSettings()
             }
+            if let ack = argument(after: "--update-ready") { try? Data(Support.releaseVersion.utf8).write(to: URL(fileURLWithPath: ack), options: .atomic) }
+            if CommandLine.arguments.contains("--update-failed") { self.updateAlert("更新未完成，已保留或恢复旧版。可去 GitHub 手动下载。", button: "去 GitHub 手动下载", url: "https://github.com/shishyguo-cyber/sakura-launcher/releases") }
         }
     }
 
@@ -791,11 +794,12 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
 
     // MARK: Update check (launcher-spec/UPDATES.md)
 
-    private let updateItem = NSMenuItem(title: "", action: #selector(openUpdatePage), keyEquivalent: "")
+    private let updateItem = NSMenuItem(title: "", action: #selector(installUpdate), keyEquivalent: "")
     private let autoUpdateItem = NSMenuItem(title: "自动检查更新", action: #selector(toggleAutoUpdate), keyEquivalent: "")
     private var updateTimer: Timer?
     private var updateTask: Task<Void, Never>?
-    private var updateMessage = "尚未检查更新"
+    private var installTask: Task<Void, Never>?
+    private var updateMessage = "尚未检查更新" { didSet { if installTask != nil { updateItem.title = updateMessage + " · 取消下载" } } }
     private var autoUpdateEnabled: Bool {
         // Isolated test roots never go online by default.
         let fallback = argument(after: "--test-root") == nil || CommandLine.arguments.contains("--test-check-update")
@@ -824,7 +828,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
             updateItem.isHidden = true
             return
         }
-        updateItem.title = "有新版本 \(version) · 下载…"
+        updateItem.title = "有新版本 \(version) · 更新…"
         if updateItem.isHidden { Support.log("update-available latest=\(version)") }
         updateItem.isHidden = false
     }
@@ -843,7 +847,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
     }
 
     private func checkForUpdates(manual: Bool, showAlert: Bool = true) {
-        guard updateTask == nil else { return }
+        guard updateTask == nil, installTask == nil else { return }
         if !manual {
             let last = Support.defaults.object(forKey: "updateLastCheckAt") as? Double
             guard autoUpdateEnabled, UpdateRules.isDue(lastCheckAt: last, now: Date().timeIntervalSince1970) else { return }
@@ -867,7 +871,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
                     Support.defaults.set(newer.url, forKey: "updateAvailableURL")
                     Support.log("update-check source=\(source) result=newer latest=\(newer.version)")
                     self.updateMessage = "发现新版本 \(newer.version)"
-                    if manual && showAlert { self.updateAlert("有新版本 \(newer.version)（当前 \(Support.releaseVersion)）。下载后退出 Sakura，替换旧版即可，设置会保留。", button: "打开下载页", url: newer.url) }
+                    if manual && showAlert { self.openSettings() }
                 } else {
                     Support.defaults.removeObject(forKey: "updateAvailableVersion")
                     Support.defaults.removeObject(forKey: "updateAvailableURL")
@@ -899,10 +903,56 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
         }
         let message = updateMessage == "尚未检查更新" ? newer.map { "发现新版本 \($0)" } ?? updateMessage : updateMessage
         return UpdateOverview(version: Support.releaseVersion, automatic: autoUpdateEnabled,
-            checking: updateTask != nil, message: message, availableVersion: newer)
+            checking: updateTask != nil, message: message, availableVersion: newer, installing: installTask != nil)
     }
     func checkForUpdatesFromSettings() { checkForUpdates(manual: true, showAlert: false) }
-    func openUpdateDownload() { openUpdatePage() }
+    func openUpdateDownload() { installUpdate() }
+    func openUpdateFallback() { openUpdatePage() }
+    @objc private func installUpdate() {
+        if let task = installTask { task.cancel(); return }
+        guard let version = updateOverview().availableVersion else { return }
+        installTask = Task { [weak self] in
+            guard let self else { return }
+            let fm = FileManager.default
+            let work = fm.temporaryDirectory.appendingPathComponent("Sakura-update-" + UUID().uuidString)
+            var prepared: URL?
+            do {
+                guard argument(after: "--test-root") == nil else { throw SignedUpdate.Failure.permission }
+                try fm.createDirectory(at: work, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
+                let free = try fm.attributesOfFileSystem(forPath: work.path)[.systemFreeSize] as? NSNumber
+                guard (free?.int64Value ?? 0) > 5 * 1024 * 1024 * 1024 else { throw SignedUpdate.Failure.space }
+                let asset = try SignedUpdate.asset(version: version, current: Support.releaseVersion, platform: "macOS")
+                let sig = UpdateDownload(destination: work.appendingPathComponent("update.sig"), limit: 16384) { _ in }
+                let signature = try await sig.fetch(URL(string: asset.absoluteString + ".sig")!)
+                let downloader = UpdateDownload(destination: work.appendingPathComponent("update.zip"), limit: Int64(SignedUpdate.maxArchive)) { [weak self] progress in
+                    Task { @MainActor in self?.updateMessage = progress < 0 ? "正在下载更新…" : "正在下载更新 \(Int(progress * 100))%" }
+                }
+                let zip = try await downloader.fetch(asset)
+                try Task.checkCancellation()
+                self.updateMessage = "正在验证并准备安装…"
+                let target = Bundle.main.bundleURL
+                let request = try await Task.detached {
+                    try UpdateInstaller.prepare(zip: zip, signature: signature, target: target, version: version, current: Support.releaseVersion, work: work)
+                }.value
+                prepared = request
+                try Task.checkCancellation()
+                let helper = work.appendingPathComponent("SakuraUpdater")
+                try fm.copyItem(at: Bundle.main.executableURL!, to: helper)
+                let p = Process(); p.executableURL = helper; p.arguments = ["--apply-update", request.path]
+                try p.run()
+                NSApp.terminate(nil)
+            } catch {
+                if let prepared, let data = try? Data(contentsOf: prepared), let r = try? JSONDecoder().decode(UpdateInstaller.Request.self, from: data) { try? fm.removeItem(atPath: r.staged) }
+                try? fm.removeItem(at: work)
+                let cancelled = Task.isCancelled
+                self.updateMessage = cancelled ? "下载已取消，旧版仍可使用。" : "更新失败：\(error.localizedDescription) 可去 GitHub 手动下载。"
+                if !cancelled { self.updateAlert(self.updateMessage, button: "去 GitHub 手动下载", url: "https://github.com/shishyguo-cyber/sakura-launcher/releases") }
+                self.installTask = nil
+                self.refreshUpdateItem()
+            }
+        }
+    }
+
     @objc private func toggleAutoUpdate() { setAutomaticUpdates(!autoUpdateEnabled) }
     func setAutomaticUpdates(_ value: Bool) {
         Support.defaults.set(value, forKey: "autoCheckUpdates")
@@ -910,9 +960,10 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
         Support.log("auto-update-check enabled=\(autoUpdateEnabled)")
     }
     @objc private func openUpdatePage() {
-        guard let url = Support.defaults.string(forKey: "updateAvailableURL").flatMap(URL.init(string:)),
-              url.scheme == "https" else { return }
-        NSWorkspace.shared.open(url)
+        let version = updateOverview().availableVersion
+        let page = version.map { "https://github.com/shishyguo-cyber/sakura-launcher/releases/tag/v\($0)" }
+            ?? "https://github.com/shishyguo-cyber/sakura-launcher/releases"
+        if let target = URL(string: page) { NSWorkspace.shared.open(target) }
     }
 
     private func refreshMenu() {
@@ -981,7 +1032,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
 
     func applicationWillTerminate(_ notification: Notification) {
         terminating = true
-        compatTimer?.invalidate(); reappearTimer?.invalidate(); updateTimer?.invalidate(); updateTask?.cancel()
+        compatTimer?.invalidate(); reappearTimer?.invalidate(); updateTimer?.invalidate(); updateTask?.cancel(); installTask?.cancel()
         warmPoll?.invalidate(); warmPoll = nil
         if let wakeWatch { NSWorkspace.shared.notificationCenter.removeObserver(wakeWatch) }
         discardWarmup()

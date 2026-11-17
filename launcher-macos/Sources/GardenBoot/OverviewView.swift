@@ -51,7 +51,7 @@ struct OverviewView: View {
                 Spacer(minLength: 0)
                 Button(snapshot.checking ? "正在检查…" : "检查更新") { editor.checkForUpdates() }
                     .buttonStyle(GardenButtonStyle(kind: .secondary, small: true))
-                    .disabled(!snapshot.connected || snapshot.checking)
+                    .disabled(!snapshot.connected || snapshot.checking || snapshot.installing)
                     .accessibilityIdentifier("overview-check-updates")
             }
             HStack(spacing: 12) {
@@ -61,9 +61,11 @@ struct OverviewView: View {
                     .accessibilityIdentifier("overview-update-result")
                 if snapshot.connected, snapshot.availableVersion != nil {
                     Spacer(minLength: 0)
-                    Button("下载新版本") { editor.openUpdateDownload() }
+                    Button(snapshot.installing ? "取消下载" : "更新") { editor.openUpdateDownload() }
                         .buttonStyle(GardenButtonStyle(kind: .primary, small: true))
                         .accessibilityIdentifier("overview-download-update")
+                    Button("在 GitHub 查看") { editor.openUpdateFallback() }
+                        .buttonStyle(GardenButtonStyle(kind: .secondary, small: true))
                 }
             }
             Rectangle().fill(Theme.divider).frame(height: 1)

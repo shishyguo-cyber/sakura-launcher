@@ -11,6 +11,16 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] == "--apply-update")
+        {
+            try { GardenBoot.Core.SignedUpdate.Apply(args[1]); return 0; }
+            catch (SignedUpdate.RecoveryRequired e) {
+                if (MessageBox.Show(e.Message, "更新失败", MessageBoxButton.YesNo, MessageBoxImage.Error) == MessageBoxResult.Yes)
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://github.com/shishyguo-cyber/sakura-launcher/releases") { UseShellExecute = true });
+                return 1;
+            }
+            catch { return 1; }
+        }
         AppOptions options;
         try { options = AppOptions.Parse(args); }
         catch (ArgumentException e)
@@ -53,6 +63,8 @@ internal sealed record AppOptions(string DataRoot, string? TestRoot, string? Tes
 {
     /// <summary>Started by hand (no arguments at all): show the settings so the user sees Sakura opened.</summary>
     public bool ManualLaunch { get; init; }
+    public string? UpdateReady { get; init; }
+    public bool UpdateFailed { get; init; }
     /// <summary>Test hooks: watch the test target for reappearing windows; pretend the system is in this quiet state.</summary>
     public bool TestReappear { get; init; }
     public QuietState? TestQuiet { get; init; }
@@ -70,7 +82,7 @@ internal sealed record AppOptions(string DataRoot, string? TestRoot, string? Tes
     public bool RequestSettings => OpenSettings || (ManualLaunch && !AtLogin);
     public static AppOptions Parse(string[] args)
     {
-        string? root = null, target = null;
+        string? root = null, target = null, updateReady = null; bool updateFailed = false;
         bool login = false, preview = false, openSettings = false, testReappear = false, testFeatured = false, testCheckUpdate = false;
         QuietState? testQuiet = null;
         string? testCompat = null, testCreateVideo = null, testUpdateFeed = null; double? testCompatSeconds = null;
@@ -82,6 +94,8 @@ internal sealed record AppOptions(string DataRoot, string? TestRoot, string? Tes
                 case "--test-target-exe": target = FullPath(Value(args, ref i)); break;
                 case "--at-login": login = true; break;
                 case "--preview": preview = true; break;
+                case "--update-ready": updateReady = FullPath(Value(args, ref i)); break;
+                case "--update-failed": updateFailed = true; break;
                 case "--settings": openSettings = true; break;
                 case "--test-reappear": testReappear = true; break;
                 case "--test-featured": testFeatured = true; break;
@@ -99,7 +113,7 @@ internal sealed record AppOptions(string DataRoot, string? TestRoot, string? Tes
             }
         }
         return new(root ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GardenBoot"),
-                   root, target, login, preview, openSettings) { ManualLaunch = args.Length == 0, TestReappear = testReappear, TestQuiet = testQuiet, TestCompat = testCompat, TestCompatSeconds = testCompatSeconds, TestCreateVideo = testCreateVideo, TestFeatured = testFeatured, TestCheckUpdate = testCheckUpdate, TestUpdateFeed = testUpdateFeed };
+                   root, target, login, preview, openSettings) { ManualLaunch = args.Length == 0, UpdateReady = updateReady, UpdateFailed = updateFailed, TestReappear = testReappear, TestQuiet = testQuiet, TestCompat = testCompat, TestCompatSeconds = testCompatSeconds, TestCreateVideo = testCreateVideo, TestFeatured = testFeatured, TestCheckUpdate = testCheckUpdate, TestUpdateFeed = testUpdateFeed };
     }
 
     private static string Value(string[] args, ref int i) => ++i < args.Length ? args[i] : throw new ArgumentException("参数缺少路径");

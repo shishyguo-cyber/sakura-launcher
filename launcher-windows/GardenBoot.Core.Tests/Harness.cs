@@ -67,6 +67,7 @@ public static class Program
 {
     public static async Task<int> Main(string[] args)
     {
+        if (args.FirstOrDefault() == "--prepare-update") return await UpdateHarness.Prepare(args);
         var filter = args.FirstOrDefault();
         var tests = typeof(Program).Assembly.GetTypes()
             .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Static))

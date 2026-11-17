@@ -388,11 +388,12 @@ internal static class Program
     {
         public bool WelcomeDismissed { get; private set; }
         public App.UpdateOverview UpdateState { get; set; } = new("0.2.0-preview.5", true, false, "尚未检查更新");
-        public int UpdateChecks, UpdateDownloads;
+        public int UpdateChecks, UpdateDownloads, UpdateFallbacks;
         public App.UpdateOverview UpdateOverview() => UpdateState;
         public void CheckForUpdatesFromSettings() { if (!UpdateState.Checking) { UpdateChecks++; UpdateState = UpdateState with { Checking = true }; } }
         public void SetAutomaticUpdates(bool enabled) => UpdateState = UpdateState with { Automatic = enabled };
         public void OpenUpdateDownload() => UpdateDownloads++;
+        public void OpenUpdateFallback() => UpdateFallbacks++;
         public bool NoPack { get; set; }
         public List<string> Calls { get; } = [];
         public void SetWelcomeDismissed(bool value) => WelcomeDismissed = value;
@@ -438,8 +439,15 @@ internal static class Program
             window.ShowPage("overview");
             Require(Named<Button>(window, "检查更新").IsEnabled && Controls<TextBlock>(window).Any(t => t.Text.Contains("暂时无法检查更新")), "Failed checks show an inline message and allow retry");
             runtime.UpdateState = runtime.UpdateState with { AvailableVersion = "0.2.0-preview.6", Message = "发现新版本 0.2.0-preview.6" };
-            window.ShowPage("overview"); ClickNamed(window, "下载新版本");
+            window.ShowPage("overview"); ClickNamed(window, "更新");
             Require(runtime.UpdateDownloads == 1 && saved is null, "New release download is visible and does not save the draft");
+            runtime.UpdateState = runtime.UpdateState with { Installing = true, Message = "正在下载更新 42%" };
+            window.ShowPage("overview");
+            Require(!Named<Button>(window, "检查更新").IsEnabled, "Checking disabled during update download");
+            ClickNamed(window, "取消下载"); Require(runtime.UpdateDownloads == 2, "Download action cancels while installing");
+            ClickNamed(window, "在 GitHub 查看"); Require(runtime.UpdateFallbacks == 1, "Manual fallback remains accessible");
+            Render(window, Path.Combine(output, "overview-update-progress.png"));
+            runtime.UpdateState = runtime.UpdateState with { Installing = false };
             checks.Add("overview-update-controls-runtime-state-and-draft-isolation");
             ClickNamed(window, "引导 选择应用");
             Require(Controls<RadioButton>(window).Single(x => Equals(x.Content, "应用")).IsChecked == true, "Guide navigates to apps");
@@ -452,7 +460,7 @@ internal static class Program
             Click(window, "保存设置"); Require(saved?.MasterVolume == .29, "Only explicit save persists draft");
             checks.Add("overview-per-target-saved-state-guide-and-draft-actions");
         }
-        finally { window.Close(); }
+        finally { typeof(App.ExperienceWindow).GetField("dirty", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(window, false); window.Close(); }
         var empty = new App.ExperienceWindow(null, new(), "", _ => { }, (_, _) => throw new InvalidOperationException("No-pack preview invoked"),
             new([], new Dictionary<string, string>(), null, "demo-garden", new(), ""), null, null);
         try
@@ -475,7 +483,7 @@ internal static class Program
     }
     [STAThread] private static int Main(string[] args)
     {
-        if (args.Length != 2 || !Path.IsPathFullyQualified(args[0]) || !Path.IsPathFullyQualified(args[1])) return 2;
+        if (args.Length is < 2 or > 3 || (args.Length == 3 && args[2] != "--overview-only") || !Path.IsPathFullyQualified(args[0]) || !Path.IsPathFullyQualified(args[1])) return 2;
         var output = args[0]; Directory.CreateDirectory(output);
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         int code = 1;
@@ -485,7 +493,12 @@ internal static class Program
             var checks = new List<string>();
             try
             {
-                Require(Environment.UserInteractive && System.Diagnostics.Process.GetCurrentProcess().SessionId != 0, "Requires logged-in desktop");
+                if (args.Length != 3) Require(Environment.UserInteractive && System.Diagnostics.Process.GetCurrentProcess().SessionId != 0, "Requires logged-in desktop");
+                if (args.Length == 3) {
+                    CheckOverview(output, args[1], checks);
+                    File.WriteAllText(Path.Combine(output, "report.json"), JsonSerializer.Serialize(new { passed = true, checks, sessionId = System.Diagnostics.Process.GetCurrentProcess().SessionId }));
+                    code = 0; return;
+                }
                 var pack = PackLibrary.Load(args[1]);
                 var store = new ExperienceStore(output);
                 ExperienceSettings? previewed = null;

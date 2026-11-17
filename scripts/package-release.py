@@ -2,6 +2,7 @@
 """Assemble a Sakura release folder from already prepared, debug-free app builds.
 
   python3 scripts/package-release.py --version 0.2.0-preview.4 \
+      --signing-key <repository-external P-256 PEM> \
       --mac-app <Sakura.app from launcher-macos/scripts/package.sh> \
       --windows-dir <folder from launcher-windows/scripts/publish-release.ps1> \
       --out <new folder>
@@ -53,6 +54,7 @@ def declared_versions(mac_app):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--version", required=True)
+    parser.add_argument("--signing-key", type=Path, required=True, help="repository-external P-256 PEM, mode 600")
     parser.add_argument("--mac-app", type=Path, required=True)
     parser.add_argument("--windows-dir", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
@@ -99,11 +101,15 @@ def main():
             print("ABORTED: the packages above contain things that must not be shipped. Nothing was written.", file=sys.stderr)
             return 1
 
+        for platform in ("macOS", "windows-x64"):
+            subprocess.run([sys.executable, str(ROOT / "scripts/sign-update.py"), "--key", str(args.signing_key.expanduser()),
+                            "--version", version, "--platform", platform, str(stage / f"Sakura-{version}-{platform}.zip")], check=True)
         zips = sorted(stage.glob("*.zip"))
-        (stage / "SHA256SUMS.txt").write_text(checksums_text(zips), encoding="utf-8")
+        signed_assets = zips + sorted(stage.glob("*.sig"))
+        (stage / "SHA256SUMS.txt").write_text(checksums_text(signed_assets), encoding="utf-8")
         inventory = {
             "version": version,
-            "packages": {z.name: {"bytes": z.stat().st_size, "sha256": sha256(z)} for z in zips},
+            "packages": {z.name: {"bytes": z.stat().st_size, "sha256": sha256(z)} for z in signed_assets},
             "macOS": mac_checks(args.mac_app),
             "source": [{"path": p.relative_to(source_dir).as_posix(), "bytes": p.stat().st_size, "sha256": sha256(p)}
                        for p, _ in tree_entries(source_dir, "")],

@@ -55,7 +55,7 @@ public static class UpdateRules
             string p = x.Prerelease[i], q = y.Prerelease[i];
             if (p == q) continue;
             var pn = p.All(char.IsAsciiDigit); var qn = q.All(char.IsAsciiDigit);
-            if (pn && qn) return long.Parse(p, CultureInfo.InvariantCulture) < long.Parse(q, CultureInfo.InvariantCulture) ? -1 : 1;
+            if (pn && qn) { var a = p.TrimStart('0'); var b = q.TrimStart('0'); if (a.Length != b.Length) return a.Length < b.Length ? -1 : 1; var result = string.CompareOrdinal(a, b); if (result != 0) return result < 0 ? -1 : 1; continue; }
             if (pn != qn) return pn ? -1 : 1;
             return string.CompareOrdinal(p, q) < 0 ? -1 : 1;
         }

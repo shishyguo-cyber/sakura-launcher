@@ -130,6 +130,8 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
             log.Write("settings-opened-on-launch");
             OpenSettings();
         }
+        if (options.UpdateReady is { } ack) File.WriteAllText(ack, ReleaseVersion);
+        if (options.UpdateFailed && MessageBox.Show("更新未完成，已保留或恢复旧版。去 GitHub 手动下载？", "更新失败", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes) OpenUpdateFallback();
     }
 
     private Task<bool> ImageProbe(string path) =>
@@ -387,6 +389,7 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
     private static readonly System.Net.Http.HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(10) };
     private System.Windows.Threading.DispatcherTimer? updateTimer;
     private bool updateChecking;
+    private CancellationTokenSource? installCancellation;
 
     internal static string ReleaseVersion
     {
@@ -435,7 +438,7 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
 
     private async Task CheckForUpdates(bool manual, bool showAlert = true)
     {
-        if (updateChecking || disposed) return;
+        if (updateChecking || installCancellation is not null || disposed) return;
         if (!manual && (!AutoUpdateEnabled || !UpdateRules.IsDue(settings.UpdateLastCheckAt, UnixNow()))) return;
         var source = manual ? "manual" : "auto";
         updateChecking = true;
@@ -454,8 +457,7 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
                 log.Write($"update-check source={source} result=newer latest={newer.Version}");
                 log.Write($"update-available latest={newer.Version}");
                 updateMessage = $"发现新版本 {newer.Version}";
-                if (manual && showAlert && MessageBox.Show($"有新版本 {newer.Version}（当前 {ReleaseVersion}）。下载后退出 Sakura，替换旧版即可，设置会保留。\n\n现在打开下载页吗？",
-                        "检查更新", MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes) OpenUpdatePage(newer.Url);
+                if (manual && showAlert) OpenSettings();
             }
             else
             {
@@ -475,9 +477,52 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
     }
 
     public UpdateOverview UpdateOverview() => new(ReleaseVersion, AutoUpdateEnabled, updateChecking,
-        updateMessage == "尚未检查更新" && AvailableUpdate() is { } newer ? $"发现新版本 {newer.Version}" : updateMessage, AvailableUpdate()?.Version);
+        updateMessage == "尚未检查更新" && AvailableUpdate() is { } newer ? $"发现新版本 {newer.Version}" : updateMessage, AvailableUpdate()?.Version, Installing: installCancellation is not null);
     public void CheckForUpdatesFromSettings() => _ = CheckForUpdates(manual: true, showAlert: false);
-    public void OpenUpdateDownload() { if (AvailableUpdate() is { } newer) OpenUpdatePage(newer.Url); }
+    public void OpenUpdateDownload() { if (installCancellation is not null) { installCancellation.Cancel(); return; } _ = InstallUpdate(); }
+    public void OpenUpdateFallback() => OpenUpdatePage("https://github.com/shishyguo-cyber/sakura-launcher/releases");
+    private async Task InstallUpdate()
+    {
+        if (AvailableUpdate() is not { } newer || installCancellation is not null) return;
+        using var cancellation = new CancellationTokenSource(); installCancellation = cancellation;
+        var work = Path.Combine(Path.GetTempPath(), "Sakura-update-" + Guid.NewGuid()); string? staged = null;
+        try
+        {
+            if (options.TestRoot is not null) throw new IOException("隔离实例请使用更新测试程序。");
+            Directory.CreateDirectory(work);
+            if (new DriveInfo(Path.GetPathRoot(work)!).AvailableFreeSpace < 5L * 1024 * 1024 * 1024) throw new IOException("磁盘空间不足，请至少留出 5 GB。");
+            var asset = SignedUpdate.Asset(newer.Version, ReleaseVersion, "windows-x64");
+            var zip = Path.Combine(work, "update.zip"); var sig = Path.Combine(work, "update.sig");
+            updateMessage = "正在下载更新签名…";
+            await SignedUpdate.Download(new Uri(asset.AbsoluteUri + ".sig"), sig, 16384, _ => {}, cancellation.Token);
+            await SignedUpdate.Download(asset, zip, SignedUpdate.MaxArchive, p => Application.Current.Dispatcher.BeginInvoke(() => updateMessage = p < 0 ? "正在下载更新…" : $"正在下载更新 {(int)(p*100)}%"), cancellation.Token);
+            cancellation.Token.ThrowIfCancellationRequested(); updateMessage = "正在验证并准备安装…";
+            var target = Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory);
+            var request = await Task.Run(() => SignedUpdate.Prepare(zip, sig, target, newer.Version, ReleaseVersion, work));
+            staged = System.Text.Json.JsonSerializer.Deserialize<SignedUpdate.Request>(File.ReadAllText(request))!.Staged;
+            cancellation.Token.ThrowIfCancellationRequested();
+            // A temporary copy of the existing self-contained app is the helper. Never runs inside the folder being moved.
+            var helper = Path.Combine(work, "helper");
+            await Task.Run(() => {
+                foreach (var source in Directory.EnumerateFiles(target, "*", SearchOption.AllDirectories)) {
+                    cancellation.Token.ThrowIfCancellationRequested();
+                    var destination = Path.Combine(helper, Path.GetRelativePath(target, source));
+                    Directory.CreateDirectory(Path.GetDirectoryName(destination)!); File.Copy(source, destination);
+                }
+            });
+            cancellation.Token.ThrowIfCancellationRequested();
+            var info = new ProcessStartInfo(Path.Combine(helper, "Sakura.exe")) { UseShellExecute = false, WorkingDirectory = helper };
+            info.ArgumentList.Add("--apply-update"); info.ArgumentList.Add(request); Process.Start(info);
+            Application.Current.Shutdown();
+        }
+        catch (Exception e)
+        {
+            try { if (staged is not null && Directory.Exists(staged)) Directory.Delete(staged, true); if (Directory.Exists(work)) Directory.Delete(work, true); } catch { }
+            updateMessage = cancellation.IsCancellationRequested ? "下载已取消，旧版仍可使用。" : $"更新失败：{e.Message} 可去 GitHub 手动下载。";
+            if (!cancellation.IsCancellationRequested && MessageBox.Show(updateMessage + "\n\n去 GitHub 手动下载？", "更新失败", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes) OpenUpdateFallback();
+        }
+        finally { installCancellation = null; }
+    }
     private void ToggleAutoUpdate() => SetAutomaticUpdates(!AutoUpdateEnabled);
     public void SetAutomaticUpdates(bool value)
     {
@@ -513,7 +558,7 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
         var update = AvailableUpdate();
         return [
             new("Sakura", Enabled: false),
-            .. (update is { } u ? new[] { new TrayEntry($"有新版本 {u.Version} · 下载…", () => OpenUpdatePage(u.Url)) } : []),
+            .. (update is { } u ? new[] { new TrayEntry(installCancellation is null ? $"有新版本 {u.Version} · 更新…" : updateMessage + " · 取消下载", OpenUpdateDownload), new TrayEntry("在 GitHub 查看", OpenUpdateFallback) } : []),
             new(shown, Enabled: false),
             new($"当前动画：{activePack?.Manifest.Name ?? "无"}", Enabled: false), new(Separator: true),
             new("调节启动体验…", OpenSettings, !libraryBusy && activePack is not null),
@@ -816,6 +861,7 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
         player?.Send(new PlaybackEvent.Superseded());
         player = null;
         shutdown.Cancel();
+        installCancellation?.Cancel();
         monitor.Dispose();
         tray.Dispose();
     }

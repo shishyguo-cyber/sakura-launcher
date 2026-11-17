@@ -21,10 +21,11 @@ Sakura 枚举已安装应用供用户选择，再依据所选目标的进程身�
 
 从 0.2.0-preview.5 起，Sakura 会检查 GitHub 上是否有新版本（规则见 [UPDATES.md](../launcher-spec/UPDATES.md)）：
 
-- 只请求 `https://api.github.com/repos/shishyguo-cyber/sakura-launcher/releases`，读取公开的版本列表；`User-Agent` 为 `Sakura/<当前版本>`。
+- 自动检查只请求 `https://api.github.com/repos/shishyguo-cyber/sakura-launcher/releases`，读取公开的版本列表；`User-Agent` 为 `Sakura/<当前版本>`。
 - 不发送账号、设备标识、设置、动画或使用数据。和任何网络请求一样，GitHub 能看到请求方的 IP 地址。
 - “自动检查更新”默认打开，最多每 7 天联网一次；可在菜单栏/托盘菜单里取消勾选，之后不再自动联网。“检查更新…”只在你点击时联网。
-- 发现新版本只提示并打开下载页，不会自动下载、替换或运行任何文件。查到的版本号和下载页地址保存在本机偏好中。
+- 发现新版后，点击“更新”才从该仓库的 GitHub Release 下载当前平台 ZIP 和签名（GitHub 可能重定向到其 release-assets.githubusercontent.com）；显示进度，可取消。签名与包校验通过后退出、替换并重新打开，失败保留或恢复旧版。不会静默下载或自动安装。查到的版本号和下载页地址保存在本机偏好中。
+- 下载与安装只接触临时目录和程序目录；设置、动画库和播放记录保持在原数据目录。preview.7 及更早版本需要先手动更新一次才能获得此功能。
 
 ## 登录与删除
 

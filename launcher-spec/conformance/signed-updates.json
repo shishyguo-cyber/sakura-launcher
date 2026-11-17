@@ -1,0 +1,121 @@
+[
+  {
+    "name": "valid",
+    "manifest": {
+      "format": 1,
+      "version": "0.2.0-preview.8",
+      "platform": "macOS",
+      "bytes": 14,
+      "sha256": "f6ee8f3108de139c0ced39ec732c8ebb2ac57bcef5e25e1dfa7a0e8e241d10f8",
+      "signature": "MEQCIEzamXDv6ohCYjSMGBmsJFmwzFGrulxxANXym7nPA0mXAiBlcOe+OW+Gkr2FYdbp1xPH8SRaW8+g3Nu5Re8LG+3FNw=="
+    },
+    "payload": "signed fixture",
+    "version": "0.2.0-preview.8",
+    "platform": "macOS",
+    "valid": true,
+    "state": "confirmed",
+    "asset": "https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.8/Sakura-0.2.0-preview.8-macOS.zip"
+  },
+  {
+    "name": "corrupt",
+    "manifest": {
+      "format": 1,
+      "version": "0.2.0-preview.8",
+      "platform": "macOS",
+      "bytes": 14,
+      "sha256": "f6ee8f3108de139c0ced39ec732c8ebb2ac57bcef5e25e1dfa7a0e8e241d10f8",
+      "signature": "MEQCIEzamXDv6ohCYjSMGBmsJFmwzFGrulxxANXym7nPA0mXAiBlcOe+OW+Gkr2FYdbp1xPH8SRaW8+g3Nu5Re8LG+3FNw=="
+    },
+    "payload": "damaged",
+    "version": "0.2.0-preview.8",
+    "platform": "macOS",
+    "valid": false,
+    "state": "corrupt",
+    "asset": "https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.8/Sakura-0.2.0-preview.8-macOS.zip"
+  },
+  {
+    "name": "wrong-platform",
+    "manifest": {
+      "format": 1,
+      "version": "0.2.0-preview.8",
+      "platform": "macOS",
+      "bytes": 14,
+      "sha256": "f6ee8f3108de139c0ced39ec732c8ebb2ac57bcef5e25e1dfa7a0e8e241d10f8",
+      "signature": "MEQCIEzamXDv6ohCYjSMGBmsJFmwzFGrulxxANXym7nPA0mXAiBlcOe+OW+Gkr2FYdbp1xPH8SRaW8+g3Nu5Re8LG+3FNw=="
+    },
+    "payload": "signed fixture",
+    "version": "0.2.0-preview.8",
+    "platform": "windows-x64",
+    "valid": false,
+    "state": "signature",
+    "asset": "https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.8/Sakura-0.2.0-preview.8-windows-x64.zip"
+  },
+  {
+    "name": "wrong-version",
+    "manifest": {
+      "format": 1,
+      "version": "0.2.0-preview.8",
+      "platform": "macOS",
+      "bytes": 14,
+      "sha256": "f6ee8f3108de139c0ced39ec732c8ebb2ac57bcef5e25e1dfa7a0e8e241d10f8",
+      "signature": "MEQCIEzamXDv6ohCYjSMGBmsJFmwzFGrulxxANXym7nPA0mXAiBlcOe+OW+Gkr2FYdbp1xPH8SRaW8+g3Nu5Re8LG+3FNw=="
+    },
+    "payload": "signed fixture",
+    "version": "0.2.0-preview.9",
+    "platform": "macOS",
+    "valid": false,
+    "state": "signature",
+    "asset": "https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.9/Sakura-0.2.0-preview.9-macOS.zip"
+  },
+  {
+    "name": "downgrade",
+    "manifest": {
+      "format": 1,
+      "version": "0.2.0-preview.8",
+      "platform": "macOS",
+      "bytes": 14,
+      "sha256": "f6ee8f3108de139c0ced39ec732c8ebb2ac57bcef5e25e1dfa7a0e8e241d10f8",
+      "signature": "MEQCIEzamXDv6ohCYjSMGBmsJFmwzFGrulxxANXym7nPA0mXAiBlcOe+OW+Gkr2FYdbp1xPH8SRaW8+g3Nu5Re8LG+3FNw=="
+    },
+    "payload": "signed fixture",
+    "version": "0.2.0-preview.7",
+    "platform": "macOS",
+    "valid": false,
+    "state": "version",
+    "asset": "https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.7/Sakura-0.2.0-preview.7-macOS.zip"
+  },
+  {
+    "name": "bad-signature",
+    "manifest": {
+      "format": 1,
+      "version": "0.2.0-preview.8",
+      "platform": "macOS",
+      "bytes": 14,
+      "sha256": "f6ee8f3108de139c0ced39ec732c8ebb2ac57bcef5e25e1dfa7a0e8e241d10f8",
+      "signature": "AAAA"
+    },
+    "payload": "signed fixture",
+    "version": "0.2.0-preview.8",
+    "platform": "macOS",
+    "valid": false,
+    "state": "signature",
+    "asset": "https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.8/Sakura-0.2.0-preview.8-macOS.zip"
+  },
+  {
+    "name": "windows-valid",
+    "manifest": {
+      "format": 1,
+      "version": "0.2.0-preview.8",
+      "platform": "windows-x64",
+      "bytes": 14,
+      "sha256": "f6ee8f3108de139c0ced39ec732c8ebb2ac57bcef5e25e1dfa7a0e8e241d10f8",
+      "signature": "MEYCIQDV3+1lE80ToSlHvFkW6BstR8JdGbmJOh0JD4QypMu4RgIhAN5o3bUXz2fkY6hW4EbTjWyvUnxATxOTxWACH1RQg65Z"
+    },
+    "payload": "signed fixture",
+    "version": "0.2.0-preview.8",
+    "platform": "windows-x64",
+    "valid": true,
+    "state": "confirmed",
+    "asset": "https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.8/Sakura-0.2.0-preview.8-windows-x64.zip"
+  }
+]

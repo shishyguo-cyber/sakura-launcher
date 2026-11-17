@@ -26,7 +26,8 @@ PAYLOAD_PATTERNS = [(label, re.compile(expression)) for label, expression in _PA
     (label + "-utf16", re.compile(re.escape(prefix.encode("utf-16-le"))))
     for label, prefix in [("macos-user-path", "/Users/"), ("linux-home-path", "/home/"), ("windows-user-path", ":\\Users\\")]
 ] + [
-    ("private-key", re.compile(rb"-----BEGIN (?:RSA |OPENSSH |EC |DSA )?PRIVATE KEY-----")),
+    ("private-key", re.compile(rb"-----BEGIN (?:RSA |OPENSSH |EC |DSA |ENCRYPTED )?PRIVATE KEY-----")),
+    ("private-key-utf16", re.compile(rb"-\x00-\x00-\x00-\x00-\x00B\x00E\x00G\x00I\x00N\x00 .*?P\x00R\x00I\x00V\x00A\x00T\x00E\x00 \x00K\x00E\x00Y\x00")),
     ("token", re.compile(rb"(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9_-]{20,})")),
 ]
 

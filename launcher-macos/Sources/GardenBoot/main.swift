@@ -1,5 +1,20 @@
 import AppKit
 import ServiceManagement
+import GardenBootCore
+
+if let request = argument(after: "--apply-update") {
+    do { try UpdateInstaller.apply(request: URL(fileURLWithPath: request)); exit(0) }
+    catch let error as UpdateInstaller.RecoveryRequired {
+        MainActor.assumeIsolated {
+            let alert = NSAlert(); alert.messageText = "更新失败"; alert.informativeText = error.localizedDescription
+            alert.addButton(withTitle: "去 GitHub 手动下载"); alert.addButton(withTitle: "关闭")
+            if alert.runModal() == .alertFirstButtonReturn { NSWorkspace.shared.open(URL(string: "https://github.com/shishyguo-cyber/sakura-launcher/releases")!) }
+        }
+        exit(1)
+    }
+    catch { exit(1) }
+}
+
 
 // Review commands never construct ApplicationController, monitor apps or register login items.
 do {

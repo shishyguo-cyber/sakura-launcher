@@ -16,6 +16,7 @@ struct UpdateOverview {
     var message = "尚未检查更新"
     var availableVersion: String?
     var connected = true
+    var installing = false
 }
 
 @MainActor protocol OverviewRuntime: AnyObject {
@@ -23,6 +24,7 @@ struct UpdateOverview {
     func checkForUpdatesFromSettings()
     func setAutomaticUpdates(_ value: Bool) throws
     func openUpdateDownload()
+    func openUpdateFallback()
     var welcomeDismissed: Bool { get }
     func setWelcomeDismissed(_ value: Bool) throws
     func overview(targetID: String?) -> OverviewSnapshot
@@ -32,3 +34,5 @@ struct UpdateOverview {
     /// "从视频创建" (PACK-FROM-VIDEO.md): build a single-video pack and import it through the normal checks.
     func createPack(fromVideo video: URL, name: String) throws
 }
+
+extension OverviewRuntime { func openUpdateFallback() {} }

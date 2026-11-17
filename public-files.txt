@@ -209,3 +209,17 @@ scripts/release_tools.py
 scripts/sync-public.py
 scripts/tests/test_packaging.py
 scripts/tests/test_public_release.py
+
+# Signed in-app updates
+launcher-spec/SIGNED-UPDATES.md
+launcher-spec/update-public-key.txt
+launcher-spec/conformance/signed-updates.json
+launcher-macos/Sources/GardenBootCore/SignedUpdate.swift
+launcher-macos/Sources/GardenBootCore/UpdateInstaller.swift
+launcher-macos/Tests/GardenBootCoreTests/SignedUpdateTests.swift
+launcher-windows/GardenBoot.Core/SignedUpdate.cs
+launcher-windows/GardenBoot.Core.Tests/SignedUpdateTests.cs
+scripts/sign-update.py
+scripts/tests/test_update_signing.py
+launcher-windows/GardenBoot.Core.Tests/UpdateHarness.cs
+launcher-macos/scripts/update-test-driver.swift

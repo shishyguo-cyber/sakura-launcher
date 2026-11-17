@@ -96,8 +96,10 @@ internal sealed partial class ExperienceWindow
         updateVersion.Margin = new(0, 4, 0, 0); title.Children.Add(updateVersion);
         heading.Children.Add(title); body.Children.Add(heading);
         var result = new DockPanel { Margin = new(0, 12, 0, 12) };
-        downloadUpdateButton = Small("下载新版本", () => runtime?.OpenUpdateDownload(), "下载新版本", "PrimaryButton");
+        downloadUpdateButton = Small("更新", () => runtime?.OpenUpdateDownload(), "更新", "PrimaryButton");
         DockPanel.SetDock(downloadUpdateButton, Dock.Right); result.Children.Add(downloadUpdateButton);
+        var fallback = Small("在 GitHub 查看", () => runtime?.OpenUpdateFallback(), "在 GitHub 查看", "SmallButton");
+        DockPanel.SetDock(fallback, Dock.Right); result.Children.Add(fallback);
         updateResult.VerticalAlignment = VerticalAlignment.Center;
         updateResult.TextWrapping = TextWrapping.Wrap;
         AutomationProperties.SetAutomationId(updateResult, "overview-update-result");
@@ -128,7 +130,9 @@ internal sealed partial class ExperienceWindow
         updateResult.Text = state.Checking ? "正在检查更新…" : state.Message;
         updateResult.SetResourceReference(TextBlock.ForegroundProperty, state.AvailableVersion is null ? "TextSecondary" : "Success");
         checkUpdatesButton.Content = state.Checking ? "正在检查…" : "检查更新";
-        checkUpdatesButton.IsEnabled = state.Connected && !state.Checking;
+        checkUpdatesButton.IsEnabled = state.Connected && !state.Checking && !state.Installing;
+        downloadUpdateButton.Content = state.Installing ? "取消下载" : "更新";
+        AutomationProperties.SetName(downloadUpdateButton, (string)downloadUpdateButton.Content);
         downloadUpdateButton.Visibility = state.Connected && state.AvailableVersion is not null ? Visibility.Visible : Visibility.Collapsed;
         automaticUpdates.IsEnabled = state.Connected;
         automaticUpdates.IsChecked = state.Automatic;

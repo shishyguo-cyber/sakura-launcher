@@ -35,7 +35,7 @@ public enum UpdateRules {
         guard numbers.count == 3 else { return nil }
         var core: [Int] = []
         for n in numbers {
-            guard !n.isEmpty, n.allSatisfy(\.isASCII), n.allSatisfy(\.isNumber), n == "0" || n.first != "0", let value = Int(n) else { return nil }
+            guard !n.isEmpty, n.allSatisfy(\.isASCII), n.allSatisfy(\.isNumber), n == "0" || n.first != "0", let value = Int(n), value <= Int32.max else { return nil }
             core.append(value)
         }
         var prerelease: [String] = []
@@ -61,12 +61,15 @@ public enum UpdateRules {
         case (false, false): break
         }
         for (p, q) in zip(x.prerelease, y.prerelease) where p != q {
-            switch (Int(p), Int(q)) {
-            case let (m?, n?): return m < n ? -1 : 1
-            case (.some, nil): return -1
-            case (nil, .some): return 1
-            case (nil, nil): return p < q ? -1 : 1
+            let pn = p.allSatisfy(\.isNumber), qn = q.allSatisfy(\.isNumber)
+            if pn && qn {
+                let a = p.drop(while: { $0 == "0" }), b = q.drop(while: { $0 == "0" })
+                if a.count != b.count { return a.count < b.count ? -1 : 1 }
+                if a != b { return a < b ? -1 : 1 }
+                continue
             }
+            if pn != qn { return pn ? -1 : 1 }
+            return p < q ? -1 : 1
         }
         return x.prerelease.count == y.prerelease.count ? 0 : (x.prerelease.count < y.prerelease.count ? -1 : 1)
     }
