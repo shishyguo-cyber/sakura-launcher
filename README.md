@@ -10,11 +10,11 @@ Sakura is a native macOS and Windows companion that plays a customizable animati
 
 <!-- 发新版时更新这里的版本号（见 docs/RELEASING.md） -->
 <h3 align="center">
-  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.8/Sakura-0.2.0-preview.8-macOS.zip">⬇ 下载 macOS 版</a>
+  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.9/Sakura-0.2.0-preview.9-macOS.zip">⬇ 下载 macOS 版</a>
   &nbsp;&nbsp;·&nbsp;&nbsp;
-  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.8/Sakura-0.2.0-preview.8-windows-x64.zip">⬇ 下载 Windows 版</a>
+  <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/download/v0.2.0-preview.9/Sakura-0.2.0-preview.9-windows-x64.zip">⬇ 下载 Windows 版</a>
 </h3>
-<p align="center">v0.2.0-preview.8 开发者预览版 · <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/tag/v0.2.0-preview.8">所有下载、更新说明与校验值</a></p>
+<p align="center">v0.2.0-preview.9 开发者预览版 · <a href="https://github.com/shishyguo-cyber/sakura-launcher/releases/tag/v0.2.0-preview.9">所有下载、更新说明与校验值</a></p>
 
 **第一次打开**
 
@@ -29,7 +29,7 @@ Sakura is a native macOS and Windows companion that plays a customizable animati
 
 从 preview.8 起支持应用内一键更新：在概览“版本与更新”或菜单里点击“更新”，显示下载进度，可取消；验证发布者签名后退出旧版、替换并自动重新打开。失败会保留或恢复旧版，并提供“在 GitHub 查看”手动下载入口。不会静默下载或自动安装，设置、动画库和播放记录保留。
 
-**已安装 preview.7 及更早版本的用户，需要先手动下载并替换一次，才能获得一键更新。** 当前公开下载为 preview.8，已包含一键更新。手动更新时退出 Sakura，Mac 替换 Sakura.app，Windows 解压完整文件夹并替换程序目录，保留个人数据目录。
+**已安装 preview.7 及更早版本的用户，需要先手动下载并替换一次，才能获得一键更新。** 当前公开下载为 preview.9，已包含一键更新。手动更新时退出 Sakura，Mac 替换 Sakura.app，Windows 解压完整文件夹并替换程序目录，保留个人数据目录。
 
 Sakura 在菜单栏或系统托盘运行。你可以从已安装应用中选择目标，为每个应用指定动画，并调节音量、过渡、画面适配和播放频率。它保留应用原有的启动入口。
 
