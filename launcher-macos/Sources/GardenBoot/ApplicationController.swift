@@ -81,12 +81,6 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
     }
     private var monitoredIdentities: [String: String] = [:]
 
-    func applicationWillFinishLaunching(_ notification: Notification) {
-        let event = NSAppleEventManager.shared().currentAppleEvent
-        startedAtLogin = event?.eventID == AEEventID(kAEOpenApplication)
-            && event?.paramDescriptor(forKeyword: AEKeyword(keyAEPropData))?.enumCodeValue == OSType(keyAELaunchedAsLogInItem)
-    }
-
     /// Double-clicking Sakura while it already runs (single instance) shows the settings instead of doing nothing.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         let event = NSAppleEventManager.shared().currentAppleEvent
@@ -98,6 +92,10 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // AppKit dispatches the initial open event here, after applicationWillFinishLaunching.
+        let event = NSAppleEventManager.shared().currentAppleEvent
+        startedAtLogin = event?.eventID == AEEventID(kAEOpenApplication)
+            && event?.paramDescriptor(forKeyword: AEKeyword(keyAEPropData))?.enumCodeValue == OSType(keyAELaunchedAsLogInItem)
         NSApp.setActivationPolicy(.accessory)
         NativeMenu.install()
         do { experience = try experienceStore.load() }

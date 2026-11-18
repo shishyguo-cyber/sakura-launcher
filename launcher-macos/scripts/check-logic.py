@@ -7,6 +7,7 @@ import plistlib
 import re
 import select
 import shutil
+import signal
 import subprocess
 import tempfile
 import time
@@ -17,10 +18,10 @@ from pathlib import Path
 PROJECT = Path(__file__).resolve().parents[1]
 GUI_SERVICES = ("com.apple.coreservices.launchservicesd", "com.apple.lsd.mapdb",
                 "com.apple.hiservices-xpcservice", "com.apple.windowserver.active")
-GUI_LOGS = ("native-logic", "delayed-window", "window-timeout", "preview", "unconfigured", "two-targets", "two-targets-disabled",
+GUI_LOGS = ("login-launch", "native-logic", "delayed-window", "window-timeout", "preview", "unconfigured", "two-targets", "two-targets-disabled",
             "quiet", "reappear", "reappear-ignored", "compat-good", "compat-running", "video-pack", "video-pack-bad",
             "featured", "featured-again", "update-newer", "update-current")
-GUI_CASES = ["existing-process baseline", "cold-launch deduplication", "exit/relaunch",
+GUI_CASES = ["silent login launch and manual reopen", "existing-process baseline", "cold-launch deduplication", "exit/relaunch",
              "no player in logic-only mode", "delayed window intro/loop/outro",
              "no-window timeout", "manual preview", "warm/cold first-frame and invisible-before-show", "unconfigured pack", "two targets: independent packs/daily records, busy and disabled",
              "quiet skip", "reappear plays", "minimize/hide ignored", "compat good / alreadyRunning",
@@ -203,6 +204,36 @@ def main():
             if gui_access_denied(services):
                 raise KnownGUIGap("GUI service bootstrap lookups denied (1100) by the execution sandbox; "
                                   "NSApplication cannot register with LaunchServices / HI Services / WindowServer")
+
+            # Keep the real no-argument startup path while isolating preferences and Application Support.
+            login_app = root / "LoginLaunch.app"
+            login_home = root / "login-home"
+            login_home.mkdir()
+            shutil.copytree(binary.parents[2], login_app)
+            login_info = login_app / "Contents/Info.plist"
+            login_info.write_bytes(plistlib.dumps({**plistlib.loads(login_info.read_bytes()),
+                                                  "CFBundleIdentifier": f"{identifier}.login"}))
+            subprocess.run(["codesign", "--force", "--sign", "-", str(login_app)], check=True, capture_output=True)
+            logs["login-launch"] = login_home / "Library/Application Support/GardenBoot/events.log"
+
+            def open_login_app(mode):
+                opened = subprocess.run([str(executable), "--open-launcher", str(login_app), str(login_home), mode],
+                                        check=True, capture_output=True, text=True, timeout=10)
+                return int(opened.stdout.strip())
+
+            login_pid = open_login_app("login")
+            try:
+                wait_for(lambda: events("login-launch").count("packs-loaded") >= 2, "login launch loaded its library", 20)
+                assert open_login_app("login-reopen") == login_pid, "Login reopen must use the running instance"
+                assert open_login_app("manual") == login_pid, "Manual reopen must use the running instance"
+                wait_for(lambda: "settings-opened pack=" in events("login-launch"), "manual reopen shows settings")
+                login_events = events("login-launch")
+                assert "settings-opened-on-launch" not in login_events, f"Login launch showed settings\n{login_events}"
+                assert login_events.count("reopen-requested") == 1, f"Login reopen requested settings\n{login_events}"
+            finally:
+                os.kill(login_pid, signal.SIGTERM)
+            report["silentLoginLaunchAndManualReopen"] = True
+
             first = start_fixture()
             report["nativeGUIExecuted"] = True
             watcher = start_watcher("native-logic", "--logic-only", "-paused", "YES")
@@ -431,17 +462,17 @@ def main():
             # Update check (UPDATES.md): a newer release is found from a local feed and remembered without going online.
             feed = root / "releases.json"
             feed.write_text(json.dumps([
-                {"tag_name": "v0.2.0-preview.9", "html_url": "https://example.test/9", "draft": False, "prerelease": True},
+                {"tag_name": "v1.0.0-preview.1", "html_url": "https://example.test/9", "draft": False, "prerelease": True},
                 {"tag_name": "v9.0.0-preview.1", "html_url": "https://example.test/draft", "draft": True, "prerelease": True}]))
             watcher = start_watcher("update-newer", "-paused", "YES", "--test-check-update", "--test-update-feed", str(feed))
-            wait_for(lambda: "update-check source=auto result=newer latest=0.2.0-preview.9" in events("update-newer"), "newer release found", 15)
-            assert "update-available latest=0.2.0-preview.9" in events("update-newer")
+            wait_for(lambda: "update-check source=auto result=newer latest=1.0.0-preview.1" in events("update-newer"), "newer release found", 15)
+            assert "update-available latest=1.0.0-preview.1" in events("update-newer")
             stop(watcher)
             before = events("update-newer").count("update-check")
             p = subprocess.Popen([str(binary), "--test-target", identifier, "--test-root", str(root / "update-newer"), "-paused", "YES",
                                   "--test-check-update", "--test-update-feed", str(feed)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             children.append(p)
-            wait_for(lambda: events("update-newer").count("update-available latest=0.2.0-preview.9") == 2, "remembered after restart", 15)
+            wait_for(lambda: events("update-newer").count("update-available latest=1.0.0-preview.1") == 2, "remembered after restart", 15)
             time.sleep(2)
             assert events("update-newer").count("update-check") == before, "a check within 7 days must not go online again"
             stop(p)

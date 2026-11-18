@@ -1,4 +1,5 @@
 import AppKit
+import Carbon
 import GardenBootCore
 
 final class FixtureDelegate: NSObject, NSApplicationDelegate {
@@ -127,6 +128,30 @@ if let index = CommandLine.arguments.firstIndex(of: "--pack-check"), index + 2 <
     }
     dispatchMain()
 }
+// Launch through AppKit so the login marker arrives at the same delegate callback as a system event.
+if CommandLine.arguments.count == 5, CommandLine.arguments[1] == "--open-launcher" {
+    let launcher = URL(fileURLWithPath: CommandLine.arguments[2])
+    let configuration = NSWorkspace.OpenConfiguration()
+    configuration.environment = ["CFFIXED_USER_HOME": CommandLine.arguments[3]]
+    configuration.activates = false
+    configuration.addsToRecentItems = false
+    configuration.promptsUserIfNeeded = false
+    let mode = CommandLine.arguments[4]
+    if mode != "manual" {
+        let event = NSAppleEventDescriptor(eventClass: AEEventClass(kCoreEventClass),
+            eventID: mode == "login" ? AEEventID(kAEOpenApplication) : AEEventID(kAEReopenApplication),
+            targetDescriptor: nil, returnID: AEReturnID(kAutoGenerateReturnID), transactionID: AETransactionID(kAnyTransactionID))
+        event.setParam(NSAppleEventDescriptor(enumCode: OSType(keyAELaunchedAsLogInItem)), forKeyword: AEKeyword(keyAEPropData))
+        configuration.appleEvent = event
+    }
+    NSWorkspace.shared.openApplication(at: launcher, configuration: configuration) { app, error in
+        guard let app else { fputs("open-launcher: \(String(describing: error))\n", stderr); exit(1) }
+        print(app.processIdentifier)
+        exit(0)
+    }
+    RunLoop.main.run()
+}
+
 let app = NSApplication.shared
 let delegate = FixtureDelegate()
 app.delegate = delegate
