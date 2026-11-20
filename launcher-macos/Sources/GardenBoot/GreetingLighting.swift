@@ -123,35 +123,43 @@ final class GreetingLighting {
 
     private func texture(dark: Bool, rays: Bool) -> CGImage? {
         let p = palette
-        return Self.image(width: 480, height: rays ? 396 : 300) { x, v, index in
-            let y = rays ? v * Self.rayHeight : v
-            let dx = x - 0.085
-            let dy = 1.08 - y
-            let distance = hypot(dx * 1.12, dy)
-            let angle = atan2(dx, dy)
-            let mist = (sin(x * 17 + y * 11) * sin(y * 23 - x * 8) + 1) * 0.5
-            let filament = sin(x * 19 + y * 32 + sin(x * 7 - y * 5) * 2)
+        // Explicit types throughout: older Swift compilers time out inferring this closure (CI, Xcode on macOS 14).
+        return Self.image(width: 480, height: rays ? 396 : 300) { (x: Double, v: Double, index: Int) -> (SIMD3<Double>, Double) in
+            let y: Double = rays ? v * Self.rayHeight : v
+            let dx: Double = x - 0.085
+            let dy: Double = 1.08 - y
+            let distance: Double = hypot(dx * 1.12, dy)
+            let angle: Double = atan2(dx, dy)
+            let mistWave: Double = sin(x * 17 + y * 11) * sin(y * 23 - x * 8)
+            let mist: Double = (mistWave + 1) * 0.5
+            let wobble: Double = sin(x * 7 - y * 5) * 2
+            let filament: Double = sin(x * 19 + y * 32 + wobble)
             if rays {
-                let intensity = 0.29 * bell((angle - 0.40) / 0.13)
-                    + 0.20 * bell((angle - 0.66) / 0.22)
-                    + 0.12 * bell((angle - 0.87) / 0.09)
-                    + 0.17 * bell((angle - 0.22) / 0.063)
-                    + 0.079 * bell((angle - 0.76) / 0.031)
-                let atmosphere = 0.72 + 0.18 * mist + 0.10 * filament
-                let falloff = exp(-distance * 1.52)
-                let glare = 0.42 * bell(distance / 0.23)
-                let edges = ease(x / 0.055) * ease((1 - x) / 0.18) * ease(y / 0.15) * ease((Self.rayHeight - y) / 0.12)
-                let strength = (intensity * (0.24 + falloff * 1.29) * atmosphere + glare) * edges
-                let color = p.lamp * (0.89 - distance * 0.14) + p.scatter * (0.11 + distance * 0.14)
+                let beamA: Double = 0.29 * bell((angle - 0.40) / 0.13) + 0.20 * bell((angle - 0.66) / 0.22)
+                let beamB: Double = 0.12 * bell((angle - 0.87) / 0.09) + 0.17 * bell((angle - 0.22) / 0.063)
+                let beamC: Double = 0.079 * bell((angle - 0.76) / 0.031)
+                let intensity: Double = beamA + beamB + beamC
+                let atmosphere: Double = 0.72 + 0.18 * mist + 0.10 * filament
+                let falloff: Double = exp(-distance * 1.52)
+                let glare: Double = 0.42 * bell(distance / 0.23)
+                let edgesX: Double = ease(x / 0.055) * ease((1 - x) / 0.18)
+                let edgesY: Double = ease(y / 0.15) * ease((Self.rayHeight - y) / 0.12)
+                let lit: Double = intensity * (0.24 + falloff * 1.29) * atmosphere
+                let strength: Double = (lit + glare) * edgesX * edgesY
+                let lampColor: SIMD3<Double> = p.lamp * (0.89 - distance * 0.14)
+                let scatterColor: SIMD3<Double> = p.scatter * (0.11 + distance * 0.14)
+                let color: SIMD3<Double> = lampColor + scatterColor
                 return (color, min(0.69, strength * (dark ? 0.83 : 1.04)))
             }
-            let fog = bell((y - 0.37 + x * 0.2 + 0.025 * filament) / 0.15) * (0.11 + 0.083 * mist)
-            let sky = 0.31 * bell(distance / 0.72)
-            let pool = 0.13 * bell(hypot((x - 0.92) * 0.6, y - 0.18) / 0.47)
-            let vignette = 1 - 0.27 * min(1, hypot((x - 0.5) * 1.8, (y - 0.51) * 1.45))
-            let grain = (noise(index) - 0.5) * 0.009
-            let grade = dark ? 0.81 : 1.05
-            let color = (p.shadow + p.air * (sky + fog) + p.scatter * pool) * (vignette * grade)
+            let fogBand: Double = (y - 0.37 + x * 0.2 + 0.025 * filament) / 0.15
+            let fog: Double = bell(fogBand) * (0.11 + 0.083 * mist)
+            let sky: Double = 0.31 * bell(distance / 0.72)
+            let pool: Double = 0.13 * bell(hypot((x - 0.92) * 0.6, y - 0.18) / 0.47)
+            let vignette: Double = 1 - 0.27 * min(1, hypot((x - 0.5) * 1.8, (y - 0.51) * 1.45))
+            let grain: Double = (noise(index) - 0.5) * 0.009
+            let grade: Double = dark ? 0.81 : 1.05
+            let base: SIMD3<Double> = p.shadow + p.air * (sky + fog) + p.scatter * pool
+            let color: SIMD3<Double> = base * (vignette * grade)
             return (color + SIMD3(repeating: grain), opaque ? 1 : 0.64)
         }
     }
