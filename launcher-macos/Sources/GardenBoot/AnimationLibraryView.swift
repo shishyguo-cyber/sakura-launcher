@@ -13,6 +13,17 @@ struct AnimationLibraryView: View {
                 Spacer(minLength: 0)
                 if editor.libraryBusy { ProgressView().controlSize(.small) }
             }
+            if let hint = editor.pinnedHint {
+                HStack(spacing: 10) {
+                    Text(hint).font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                    Button("改为跟随当前动画") { editor.followCurrentForAll() }
+                        .buttonStyle(GardenButtonStyle(kind: .text, small: true))
+                        .accessibilityIdentifier("follow-current-animation")
+                }
+                .padding(10).background(Theme.accentSoft, in: RoundedRectangle(cornerRadius: 10))
+            }
             LazyVGrid(columns: columns, alignment: .leading, spacing: 12) {
                 ForEach(editor.entries.filter { $0.pack != nil }) { entry in AnimationCard(editor: editor, entry: entry) }
                 AddTile(icon: "plus", title: "导入动画包", detail: nil, action: editor.onImport).disabled(editor.libraryBusy)
@@ -100,7 +111,8 @@ private struct AnimationCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack(alignment: .topTrailing) {
-                Button { if let pack = entry.pack { editor.inspect(pack) } } label: {
+                // One click makes it the current animation and opens its settings (no separate "设为当前").
+                Button { if let pack = entry.pack { editor.select(pack) } } label: {
                     VStack(alignment: .leading, spacing: 8) {
                         PackThumbnailView(pack: entry.pack, name: entry.name)
                         Text(entry.name).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.text)
@@ -113,7 +125,8 @@ private struct AnimationCard: View {
                             Spacer(minLength: 0)
                         }.frame(height: 20)
                     }
-                }.buttonStyle(GardenPlainButtonStyle()).accessibilityLabel("调节\(entry.name)").disabled(editor.libraryBusy)
+                }.buttonStyle(GardenPlainButtonStyle()).accessibilityLabel("设为当前并调节\(entry.name)").disabled(editor.libraryBusy || entry.pack == nil)
+                    .help("点按设为当前动画")
                 Button { editor.toggleFavorite(entry.id) } label: {
                     Image(systemName: editor.draft.library.favorites.contains(entry.id) ? "star.fill" : "star")
                         .font(.system(size: 12, weight: .semibold)).frame(width: 24, height: 24)
@@ -123,10 +136,6 @@ private struct AnimationCard: View {
                     .help("收藏（保存设置后生效）").accessibilityLabel("收藏\(entry.name)")
             }
             HStack(spacing: 4) {
-                Button("设为当前") { if let pack = entry.pack { editor.select(pack) } }
-                    .buttonStyle(GardenButtonStyle(kind: .text, small: true))
-                    .disabled(editor.libraryBusy || entry.pack == nil || editor.activeID == entry.id)
-                Text("·").foregroundStyle(Theme.textSecondary)
                 Button("移除…") { editor.remove(entry) }.buttonStyle(GardenButtonStyle(kind: .danger, small: true))
                     .disabled(editor.libraryBusy || Support.protectedPackIDs.contains(entry.id))
                     .help(Support.protectedPackIDs.contains(entry.id) ? "随程序附带的动画不可移除" : "移到废纸篓，保留个人设置")

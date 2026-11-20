@@ -384,7 +384,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
         let pack: InstalledPack
         do { pack = try original.applying(preferences) }
         catch { stateItem.title = "无法播放：个人设置无效"; sessions[targetID ?? ""]?.finish(); playbackTargetID = nil; return }
-        Support.log("experience-applied pack=\(pack.id) preview=\(preview) volume=\(pack.manifest.effectiveVolume) fade=\(pack.manifest.effectiveFadeDuration) coverage=\(preferences.coverage(for: pack.id)) target=\(targetID ?? "preview")")
+        Support.log("experience-applied pack=\(pack.id) preview=\(preview) volume=\(pack.manifest.effectiveVolume) fade=\(pack.manifest.effectiveFadeDuration) coverage=\(preferences.coverage(for: pack.id)) fullScreen=\(preferences.fullScreen(for: pack.id)) target=\(targetID ?? "preview")")
         let greetingName = try? Greeting.normalizedName(preferences.greetingName)
         let previewWindow = preview && pack.manifest.showsGreeting ? settingsWindow?.window : nil
         let useDemoChoices = preview && Support.isGreetingArtDemo
@@ -398,7 +398,8 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
                                     // a text overlay keep their own video under the light-sweep lettering.
                                     greetingStyle: style ?? (Support.usesProceduralGreeting(pack) ? .script : .sweep),
                                     reduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
-                                    previewFrame: previewWindow?.isVisible == true ? previewWindow?.frame : nil) { [weak self] reason in
+                                    previewFrame: previewWindow?.isVisible == true ? previewWindow?.frame : nil,
+                                    fullScreen: preferences.fullScreen(for: pack.id)) { [weak self] reason in
             guard let self, self.generation == token else { return }
             self.player = nil
             if case .failed = reason { self.failedOverviewPacks[targetID ?? "preview"] = pack.id }
@@ -863,8 +864,31 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
             item.state = pack.id == activePack?.id ? .on : .off
             packsMenu.addItem(item)
         }
+        // Apps with their own animation ignore this switch; say so and offer to let them follow.
+        let pinned = PinnedTargets.unaffected(activeID: activePack?.id, targets: experience.targets)
+        if let hint = PinnedTargets.hint(pinned, packName: { id in installed.packs.first(where: { $0.id == id })?.manifest.name ?? id }) {
+            packsMenu.addItem(.separator())
+            let note = NSMenuItem(title: hint, action: nil, keyEquivalent: "")
+            note.isEnabled = false
+            packsMenu.addItem(note)
+            let follow = NSMenuItem(title: "让所有应用跟随当前动画", action: #selector(followCurrentAnimation), keyEquivalent: "")
+            follow.target = self
+            packsMenu.addItem(follow)
+        }
         refreshWarmup()
         Support.log("packs-loaded count=\(installed.packs.count) skipped=\(installed.problems.count) active=\(activePack?.id ?? "none")")
+    }
+
+    @objc private func followCurrentAnimation() {
+        var next = experience
+        next.targets = PinnedTargets.followingCurrent(next.targets)
+        do {
+            try experienceStore.save(next)
+            experience = next
+            settingsWindow?.editor.adoptSavedTargets(next.targets)
+            configureTargets(); reloadPacks(); refreshMenu(); refreshWarmup(force: true)
+            Support.log("targets-follow-current")
+        } catch { Support.log("targets-follow-current-failed=\(error.localizedDescription)") }
     }
 
     @objc private func selectPack(_ sender: NSMenuItem) {

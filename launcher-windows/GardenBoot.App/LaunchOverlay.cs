@@ -51,13 +51,16 @@ internal sealed class LaunchOverlay
     private readonly string? greetingName;
     private readonly bool greetingStill;
     private ScriptGreetingView? greeting;
+    /// <summary>Covers the whole monitor for the entire playback and never docks onto the target window.</summary>
+    private readonly bool fullScreen;
     private double? greetingExitAt;
     private bool greetingHandoff;
 
     public LaunchOverlay(InstalledPack pack, TargetMonitor monitor, TrayIcon tray, EventLog log,
                          bool preview, Action<EndReason> onFinish, double coverage = .72, MediaClip? warmFirst = null, string? targetId = null,
-                         string? greetingName = null, bool greetingStill = false)
+                         string? greetingName = null, bool greetingStill = false, bool fullScreen = false)
     {
+        this.fullScreen = fullScreen;
         procedural = Greeting.IsProcedural(pack);
         this.greetingName = greetingName;
         this.greetingStill = greetingStill;
@@ -70,8 +73,12 @@ internal sealed class LaunchOverlay
         this.preview = preview;
         this.onFinish = onFinish;
         machine = new PlaybackMachine(pack);
-        var work = TargetMonitor.PointerWorkArea();
-        launchFrame = new(OverlayGeometry.LaunchFrame(work.Bounds, coverage: coverage), work.Scale);
+        if (fullScreen) launchFrame = TargetMonitor.PointerMonitor();
+        else
+        {
+            var work = TargetMonitor.PointerWorkArea();
+            launchFrame = new(OverlayGeometry.LaunchFrame(work.Bounds, coverage: coverage), work.Scale);
+        }
         timer = new DispatcherTimer(DispatcherPriority.Render) { Interval = TimeSpan.FromSeconds(1.0 / 60) };
         timer.Tick += (_, _) => Tick();
     }
@@ -107,7 +114,12 @@ internal sealed class LaunchOverlay
         switch (command)
         {
             case PlaybackCommand.ShowOnLaunchScreen: Present(launchFrame, "launch-screen"); break;
-            case PlaybackCommand.ShowOnTargetWindow: Present(targetFrame ?? launchFrame, "target-window"); break;
+            case PlaybackCommand.ShowOnTargetWindow:
+                if (fullScreen) Present(launchFrame, "full-screen"); else Present(targetFrame ?? launchFrame, "target-window");
+                break;
+            case PlaybackCommand.MoveToTargetWindow when fullScreen:
+                log.Write("player-stay full-screen"); // fades out in place
+                break;
             case PlaybackCommand.MoveToTargetWindow movement:
                 if (window is null || targetFrame is not { } target) break;
                 log.Write($"player-move animated={movement.Animated} to={Format(target.Bounds)}");
@@ -141,6 +153,7 @@ internal sealed class LaunchOverlay
     private void Present(DesktopFrame frame, string place)
     {
         window = new OverlayWindow(() => Send(new PlaybackEvent.Skip())) { FitMode = pack.Manifest.EffectiveVideoFit, Log = log.Write };
+        if (fullScreen) window.UseSquareCorners();
         if (procedural)
         {
             greeting = new ScriptGreetingView(greetingName, greetingStill);
@@ -323,7 +336,7 @@ internal sealed class LaunchOverlay
 
     private void FollowWindow(double now)
     {
-        if (preview || !windowReported || !machine.IsOnTargetWindow || machine.Phase is PlaybackPhase.Fading or PlaybackPhase.Closed
+        if (fullScreen || preview || !windowReported || !machine.IsOnTargetWindow || machine.Phase is PlaybackPhase.Fading or PlaybackPhase.Closed
             || window is null || now - lastFollowQuery < 0.15) return;
         lastFollowQuery = now;
         if (TargetMonitor.MainWindow(Session.Processes) is not { } main) return;

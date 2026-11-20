@@ -347,7 +347,7 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
         InstalledPack pack;
         try { var manifest = preferences.Resolve(original.Manifest); pack = original with { Manifest = manifest, Layout = manifest.ValidatedLayout() }; }
         catch (ExperienceException) { status = "无法播放：个人设置无效"; return; }
-        log.Write(FormattableString.Invariant($"experience-applied pack={pack.Id} preview={preview} volume={pack.Manifest.EffectiveVolume} fade={pack.Manifest.EffectiveFadeDuration} coverage={preferences.Coverage(pack.Id)} fit={pack.Manifest.EffectiveVideoFit.LogName()}"));
+        log.Write(FormattableString.Invariant($"experience-applied pack={pack.Id} preview={preview} volume={pack.Manifest.EffectiveVolume} fade={pack.Manifest.EffectiveFadeDuration} coverage={preferences.Coverage(pack.Id)} fullScreen={preferences.FullScreen(pack.Id)} fit={pack.Manifest.EffectiveVideoFit.LogName()}"));
         var overlay = new LaunchOverlay(pack, monitor, tray, log, preview, reason =>
         {
             if (generation != token) return;
@@ -359,7 +359,7 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
             if (preview && experienceWindow is { IsVisible: true } editor) editor.ReportPreview(reason);
             status = settings.Paused ? "自动播放已暂停" : Waiting();
         }, coverage: preferences.Coverage(pack.Id), warmFirst: TakeWarm(pack), targetId: targetId,
-           greetingName: preferences.GreetingName, greetingStill: TargetMonitor.ReduceMotion);
+           greetingName: preferences.GreetingName, greetingStill: TargetMonitor.ReduceMotion, fullScreen: preferences.FullScreen(pack.Id));
         player = overlay;
         status = $"正在播放：{pack.Manifest.Name}";
         overlay.Begin();
@@ -594,9 +594,7 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
             new("调节启动体验…", OpenSettings, !libraryBusy && activePack is not null),
             new("预览当前动画", () => { log.Write("preview-requested"); Play(true); }, !libraryBusy && activePack is not null),
             new("导入动画包…", () => _ = ImportPack(), !libraryBusy),
-            new("切换动画", Enabled: !libraryBusy && packs.Count > 0,
-                Children: packs.Select(p => new TrayEntry(p.Manifest.Name, () => SelectPack(p.Id),
-                    !libraryBusy, p.Id == activePack?.Id)).ToArray()),
+            new("切换动画", Enabled: !libraryBusy && packs.Count > 0, Children: SwitchEntries()),
             new(Separator: true),
             new("暂停自动播放", TogglePause, Checked: settings.Paused),
             .. snoozeEntries,
@@ -609,6 +607,35 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
             new("自动检查更新", ToggleAutoUpdate, Checked: AutoUpdateEnabled),
             new("打开日志", OpenLog), new(Separator: true), new("退出 Sakura", () => { if (experienceWindow?.RequestClose() != false) Application.Current.Shutdown(); }),
         ];
+    }
+
+    /// <summary>The packs, then a note about apps that keep their own animation and a way to let them follow.</summary>
+    private TrayEntry[] SwitchEntries()
+    {
+        var entries = packs.Select(p => new TrayEntry(p.Manifest.Name, () => SelectPack(p.Id), !libraryBusy, p.Id == activePack?.Id)).ToList();
+        var pinned = PinnedTargets.Unaffected(activePack?.Id, experience.Targets);
+        if (PinnedTargets.Hint(pinned, id => packs.FirstOrDefault(p => p.Id == id)?.Manifest.Name ?? id) is { } hint)
+        {
+            entries.Add(new(Separator: true));
+            entries.Add(new(hint, Enabled: false));
+            entries.Add(new("让所有应用跟随当前动画", FollowCurrentAnimation, !libraryBusy));
+        }
+        return entries.ToArray();
+    }
+
+    private void FollowCurrentAnimation()
+    {
+        try
+        {
+            var next = experience.Copy();
+            PinnedTargets.FollowCurrent(next.Targets);
+            experienceStore.Save(next);
+            experience = next.Copy();
+            experienceWindow?.AdoptSavedTargets(next.Targets);
+            log.Write("targets-follow-current");
+        }
+        catch (Exception e) when (e is ExperienceException or IOException or UnauthorizedAccessException)
+        { log.Write($"targets-follow-current-failed type={e.GetType().Name}"); }
     }
 
     private void SelectPack(string id)

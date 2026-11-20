@@ -227,6 +227,17 @@ internal sealed class TargetMonitor : IDisposable
         return new(ToBox(info.Work, scale), scale);
     }
 
+    /// <summary>The whole monitor under the pointer, taskbar included (full-screen playback).</summary>
+    public static DesktopFrame PointerMonitor()
+    {
+        Native.GetCursorPos(out var pointer);
+        var monitor = Native.MonitorFromPoint(pointer, 2);
+        var info = new Native.MonitorInfo { Size = Marshal.SizeOf<Native.MonitorInfo>() };
+        if (!Native.GetMonitorInfo(monitor, ref info)) throw new IOException("无法读取显示器范围");
+        var scale = Native.GetDpiForMonitor(monitor, 0, out var dpi, out _) == 0 && dpi > 0 ? dpi / 96.0 : 1;
+        return new(ToBox(info.Monitor, scale), scale);
+    }
+
     public static bool ReduceMotion => Native.SystemParametersInfo(0x1042, 0, out var animate, 0) && !animate;
     internal static double ScaleForWindow(nint window) => Native.GetDpiForWindow(window) is var dpi && dpi > 0 ? dpi / 96.0 : 1;
     internal static Box ToBox(Native.Rect rect, double scale) => new(rect.Left / scale, rect.Top / scale,

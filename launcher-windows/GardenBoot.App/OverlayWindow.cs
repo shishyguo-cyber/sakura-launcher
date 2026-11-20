@@ -84,6 +84,13 @@ internal sealed class OverlayWindow : Window
         return 0;
     }
 
+    /// <summary>Full-screen playback: square corners that meet the monitor's edges (DWMWCP_DONOTROUND).</summary>
+    public void UseSquareCorners()
+    {
+        int square = 1;
+        Native.DwmSetWindowAttribute(handle, 33, ref square, sizeof(int));
+    }
+
     public double Alpha { get; private set; }
 
     /// <summary>Whole-window opacity through the layered-window alpha (0 = invisible, clicks pass through to nothing).</summary>

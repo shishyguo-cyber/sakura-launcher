@@ -137,4 +137,18 @@ final class ExperienceTests: XCTestCase {
         XCTAssertEqual(OverlayGeometry.launchFrame(in: left, coverage: 0.4).minX, -1344)
         XCTAssertEqual(OverlayGeometry.launchFrame(in: screen, coverage: .nan), OverlayGeometry.launchFrame(in: screen))
     }
+
+    func testFullScreenIsAnOptionalPerAnimationSwitch() throws {
+        var settings = ExperienceSettings()
+        XCTAssertFalse(settings.fullScreen(for: "a"), "off by default")
+        settings.packs["a"] = PackPreferences(overrides: PlaybackOverrides(fullScreen: true))
+        XCTAssertTrue(settings.fullScreen(for: "a"))
+        XCTAssertFalse(settings.fullScreen(for: "b"), "per animation")
+        let data = try JSONEncoder().encode(settings)
+        let text = String(decoding: data, as: UTF8.self)
+        XCTAssertTrue(text.contains("\"fullScreen\":true"))
+        XCTAssertTrue(try JSONDecoder().decode(ExperienceSettings.self, from: data).fullScreen(for: "a"))
+        settings.packs["a"]?.overrides.fullScreen = nil
+        XCTAssertFalse(String(decoding: try JSONEncoder().encode(settings), as: UTF8.self).contains("fullScreen"), "off is not written")
+    }
 }

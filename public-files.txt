@@ -244,3 +244,7 @@ launcher-windows/GardenBoot.Core/ScriptSkeleton.cs
 launcher-windows/GardenBoot.App/ScriptGreetingView.cs
 launcher-windows/GardenBoot.App/GreetingRecorder.cs
 launcher-windows/GardenBoot.Core.Tests/GreetingTests.cs
+launcher-macos/Sources/GardenBootCore/PinnedTargets.swift
+launcher-macos/Tests/GardenBootCoreTests/PinnedTargetsTests.swift
+launcher-windows/GardenBoot.Core/PinnedTargets.cs
+launcher-windows/GardenBoot.Core.Tests/PinnedTargetsTests.cs

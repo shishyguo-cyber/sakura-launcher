@@ -18,11 +18,15 @@ public struct PlaybackOverrides: Codable, Equatable, Sendable {
     public var loopExit: LoopExit?
     public var launchCoverage: Double?
     public var videoFit: VideoFit.Mode?
+    /// Play over the whole screen (menu bar and Dock included) and fade out in place instead of docking.
+    /// `nil` = off. macOS only for now; other builds ignore the key (EXPERIENCE-SETTINGS.md).
+    public var fullScreen: Bool?
     public init(fadeDuration: Double? = nil, handoffAt: Double? = nil, maxWaitSeconds: Double? = nil,
-                loopExit: LoopExit? = nil, launchCoverage: Double? = nil, videoFit: VideoFit.Mode? = nil) {
+                loopExit: LoopExit? = nil, launchCoverage: Double? = nil, videoFit: VideoFit.Mode? = nil,
+                fullScreen: Bool? = nil) {
         self.fadeDuration = fadeDuration; self.handoffAt = handoffAt; self.maxWaitSeconds = maxWaitSeconds
         self.loopExit = loopExit; self.launchCoverage = launchCoverage
-        self.videoFit = videoFit
+        self.videoFit = videoFit; self.fullScreen = fullScreen
     }
     public func validated() throws {
         for (value, range, name) in [(fadeDuration, 0.1...2, "淡出时长"), (maxWaitSeconds, 1.0...60, "最长等待"),
@@ -119,6 +123,7 @@ public struct ExperienceSettings: Codable, Equatable, Sendable {
     }
 
     public func coverage(for packID: String) -> Double { packs[packID]?.overrides.launchCoverage ?? 0.72 }
+    public func fullScreen(for packID: String) -> Bool { packs[packID]?.overrides.fullScreen ?? false }
     public mutating func resetPack(_ id: String) { packs[id, default: .init()].overrides = .init() }
     public mutating func addPreset(packID: String, name: String) throws {
         var next = self

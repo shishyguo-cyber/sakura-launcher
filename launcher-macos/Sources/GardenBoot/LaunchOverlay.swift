@@ -144,6 +144,9 @@ private final class OverlaySurface: NSView {
     }
 
     /// Layer-backed (not layer-hosting), so the hint can stay an ordinary subview.
+    /// Full-screen playback has square edges that meet the screen's own.
+    var squareCorners = false { didSet { layer?.cornerRadius = squareCorners ? 0 : 16 } }
+
     override func makeBackingLayer() -> CALayer {
         let base = CALayer()
         base.backgroundColor = NSColor.black.cgColor
@@ -233,6 +236,8 @@ final class LaunchOverlay {
     private var launchFrame: CGRect
     private let launchScreen: CGRect
     private let launchCoverage: CGFloat
+    /// Covers the whole screen for the entire playback and never docks onto the target window.
+    private let fullScreen: Bool
     private var targetFrame: CGRect?
     private var panel: OverlayPanel?
     private var surface: OverlaySurface?
@@ -274,8 +279,9 @@ final class LaunchOverlay {
 
     init(pack: InstalledPack, target: NSRunningApplication?, screen: NSScreen, preview: Bool, opened: Date, warmPlayback: PreparedPlayback? = nil, launchCoverage: Double = 0.72, targetID: String = "preview",
          greetingName: String? = nil, greetingLight: Greeting.Light? = nil, greetingStyle: Greeting.Style = .sweep,
-         reduceMotion: Bool = false, previewFrame: CGRect? = nil,
+         reduceMotion: Bool = false, previewFrame: CGRect? = nil, fullScreen: Bool = false,
          onFinish: @escaping (PlaybackEndReason) -> Void) {
+        self.fullScreen = fullScreen
         self.targetID = targetID
         self.opened = opened
         self.warmPlayback = warmPlayback
@@ -293,7 +299,8 @@ final class LaunchOverlay {
         self.onFinish = onFinish
         self.launchScreen = screen.visibleFrame
         self.launchCoverage = CGFloat(launchCoverage)
-        self.launchFrame = OverlayGeometry.launchFrame(in: screen.visibleFrame, coverage: CGFloat(launchCoverage))
+        self.launchFrame = fullScreen ? screen.frame
+            : OverlayGeometry.launchFrame(in: screen.visibleFrame, coverage: CGFloat(launchCoverage))
         self.machine = PlaybackMachine(pack: pack)
     }
 
@@ -335,9 +342,12 @@ final class LaunchOverlay {
         case .showOnLaunchScreen:
             present(at: launchFrame, place: "launch-screen")
         case .showOnTargetWindow:
+            if fullScreen { present(at: launchFrame, place: "full-screen"); return }
             present(at: targetFrame ?? launchFrame, place: "target-window")
         case .moveToTargetWindow(let animated):
             guard let panel else { return }
+            // Full screen stays put and fades out in place.
+            if fullScreen { self.log("player-stay full-screen"); return }
             guard !reduceMotion else { return }
             location = "target-window"
             let destination = targetFrame ?? panel.frame
@@ -382,6 +392,7 @@ final class LaunchOverlay {
         surface.targetID = targetID
         surface.autoresizingMask = [.width, .height]
         surface.configure(requested: pack.manifest.effectiveVideoFit)
+        surface.squareCorners = fullScreen
         if let greetingLight {
             if greetingStyle == .script {
                 surface.showGreeting(ScriptGreetingView(name: greetingName, still: !greetingTreatment.allowsDocking))
@@ -472,7 +483,7 @@ final class LaunchOverlay {
         self.incoming = nil
         queued = nil
         surface?.setVideoAspect(incoming.media.videoAspect)
-        if !machine.isOnTargetWindow, (machine.phase == .intro || machine.phase == .looping),
+        if !fullScreen, !machine.isOnTargetWindow, (machine.phase == .intro || machine.phase == .looping),
            incoming.media.videoAspect.isFinite, incoming.media.videoAspect > 0 {
             launchFrame = OverlayGeometry.launchFrame(in: launchScreen, aspect: incoming.media.videoAspect, coverage: launchCoverage)
             setPanelFrame(launchFrame)
@@ -636,7 +647,7 @@ final class LaunchOverlay {
     /// After docking, keep the overlay on the target window if it still moves or resizes
     /// (apps often restore their saved frame a moment after first appearing). Stops once fading.
     private func followTargetWindow(_ now: Date) {
-        guard !reduceMotion, windowReported, machine.isOnTargetWindow, machine.phase != .fading, !machine.isClosed,
+        guard !fullScreen, !reduceMotion, windowReported, machine.isOnTargetWindow, machine.phase != .fading, !machine.isClosed,
               let target, let panel,
               now.timeIntervalSince(lastFollowQuery) >= Self.windowQueryInterval else { return }
         lastFollowQuery = now

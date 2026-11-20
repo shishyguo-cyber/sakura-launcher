@@ -48,6 +48,9 @@ internal sealed partial class ExperienceWindow : Window
     /// <summary>Source of the "添加应用" list; tests substitute their own.</summary>
     internal Func<Task<IReadOnlyList<InstalledApp>>> InstalledAppsProvider { get; set; } = InstalledApps.LoadAsync;
     private readonly StackPanel problemsPanel = new();
+    /// <summary>Shown when some apps keep their own animation and ignore a switch of the current one.</summary>
+    private readonly Border pinnedPanel = new() { CornerRadius = new(10), Padding = new(12, 8, 12, 8), Margin = new(0, 0, 0, 12), Visibility = Visibility.Collapsed };
+    private readonly TextBlock pinnedText = Text("", 12);
     private readonly ComboBox rotation = new() { MinWidth = 200 };
     private readonly RadioButton everyLaunch = new() { Content = "每次启动", GroupName = "frequency" };
     private readonly RadioButton firstOfDay = new() { Content = "每天首次", GroupName = "frequency" };
@@ -60,6 +63,8 @@ internal sealed partial class ExperienceWindow : Window
     private readonly TextBlock volumeValue = Value("100%");
     private readonly CheckBox muted = new() { Content = "静音" };
     private readonly CheckBox quiet = new() { Content = "" };
+    private readonly CheckBox fullScreen = new() { Content = "" };
+    private FrameworkElement? fitRow;
     private readonly CheckBox customHandoff = new() { Content = "自定义" };
     private readonly TextBox handoff = new() { Width = 96 };
     private readonly TextBlock handoffDefault = Secondary("");
@@ -195,6 +200,15 @@ internal sealed partial class ExperienceWindow : Window
         DockPanel.SetDock(rotation, Dock.Right); row.Children.Add(rotation);
         var label = Text("自动播放时"); label.VerticalAlignment = VerticalAlignment.Center; row.Children.Add(label);
         page.Children.Add(row);
+        var pinnedRow = new DockPanel();
+        var follow = Small("改为跟随当前动画", FollowCurrentForAll, "改为跟随当前动画");
+        System.Windows.Automation.AutomationProperties.SetAutomationId(follow, "follow-current-animation");
+        DockPanel.SetDock(follow, Dock.Right); pinnedRow.Children.Add(follow);
+        pinnedText.TextWrapping = TextWrapping.Wrap; pinnedText.VerticalAlignment = VerticalAlignment.Center;
+        pinnedText.SetResourceReference(TextBlock.ForegroundProperty, "TextSecondary");
+        pinnedRow.Children.Add(pinnedText);
+        pinnedPanel.Child = pinnedRow; pinnedPanel.SetResourceReference(Border.BackgroundProperty, "AccentSoft");
+        page.Children.Add(pinnedPanel);
         cards.Margin = new(-6, 0, -6, 0); page.Children.Add(cards);
         problemsPanel.Margin = new(0, 8, 0, 0); page.Children.Add(problemsPanel);
         return page;
@@ -227,7 +241,7 @@ internal sealed partial class ExperienceWindow : Window
             choice.SelectionChanged += (_, _) => Guard(() =>
             {
                 if (choice.SelectedIndex < 0) return;
-                draft = ReadDraft(); draft.Targets.First(t => t.Id == target.Id).Animation = options[choice.SelectedIndex].Id; Changed();
+                draft = ReadDraft(); draft.Targets.First(t => t.Id == target.Id).Animation = options[choice.SelectedIndex].Id; Changed(); UpdatePinnedHint();
             });
             right.Children.Add(choice);
             var enabled = new CheckBox { Content = "", IsChecked = target.Enabled, VerticalAlignment = VerticalAlignment.Center, Margin = new(0, 0, 8, 0) };
@@ -384,11 +398,19 @@ internal sealed partial class ExperienceWindow : Window
     {
         var page = new StackPanel();
         var list = Group(page);
+        System.Windows.Automation.AutomationProperties.SetName(fullScreen, "全屏播放");
+        System.Windows.Automation.AutomationProperties.SetAutomationId(fullScreen, "full-screen");
+        fullScreen.Checked += (_, _) => { ShowFullScreen(); Changed(); };
+        fullScreen.Unchecked += (_, _) => { ShowFullScreen(); Changed(); };
+        var title = new StackPanel();
+        title.Children.Add(Text("全屏播放"));
+        title.Children.Add(Secondary("盖住整个屏幕（含任务栏），播完在原处淡出，不贴到应用窗口。", 12));
+        AddRow(list, title, fullScreen);
         AddView(list, coverage.View);
         fitMode.ItemsSource = new[] { "使用动画默认设置", "自动适配（推荐）", "铺满（可能裁边）", "完整显示（模糊补边）" };
         System.Windows.Automation.AutomationProperties.SetName(fitMode, "贴到窗口时的显示方式");
         fitMode.SelectionChanged += (_, _) => Changed();
-        var fitRow = AddRow(list, "贴到窗口时", fitMode);
+        fitRow = AddRow(list, "贴到窗口时", fitMode);
         fitRow.ToolTip = "窗口比例和视频接近时铺满；差得多时完整显示整段视频，空边用模糊画面补齐。";
         page.Children.Add(Hint("开场尺寸按屏幕可见区域缩放；收尾仍与目标窗口对齐。"));
         return page;
@@ -499,7 +521,8 @@ internal sealed partial class ExperienceWindow : Window
             if (!next.Packs.TryGetValue(pack.Id, out var p)) next.Packs[pack.Id] = p = new();
             p.Overrides = new() { FadeDuration = fade.Value, HandoffAt = at, MaxWaitSeconds = wait.Value,
                 LaunchCoverage = coverage.Value, LoopExit = customLoop.IsChecked == true ? (loop.SelectedIndex == 1 ? LoopExit.Immediate : LoopExit.CycleEnd) : null,
-                VideoFit = fitMode.SelectedIndex switch { 1 => VideoFitMode.Auto, 2 => VideoFitMode.Fill, 3 => VideoFitMode.Fit, _ => null } };
+                VideoFit = fitMode.SelectedIndex switch { 1 => VideoFitMode.Auto, 2 => VideoFitMode.Fill, 3 => VideoFitMode.Fit, _ => null },
+                FullScreen = fullScreen.IsChecked == true ? true : null };
         }
         next.Playback.Frequency = firstOfDay.IsChecked == true ? PlayFrequency.FirstOfDay : PlayFrequency.EveryLaunch;
         next.Playback.DayStartHour = Math.Max(0, dayStart.SelectedIndex);
@@ -524,6 +547,8 @@ internal sealed partial class ExperienceWindow : Window
         loopDefault.Text = "默认 " + ((pack?.Manifest.EffectiveLoopExit ?? LoopExit.CycleEnd) == LoopExit.Immediate ? "立即收尾" : "播完循环");
         ShowLoop();
         fitMode.SelectedIndex = p.Overrides.VideoFit switch { VideoFitMode.Auto => 1, VideoFitMode.Fill => 2, VideoFitMode.Fit => 3, _ => 0 };
+        fullScreen.IsChecked = p.Overrides.FullScreen == true;
+        ShowFullScreen();
         presets.ItemsSource = p.Presets; presets.SelectedIndex = -1;
         (draft.Playback.Frequency == PlayFrequency.FirstOfDay ? firstOfDay : everyLaunch).IsChecked = true;
         ShowDayRows();
@@ -533,6 +558,24 @@ internal sealed partial class ExperienceWindow : Window
         greetingName.Text = draft.GreetingName ?? "";
         loading = false;
         UpdateToday(); UpdateStats();
+    }
+
+    /// <summary>Full screen has no opening size; the fit choice still decides how the video meets the screen.</summary>
+    private void ShowFullScreen()
+    {
+        var on = fullScreen.IsChecked == true;
+        var block = coverage.View.Parent as FrameworkElement ?? coverage.View;
+        block.Visibility = on ? Visibility.Collapsed : Visibility.Visible;
+        if (fitRow is not null && FindTitle(fitRow) is { } label) label.Text = on ? "画面适配" : "贴到窗口时";
+    }
+
+    private static TextBlock? FindTitle(DependencyObject root)
+    {
+        if (root is DockPanel dock) return dock.Children.OfType<TextBlock>().LastOrDefault();
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+            if (FindTitle(VisualTreeHelper.GetChild(root, i)) is { } found) return found;
+        if (root is Panel panel) foreach (var child in panel.Children.OfType<DependencyObject>()) if (FindTitle(child) is { } f) return f;
+        return null;
     }
 
     private void ShowDayRows()
@@ -656,9 +699,36 @@ internal sealed partial class ExperienceWindow : Window
         status.Text = draft.Library.Favorites.Contains(id) ? "已加入收藏，保存后生效。" : "已取消收藏，保存后生效。";
     });
 
+    private void UpdatePinnedHint()
+    {
+        var view = library;
+        var hint = PinnedTargets.Hint(PinnedTargets.Unaffected(view?.ActiveId ?? pack?.Id, draft.Targets),
+            id => view?.Packs.FirstOrDefault(p => p.Id == id)?.Manifest.Name ?? id);
+        pinnedText.Text = hint ?? "";
+        pinnedPanel.Visibility = hint is null ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private void FollowCurrentForAll() => Guard(() =>
+    {
+        draft = ReadDraft(); PinnedTargets.FollowCurrent(draft.Targets); BuildTargets(); Changed(); UpdatePinnedHint();
+        status.Text = "所有应用已改为跟随当前动画，保存设置后生效。";
+    });
+
+    /// <summary>The tray menu changed saved settings; keep the draft's other unsaved edits.</summary>
+    public void AdoptSavedTargets(IEnumerable<LaunchTarget> saved)
+    {
+        try { if (!loading) draft = ReadDraft(); } catch (ExperienceException) { }
+        var ids = saved.Where(t => t.Animation is null).Select(t => t.Id).ToHashSet();
+        foreach (var target in draft.Targets) if (ids.Contains(target.Id)) target.Animation = null;
+        var wasDirty = dirty;
+        BuildTargets(); UpdatePinnedHint();
+        dirty = wasDirty; SetPill();
+    }
+
     private void BuildCards()
     {
         cards.Children.Clear();
+        UpdatePinnedHint();
         problemsPanel.Children.Clear();
         var view = library ?? new LibraryView(pack is null ? [] : [pack], new Dictionary<string, string>(), pack?.Id, "", new(), "");
         foreach (var item in view.Packs)
@@ -698,14 +768,19 @@ internal sealed partial class ExperienceWindow : Window
             if (actions is not null)
             {
                 var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new(-6, 4, 0, 0) };
-                var current = Small("设为当前", () => actions.SetActive(item.Id), "设为当前 " + item.Id); current.IsEnabled = !isCurrent; row.Children.Add(current);
                 var remove = Small("移除…", () => ConfirmRemove(item), "移除 " + item.Id, "DangerTextButton");
                 if (item.Id == view.BundledId) { remove.IsEnabled = false; remove.ToolTip = "随程序附带的示例动画不能移除"; ToolTipService.SetShowOnDisabled(remove, true); }
                 row.Children.Add(remove);
                 layout.Children.Add(row);
             }
             card.Child = layout;
-            card.MouseLeftButtonUp += (_, _) => SwitchTo(item);
+            // One click makes it the current animation and opens its settings (no separate "设为当前").
+            card.ToolTip = isCurrent ? "当前动画" : "点按设为当前动画";
+            card.MouseLeftButtonUp += (_, _) =>
+            {
+                SwitchTo(item);
+                if (actions is not null && !isCurrent) { actions.SetActive(item.Id); status.Text = $"已把「{item.Manifest.Name}」设为当前动画。"; }
+            };
             cards.Children.Add(card);
         }
         if (actions is not null)

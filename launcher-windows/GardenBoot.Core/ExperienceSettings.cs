@@ -17,6 +17,8 @@ public sealed class PlaybackOverrides
     public double? MaxWaitSeconds { get; set; }
     [JsonConverter(typeof(ExperienceLoopConverter))] public LoopExit? LoopExit { get; set; }
     public double? LaunchCoverage { get; set; }
+    /// <summary>Play over the whole monitor (taskbar included) and fade out in place instead of docking; null = off.</summary>
+    public bool? FullScreen { get; set; }
     [JsonConverter(typeof(VideoFitOverrideConverter))] public VideoFitMode? VideoFit { get; set; }
     public PlaybackOverrides Copy() => (PlaybackOverrides)MemberwiseClone();
     public void Validate()
@@ -165,6 +167,7 @@ public sealed class ExperienceSettings
         return snapshot;
     }
     public double Coverage(string id) => Packs.GetValueOrDefault(id)?.Overrides.LaunchCoverage ?? .72;
+    public bool FullScreen(string id) => Packs.GetValueOrDefault(id)?.Overrides.FullScreen ?? false;
     public void ResetPack(string id)
     {
         if (!Packs.TryGetValue(id, out var pack)) Packs[id] = pack = new();

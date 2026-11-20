@@ -44,7 +44,7 @@ schemaVersion 1 顶层四个字段必需，schemaVersion 2 另需 `playback`、`
 - 每包 `overrides`：所有成员可省略或为 null，表示继承包默认值；主动填写默认数值仍算覆盖。
 - `fadeDuration`：0.1–2 秒；`handoffAt`：有限、非负秒数，省略时继承包交接点或自动结尾；依然按最终媒体时长收紧。
 - `videoFit`：`auto`、`fill`、`fit` 或 null（继承包默认，再默认 `auto`），见 VIDEO-FIT.md。
-- `maxWaitSeconds`：1–60；`loopExit`：严格为 `cycleEnd` 或 `immediate`；`launchCoverage`：0.4–0.9，省略为 0.72。
+- `maxWaitSeconds`：1–60；`loopExit`：严格为 `cycleEnd` 或 `immediate`；`launchCoverage`：0.4–0.9，省略为 0.72；`fullScreen`：可选布尔值，`true` 时该动画盖住整个屏幕（macOS 含菜单栏和程序坞，Windows 含任务栏）播放、在原处淡出、不贴到目标窗口，此时不使用 `launchCoverage`，`videoFit` 决定画面如何适配屏幕；省略或 `false` 为关闭，关闭时不写入。
 - 覆盖比例仅影响开场，保持最大宽度 1120、屏幕可见区域和收尾停靠规则。
 - 数值必须有限，拒绝错误类型、NaN、Infinity；JSON 不接受以字符串代替数字。
 - 包键使用包格式的 id 规则。过往包的偏好保留，包暂时不存在时不删个人方案。

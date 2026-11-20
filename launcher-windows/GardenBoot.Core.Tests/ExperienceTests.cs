@@ -148,4 +148,18 @@ public static class ExperienceTests
         }
         finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
     }
+
+    [Test] public static void FullScreenIsAnOptionalPerAnimationSwitch()
+    {
+        var settings = new ExperienceSettings();
+        Check.False(settings.FullScreen("a"), "off by default");
+        settings.Packs["a"] = new() { Overrides = new() { FullScreen = true } };
+        Check.True(settings.FullScreen("a"));
+        Check.False(settings.FullScreen("b"), "per animation");
+        var json = settings.ToJson();
+        Check.True(json.Contains("\"fullScreen\": true"), "same key as macOS");
+        Check.True(ExperienceSettings.Parse(json).FullScreen("a"));
+        settings.Packs["a"].Overrides.FullScreen = null;
+        Check.False(settings.ToJson().Contains("fullScreen"), "off is not written");
+    }
 }

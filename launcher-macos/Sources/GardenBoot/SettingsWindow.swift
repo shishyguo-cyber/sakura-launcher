@@ -330,12 +330,30 @@ struct ExperienceSettingsView: View {
 
     private func display(_ pack: InstalledPack) -> some View {
         SettingsGroup {
-            slider("开场尺寸", key: \.launchCoverage, fallback: 0.72, range: 0.4...0.9, step: 0.01, percent: true)
-                .help("按所在屏幕的可见区域缩放；收尾仍与目标窗口对齐。")
+            SettingsRow {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("全屏播放")
+                        Text("盖住整个屏幕（含菜单栏和程序坞），播完在原处淡出，不贴到应用窗口。")
+                            .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                    }
+                    Spacer()
+                    Toggle("", isOn: Binding(get: { editor.preferences.overrides.fullScreen == true },
+                                             set: { on in editor.update { $0.fullScreen = on ? true : nil } }))
+                        .labelsHidden().toggleStyle(.switch).accessibilityLabel("全屏播放")
+                        .accessibilityIdentifier("full-screen")
+                }
+            }
+            // Full screen has no opening size; the fit choice still decides how the video meets the screen.
+            if editor.preferences.overrides.fullScreen != true {
+                SettingsDivider()
+                slider("开场尺寸", key: \.launchCoverage, fallback: 0.72, range: 0.4...0.9, step: 0.01, percent: true)
+                    .help("按所在屏幕的可见区域缩放；收尾仍与目标窗口对齐。")
+            }
             SettingsDivider()
             SettingsRow {
                 HStack {
-                    Text("贴到窗口时")
+                    Text(editor.preferences.overrides.fullScreen == true ? "画面适配" : "贴到窗口时")
                     Spacer()
                     GardenMenu(title: "贴到窗口时", selection: Binding(get: { editor.preferences.overrides.videoFit?.rawValue ?? "default" },
                         set: { value in editor.update { $0.videoFit = VideoFit.Mode(rawValue: value) } }),

@@ -169,7 +169,25 @@ final class ExperienceEditor: ObservableObject {
         else { message = "最多收藏 200 个动画。" }
     }
     func inspect(_ selected: InstalledPack) { pack = selected }
-    func select(_ selected: InstalledPack) { onSelect(selected); activeID = selected.id; pack = selected; message = "已设为当前动画。" }
+    func select(_ selected: InstalledPack) {
+        onSelect(selected); activeID = selected.id; pack = selected
+        message = "已设为当前动画。" + (pinnedHint.map { " " + $0 } ?? "")
+    }
+    /// Apps with their own animation that a switch of the current animation does not reach (TARGETS.md).
+    var pinnedHint: String? {
+        PinnedTargets.hint(PinnedTargets.unaffected(activeID: activeID, targets: draft.targets)) { id in
+            entries.first(where: { $0.id == id })?.name ?? id
+        }
+    }
+    func followCurrentForAll() {
+        draft.targets = PinnedTargets.followingCurrent(draft.targets)
+        message = "所有应用已改为跟随当前动画，保存设置后生效。"
+    }
+    /// The menu changed saved settings; keep the draft's other unsaved edits.
+    func adoptSavedTargets(_ targets: [ApplicationTarget]) {
+        saved.targets = targets
+        draft.targets = targets
+    }
     func resetPlayback() {
         do { try onResetPlayback(); message = "已清空播放记录，下次启动按当前暂停和动态效果设置播放。" }
         catch { message = "播放记录未清空：\(error.localizedDescription)" }
