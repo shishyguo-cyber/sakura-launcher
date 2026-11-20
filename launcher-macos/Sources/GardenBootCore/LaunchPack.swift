@@ -33,11 +33,12 @@ public struct PackManifest: Codable, Equatable, Sendable {
     /// Rights and licence statement shipped with the pack. Required.
     public var notice: String?
     public var cover: String?
+    public var textOverlay: String?
 
     public init(schemaVersion: Int = PackManifest.supportedSchema, id: String, name: String,
                 segments: [PackSegment: String], handoffAt: Double? = nil, fadeDuration: Double? = nil,
                 volume: Double? = nil, maxWaitSeconds: Double? = nil, loopExit: LoopExit? = nil,
-                notice: String? = nil, cover: String? = nil, videoFit: VideoFit.Mode? = nil) {
+                notice: String? = nil, cover: String? = nil, videoFit: VideoFit.Mode? = nil, textOverlay: String? = nil) {
         self.schemaVersion = schemaVersion
         self.id = id
         self.name = name
@@ -50,10 +51,11 @@ public struct PackManifest: Codable, Equatable, Sendable {
         self.notice = notice
         self.cover = cover
         self.videoFit = videoFit
+        self.textOverlay = textOverlay
     }
 
     private enum CodingKeys: String, CodingKey {
-        case schemaVersion, id, name, segments, handoffAt, fadeDuration, volume, maxWaitSeconds, loopExit, notice, cover, videoFit
+        case schemaVersion, id, name, segments, handoffAt, fadeDuration, volume, maxWaitSeconds, loopExit, notice, cover, videoFit, textOverlay
     }
 
     public init(from decoder: Decoder) throws {
@@ -78,6 +80,7 @@ public struct PackManifest: Codable, Equatable, Sendable {
         notice = try c.decodeIfPresent(String.self, forKey: .notice)
         cover = try c.decodeIfPresent(String.self, forKey: .cover)
         videoFit = try c.decodeIfPresent(VideoFit.Mode.self, forKey: .videoFit)
+        textOverlay = try? c.decode(String.self, forKey: .textOverlay)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -94,6 +97,7 @@ public struct PackManifest: Codable, Equatable, Sendable {
         try c.encodeIfPresent(notice, forKey: .notice)
         try c.encodeIfPresent(cover, forKey: .cover)
         try c.encodeIfPresent(videoFit, forKey: .videoFit)
+        try c.encodeIfPresent(textOverlay, forKey: .textOverlay)
     }
 }
 
@@ -135,6 +139,7 @@ public enum PackDefaults {
 }
 
 extension PackManifest {
+    public var showsGreeting: Bool { textOverlay == "greeting" }
     public var effectiveFadeDuration: Double { fadeDuration ?? PackDefaults.fadeDuration }
     public var effectiveVolume: Double { volume ?? PackDefaults.volume }
     public var effectiveMaxWait: Double { maxWaitSeconds ?? PackDefaults.maxWaitSeconds }

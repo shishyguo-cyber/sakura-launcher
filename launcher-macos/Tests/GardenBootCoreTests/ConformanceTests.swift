@@ -103,6 +103,12 @@ final class ConformanceTests: XCTestCase {
                 let encoded = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(manifest)) as? [String: Any])
                 XCTAssertEqual(encoded["videoFit"] as? String, expected, name)
             }
+            if c.keys.contains("expectTextOverlay") {
+                let manifest = try JSONDecoder().decode(PackManifest.self, from: data)
+                let roundTrip = try JSONDecoder().decode(PackManifest.self, from: JSONEncoder().encode(manifest))
+                XCTAssertEqual(roundTrip.textOverlay, c["expectTextOverlay"] as? String, name)
+                XCTAssertEqual(manifest.showsGreeting, c["showsGreeting"] as? Bool, name)
+            }
             if c["valid"] as! Bool {
                 let got = try result.get()
                 let want = c["layout"] as! [String: Any]
@@ -118,6 +124,53 @@ final class ConformanceTests: XCTestCase {
                                         fadeDuration: (c["fadeDuration"] as? NSNumber)?.doubleValue)
             XCTAssertEqual(manifest.handoffTime(finalDuration: (c["finalDuration"] as! NSNumber).doubleValue),
                            (c["expect"] as! NSNumber).doubleValue, accuracy: 1e-9, "\(c)")
+        }
+    }
+
+    func testGreetingLightUsesLocalDaypart() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try XCTUnwrap(TimeZone(secondsFromGMT: 8 * 3600))
+        let cases: [(Int, Greeting.Light, String)] = [
+            (0, .moonlight, "Good evening"), (4, .moonlight, "Good evening"),
+            (5, .dawn, "Good morning"), (11, .dawn, "Good morning"),
+            (12, .daylight, "Good afternoon"), (17, .daylight, "Good afternoon"),
+            (18, .dusk, "Good evening"), (22, .dusk, "Good evening"),
+            (23, .moonlight, "Good evening"),
+        ]
+        for (hour, light, text) in cases {
+            let date = try XCTUnwrap(calendar.date(from: .init(year: 2026, month: 11, day: 20, hour: hour)))
+            XCTAssertEqual(Greeting.light(at: date, calendar: calendar), light)
+            XCTAssertEqual(Greeting.text(at: date, calendar: calendar, name: nil), text)
+        }
+    }
+
+    func testGreetingReduceMotionUsesStillTreatmentForEitherStyle() {
+        for style in [Greeting.Style.pen, .sweep, .script] {
+            let still = Greeting.Treatment(style: style, reduceMotion: true)
+            XCTAssertEqual(still, .still)
+            XCTAssertFalse(still.allowsDocking)
+            let animated = Greeting.Treatment(style: style, reduceMotion: false)
+            XCTAssertEqual(animated, .animated(style))
+            XCTAssertTrue(animated.allowsDocking)
+        }
+    }
+
+    func testGreetingCases() throws {
+        let spec = try load("greeting.json")
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try XCTUnwrap(TimeZone(secondsFromGMT: 8 * 3600))
+        for c in spec["messages"] as! [[String: Any]] {
+            calendar.locale = Locale(identifier: c["language"] as! String)
+            let date = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 11, day: 20, hour: c["hour"] as? Int)))
+            XCTAssertEqual(Greeting.text(at: date, calendar: calendar, name: c["name"] as? String),
+                           c["expect"] as? String, "\(c)")
+        }
+        for c in spec["names"] as! [[String: Any]] {
+            if c["invalid"] as? Bool == true {
+                XCTAssertThrowsError(try Greeting.normalizedName(c["input"] as? String))
+            } else {
+                XCTAssertEqual(try Greeting.normalizedName(c["input"] as? String), c["expect"] as? String)
+            }
         }
     }
 

@@ -12,10 +12,11 @@ PRIVATE = {".agents", ".collab", ".superpowers", "assets", "handoff", "node_modu
 TEXT = {".md", ".txt", ".py", ".sh", ".command", ".json", ".yml", ".yaml", ".swift", ".cs", ".csproj", ".slnx", ".ps1", ".xaml", ".plist", ".manifest"}
 CREDENTIAL = re.compile(r"(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9_-]{20,}|-----BEGIN (?:(?:OPENSSH|RSA|EC|DSA|ENCRYPTED) )?PRIVATE KEY-----)")
 PERSONAL = re.compile(r"/Users/[A-Za-z0-9_.-]+/|[A-Za-z]:\\Users\\[A-Za-z0-9_.-]+\\")
-# Media allowed in the public tree: the CC0 demo, and the featured pack its owner confirmed for bundling (docs/MEDIA.md).
+# Media allowed in the public tree: the CC0 packs, and the featured pack its owner confirmed for bundling (docs/MEDIA.md).
 APPROVED_MEDIA = {"launcher-macos/demo-pack/intro.mp4", "launcher-macos/demo-pack/loop.mp4", "launcher-macos/demo-pack/outro.mp4",
                   "launcher-macos/featured-pack/intro.mp4", "launcher-macos/featured-pack/loop.mov",
-                  "launcher-macos/featured-pack/outro.mp4"}
+                  "launcher-macos/featured-pack/outro.mp4",
+                  "launcher-macos/greeting-pack/intro.mp4", "launcher-macos/greeting-pack/outro.mp4"}
 LINK = re.compile(r"!?\[[^\]\n]*\]\((<[^>]+>|[^\s)]+)(?:\s+\"[^\"]*\")?\)")
 
 

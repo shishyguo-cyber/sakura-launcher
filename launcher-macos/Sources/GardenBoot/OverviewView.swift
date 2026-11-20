@@ -68,6 +68,10 @@ struct OverviewView: View {
                         .buttonStyle(GardenButtonStyle(kind: .secondary, small: true))
                 }
             }
+            Text(UpdateRules.gitHubRequirement)
+                .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("overview-update-requirement")
             Rectangle().fill(Theme.divider).frame(height: 1)
             Toggle(isOn: Binding(get: { editor.updateOverview().automatic }, set: { editor.setAutomaticUpdates($0) })) {
                 VStack(alignment: .leading, spacing: 3) {
@@ -120,7 +124,7 @@ struct OverviewView: View {
         SettingsGroup {
             SettingsRow {
                 HStack {
-                    Text("三步开始").font(.system(size: 15, weight: .semibold))
+                    Text("使用引导").font(.system(size: 15, weight: .semibold))
                     Spacer()
                     Button("我已了解") { editor.setWelcomeDismissed(true) }
                         .buttonStyle(GardenButtonStyle(kind: .text, small: true))
@@ -128,6 +132,13 @@ struct OverviewView: View {
                 }
             }
             SettingsDivider()
+            if !editor.greetingStepSkipped {
+                SettingsRow {
+                    GreetingSettingsView(editor: editor, title: "想让 Sakura 怎么称呼你？",
+                                         skip: editor.skipGreetingStep)
+                }
+                SettingsDivider()
+            }
             step("1", title: "选一个常用应用", detail: "添加或启用应用，保存后开始监听。", action: "选择应用") { navigate(.targets) }
             SettingsDivider()
             step("2", title: "挑一段动画", detail: "设为当前动画，或在应用页单独指定。", action: "选择动画") { navigate(.animation) }

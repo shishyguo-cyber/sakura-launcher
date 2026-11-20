@@ -15,6 +15,8 @@ __pycache__/
 !demo-pack/*.mov
 !featured-pack/*.mp4
 !featured-pack/*.mov
+# The built-in Welcome's silent CC0 compatibility backgrounds (greeting-pack/NOTICE.md).
+!greeting-pack/*.mp4
 
 # Isolated sandbox-safe build and verification output.
 .work/

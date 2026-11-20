@@ -10,6 +10,8 @@ namespace GardenBoot.App;
 internal sealed class LaunchOverlay
 {
     private const double PrepareLimit = 6, StallLimit = 6, PreviewDelay = 3, RevealDuration = 0.12;
+    /// <summary>The built-in Welcome writes for this long before it docks (macOS LaunchOverlay greetingHold).</summary>
+    private const double GreetingHold = 3.3, GreetingMove = 0.45;
     private readonly InstalledPack pack;
     private readonly TargetMonitor monitor;
     private readonly TrayIcon tray;
@@ -44,10 +46,21 @@ internal sealed class LaunchOverlay
     private double lastWindowQuery = -1, lastFollowQuery = -1, lastPosition;
     public double Age => age.Elapsed.TotalSeconds;
     public bool IsPreview => preview;
+    /// <summary>The built-in Welcome: drawn by Sakura, no video is decoded (Greeting.IsProcedural).</summary>
+    private readonly bool procedural;
+    private readonly string? greetingName;
+    private readonly bool greetingStill;
+    private ScriptGreetingView? greeting;
+    private double? greetingExitAt;
+    private bool greetingHandoff;
 
     public LaunchOverlay(InstalledPack pack, TargetMonitor monitor, TrayIcon tray, EventLog log,
-                         bool preview, Action<EndReason> onFinish, double coverage = .72, MediaClip? warmFirst = null, string? targetId = null)
+                         bool preview, Action<EndReason> onFinish, double coverage = .72, MediaClip? warmFirst = null, string? targetId = null,
+                         string? greetingName = null, bool greetingStill = false)
     {
+        procedural = Greeting.IsProcedural(pack);
+        this.greetingName = greetingName;
+        this.greetingStill = greetingStill;
         this.targetId = targetId;
         warm = warmFirst;
         this.pack = pack;
@@ -70,7 +83,7 @@ internal sealed class LaunchOverlay
         windowReported = targetFrame is not null || (preview && !pack.Layout.CoversLaunch);
         if (targetFrame is not null) WindowReadyAge = 0;
         Send(new PlaybackEvent.Start(windowReported));
-        if (!machine.IsClosed) _ = Preload();
+        if (!machine.IsClosed && !procedural) _ = Preload();
     }
 
     // Media/Win32 callbacks may enqueue events while a command is being performed. Finish every
@@ -101,6 +114,11 @@ internal sealed class LaunchOverlay
                 if (movement.Animated) StartMove(target, 0.45);
                 else window.SetFrame(target);
                 break;
+            case PlaybackCommand.Play play when procedural:
+                // The drawn Welcome stands in for the compatibility videos: the outro marks the hand-off.
+                if (play.Segment == PackSegment.Outro) greetingExitAt ??= Age;
+                log.Write($"greeting-phase segment={play.Segment.ToString().ToLowerInvariant()}");
+                break;
             case PlaybackCommand.Play play:
                 queued = (play.Segment, play.Looping, Age);
                 StartQueued();
@@ -123,6 +141,11 @@ internal sealed class LaunchOverlay
     private void Present(DesktopFrame frame, string place)
     {
         window = new OverlayWindow(() => Send(new PlaybackEvent.Skip())) { FitMode = pack.Manifest.EffectiveVideoFit, Log = log.Write };
+        if (procedural)
+        {
+            greeting = new ScriptGreetingView(greetingName, greetingStill);
+            window.ShowGreeting(greeting);
+        }
         window.ShowHidden(frame); // positioned but invisible until the first frame (LAUNCH-LATENCY.md)
         escapeRegistered = tray.SetEscape(() => Send(new PlaybackEvent.Skip()));
         if (!escapeRegistered) log.Write("skip-hotkey-unavailable");
@@ -133,7 +156,8 @@ internal sealed class LaunchOverlay
     /// <summary>Fades the overlay in once a video frame is actually on screen.</summary>
     private void RevealIfReady()
     {
-        if (pendingShow is not { } show || window is null || active is null || active.Position <= 0) return;
+        if (pendingShow is not { } show || window is null) return;
+        if (procedural ? greeting is not { IsReady: true } : active is null || active.Position <= 0) return;
         pendingShow = null;
         revealStart = shownAt = Age;
         log.Write(FormattableString.Invariant($"first-frame age={Age:F3} warm={usedWarm.ToString().ToLowerInvariant()} segment={activeSegment?.ToString().ToLowerInvariant()}"));
@@ -203,6 +227,8 @@ internal sealed class LaunchOverlay
         if (machine.IsClosed) return;
         var now = Age;
         if (!preview && !Session.IsActive) { Send(new PlaybackEvent.TargetExited()); return; }
+        if (shownAt is { } greetingShown)
+            greeting?.Render(now - greetingShown, greetingExitAt is { } leaving ? now - leaving : null);
         if (fade is { } fading)
         {
             var progress = (now - fading.Start) / fading.Duration;
@@ -244,6 +270,17 @@ internal sealed class LaunchOverlay
         if (machine.IsClosed || fade is not null) return;
         if (queued is { } request && now - request.Since > PrepareLimit)
         { Send(new PlaybackEvent.Failed("prepare-timeout")); return; }
+        if (procedural && shownAt is { } written)
+        {
+            if (machine.Phase == PlaybackPhase.Intro && now - written >= GreetingHold) Send(new PlaybackEvent.SegmentEnded(PackSegment.Intro));
+            if (!greetingHandoff && machine.Phase == PlaybackPhase.Final && greetingExitAt is { } exitAt && now - exitAt >= GreetingMove)
+            {
+                greetingHandoff = true;
+                log.Write("player-handoff");
+                Send(new PlaybackEvent.ReachedHandoff());
+            }
+            return;
+        }
         if (active is { } playing)
         {
             playing.Poll(); // loop boundary may change the active clip through the state machine
@@ -262,6 +299,8 @@ internal sealed class LaunchOverlay
     private void PollWindow(double now)
     {
         if (windowReported || now - lastWindowQuery < 0.15) return;
+        // Let the Welcome finish writing before it docks onto the target window.
+        if (procedural && (shownAt is not { } shown || now - shown < GreetingHold)) return;
         lastWindowQuery = now;
         if (!preview)
         {

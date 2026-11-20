@@ -161,6 +161,12 @@ public struct PackLibrary: Sendable {
         return try await importPack(from: staging, probe: probe)
     }
 
+    /// The pack a brand-new install starts on. Returns nil (leave things alone) once the user has a choice,
+    /// or when this install already went through the featured-pack offer (an upgrade from an earlier version).
+    public static func newInstallChoice(preferredID: String?, alreadyOfferedFeatured: Bool, defaultID: String) -> String? {
+        preferredID == nil && !alreadyOfferedFeatured ? defaultID : nil
+    }
+
     /// Called only after the featured pack's first successful installation. Existing choices are preserved;
     /// the app's offered-once marker prevents a removed pack from reaching this step again.
     public static func preferredAfterFirstFeaturedInstall(preferredID: String?, featuredID: String) -> String {

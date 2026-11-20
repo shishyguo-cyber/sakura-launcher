@@ -12,6 +12,7 @@ final class ExperienceEditor: ObservableObject {
     @Published var playbackState: PlaybackState
     @Published var libraryBusy = false
     @Published private(set) var welcomeDismissed = false
+    @Published private(set) var greetingStepSkipped = false
     @Published var overviewActive = false
     struct VideoDraft: Identifiable {
         let id = UUID()
@@ -96,7 +97,14 @@ final class ExperienceEditor: ObservableObject {
         message = "方案已从草稿移除，保存后生效。"
     }
     @discardableResult func save() -> Bool {
-        do { try draft.validated(); try onSave(draft); saved = draft; didSave = true; message = "已保存，下次播放使用这些设置。"; return true }
+        do {
+            var next = draft
+            next.greetingName = try Greeting.normalizedName(draft.greetingName)
+            try next.validated()
+            try onSave(next)
+            draft = next; saved = next; didSave = true; message = "已保存，下次播放使用这些设置。"
+            return true
+        }
         catch { message = "未保存：\(error.localizedDescription)"; return false }
     }
     func preview(_ requested: InstalledPack? = nil) {
@@ -104,6 +112,19 @@ final class ExperienceEditor: ObservableObject {
         do { try draft.validated(); try onPreview(draft, selected); message = "正在预览当前调整；未保存的设置不会用于自动播放。" }
         catch { message = "无法预览：\(error.localizedDescription)" }
     }
+    func skipGreetingStep() {
+        greetingStepSkipped = true
+    }
+
+    func previewGreeting() {
+        guard let directory = Bundle.main.resourceURL?.appendingPathComponent(Support.greetingResource),
+              let greeting = try? PackLibrary.load(directory: directory) else {
+            message = "问候动画不可用。"
+            return
+        }
+        preview(greeting)
+    }
+
     func discard() { draft = saved }
     func updateTarget(_ id: String, change: (inout ApplicationTarget) -> Void) {
         guard let index = draft.targets.firstIndex(where: { $0.id == id && $0.bundleID != nil }) else { return }
@@ -154,7 +175,7 @@ final class ExperienceEditor: ObservableObject {
         catch { message = "播放记录未清空：\(error.localizedDescription)" }
     }
     func remove(_ entry: LibraryEntry) {
-        guard entry.id != Support.demoID else { return }
+        guard !Support.protectedPackIDs.contains(entry.id) else { return }
         let alert = NSAlert()
         alert.messageText = "移除「\(entry.name)」？"
         alert.informativeText = "动画包会移到废纸篓。个人参数、方案与收藏会保留。"
@@ -173,7 +194,7 @@ final class ExperienceEditor: ObservableObject {
             entries.append(LibraryEntry(id: id, name: raw?["name"] as? String ?? id, pack: nil, problem: problem))
         }
         entries.sort { $0.id < $1.id }
-        let active = PackLibrary.resolveActive(preferredID: Support.defaults.string(forKey: "activePackID"), packs: result.packs, fallbackID: Support.demoID)
+        let active = PackLibrary.resolveActive(preferredID: Support.defaults.string(forKey: "activePackID"), packs: result.packs, fallbackID: Support.defaultPackID)
         activeID = active?.id
         pack = result.packs.first(where: { $0.id == pack?.id }) ?? active
         libraryBusy = false

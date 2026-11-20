@@ -160,6 +160,11 @@ public sealed class PackLibrary(string root)
         }
     }
 
+    /// <summary>The pack a brand-new install starts on; null once the user has a choice or this install already went
+    /// through the featured-pack offer (an upgrade). Windows uses the built-in Welcome once it is bundled.</summary>
+    public static string? NewInstallChoice(string? preferredId, bool alreadyOfferedFeatured, string defaultId) =>
+        preferredId is null && !alreadyOfferedFeatured ? defaultId : null;
+
     /// <summary>Only after the first successful featured installation: preserve a choice, otherwise select featured.
     /// The app's offered-once marker prevents removed packs from reaching this step again.</summary>
     public static string PreferredAfterFirstFeaturedInstall(string? preferredId, string featuredId) => preferredId ?? featuredId;

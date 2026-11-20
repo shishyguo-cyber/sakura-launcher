@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Net.Http;
+using System.Net.Sockets;
 using System.Text.Json;
 
 namespace GardenBoot.Core;
@@ -8,6 +10,28 @@ public static class UpdateRules
 {
     public const double CheckInterval = 7 * 24 * 3600;
     public const string ReleasesUrl = "https://api.github.com/repos/shishyguo-cyber/sakura-launcher/releases?per_page=20";
+    public const string GitHubRequirement = "检查和下载更新需要能连接 GitHub。";
+    public const string GitHubConnectionMessage = "连不上 GitHub，请确认这台电脑能打开 github.com 后重试。";
+
+    internal static bool IsGitHubConnectionFailure(Exception error) => error switch
+    {
+        HttpRequestException { StatusCode: not null } => false,
+        HttpRequestException { HttpRequestError: HttpRequestError.NameResolutionError
+            or HttpRequestError.ConnectionError or HttpRequestError.SecureConnectionError } => true,
+        // HttpClient reports its timeout as cancellation with a TimeoutException inside.
+        OperationCanceledException { InnerException: TimeoutException } => true,
+        SocketException socket => socket.SocketErrorCode is SocketError.HostNotFound or SocketError.TryAgain
+            or SocketError.NoData or SocketError.NoRecovery or SocketError.ConnectionRefused or SocketError.TimedOut
+            or SocketError.ConnectionReset or SocketError.ConnectionAborted or SocketError.NetworkDown
+            or SocketError.NetworkUnreachable or SocketError.NetworkReset or SocketError.HostDown or SocketError.HostUnreachable,
+        // A connection can also fail while HttpClient streams the response body.
+        HttpRequestException { InnerException: SocketException socket } => IsGitHubConnectionFailure(socket),
+        IOException { InnerException: SocketException socket } => IsGitHubConnectionFailure(socket),
+        _ => false
+    };
+
+    public static string CheckFailureMessage(Exception error) =>
+        IsGitHubConnectionFailure(error) ? GitHubConnectionMessage : "暂时无法检查更新，请稍后再试。";
 
     public sealed record Version(int[] Core, string[] Prerelease)
     {

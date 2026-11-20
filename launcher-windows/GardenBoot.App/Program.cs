@@ -21,6 +21,13 @@ internal static class Program
             }
             catch { return 1; }
         }
+        // Review command: renders the built-in Welcome offscreen to PNG frames; never opens a window.
+        if (args.Length >= 2 && args[0] == "--render-greeting")
+        {
+            try { GreetingRecorder.Record(args); return 0; }
+            catch (Exception e) when (e is ArgumentException or FormatException or IOException or ExperienceException)
+            { Console.Error.WriteLine("render-greeting: " + e.Message); return 2; }
+        }
         AppOptions options;
         try { options = AppOptions.Parse(args); }
         catch (ArgumentException e)

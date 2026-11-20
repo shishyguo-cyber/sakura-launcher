@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "sakura-greeting",
+  "name": "Welcome · 彩虹手写",
+  "segments": {
+    "intro": "intro.mp4",
+    "outro": "outro.mp4"
+  },
+  "textOverlay": "greeting",
+  "videoFit": "fill",
+  "fadeDuration": 0.42,
+  "volume": 0,
+  "cover": "cover.png"
+}

@@ -17,6 +17,21 @@ if let request = argument(after: "--apply-update") {
 
 
 // Review commands never construct ApplicationController, monitor apps or register login items.
+if GreetingRecorder.requested {
+    MainActor.assumeIsolated {
+        let application = NSApplication.shared
+        application.setActivationPolicy(.prohibited)
+        Task { @MainActor in
+            do { try await GreetingRecorder.record(); exit(EXIT_SUCCESS) }
+            catch {
+                FileHandle.standardError.write(Data("render-greeting: \(error.localizedDescription)\n".utf8))
+                exit(EXIT_FAILURE)
+            }
+        }
+        application.run()
+    }
+}
+
 do {
     if let options = try ReviewRenderOptions.parse(CommandLine.arguments) {
         if options.content == .icon {

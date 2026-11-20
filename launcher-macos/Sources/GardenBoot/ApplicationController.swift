@@ -60,6 +60,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
             test.playOnReappear = CommandLine.arguments.contains("--test-reappear")
             return [test]
         }
+        if Support.isGreetingDemo { return [] }
         return experience.targets.filter { $0.enabled && $0.bundleID != nil }
     }
     private var waitingTitle: String {
@@ -98,22 +99,43 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
             && event?.paramDescriptor(forKeyword: AEKeyword(keyAEPropData))?.enumCodeValue == OSType(keyAELaunchedAsLogInItem)
         NSApp.setActivationPolicy(.accessory)
         NativeMenu.install()
-        do { experience = try experienceStore.load() }
+        do {
+            if Support.isGreetingDemo, !FileManager.default.fileExists(atPath: experienceStore.file.path) {
+                var initial = ExperienceSettings()
+                initial.targets = []
+                try experienceStore.save(initial)
+            }
+            experience = try experienceStore.load()
+        }
         catch { experienceWarning = error.localizedDescription; Support.log("experience-load-failed") }
         playbackState = playbackStore.load { Support.log("playback-state-reset") }
-        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        let item = NSStatusBar.system.statusItem(withLength: Support.isGreetingDemo ? NSStatusItem.variableLength : NSStatusItem.squareLength)
         item.button?.image = FlowerIcon.image()
-        item.button?.toolTip = "Sakura"
+        let appName = Support.isGreetingDemo ? "Sakura Demo" : "Sakura"
+        if Support.isGreetingDemo {
+            item.button?.imagePosition = .imageLeading
+            item.button?.title = "Demo"
+        }
+        item.button?.toolTip = appName
         item.menu = menu
         menu.delegate = self
         statusItem = item
-        menu.addItem(NSMenuItem(title: "Sakura", action: nil, keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: appName, action: nil, keyEquivalent: ""))
         updateItem.target = self; updateItem.isHidden = true; menu.addItem(updateItem)
+        updateItem.toolTip = UpdateRules.gitHubRequirement
         menu.addItem(autoStatusItem)
         menu.addItem(currentItem)
         menu.addItem(.separator())
         add("调节启动体验…", action: #selector(openSettings), key: ",")
         add("预览当前动画", action: #selector(preview), key: "p")
+        if Support.isGreetingDemo { add("预览问候", action: #selector(previewGreeting)) }
+        if Support.isGreetingArtDemo {
+            addGreetingDemoMenu("显影风格", choices: [("script", "C · 彩虹手写"), ("pen", "A · 光笔书写"), ("sweep", "B · 光扫显影")],
+                                key: "greetingDemoStyle", fallback: "script")
+            addGreetingDemoMenu("光照时段", choices: [("auto", "跟随本机时间"), ("dawn", "清晨"),
+                                                     ("daylight", "午后"), ("dusk", "黄昏"), ("moonlight", "深夜")],
+                                key: "greetingDemoLight", fallback: "auto")
+        }
         add("导入动画包…", action: #selector(choosePack))
         let packsItem = NSMenuItem(title: "切换动画", action: nil, keyEquivalent: "")
         packsItem.submenu = packsMenu
@@ -127,8 +149,8 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
         motionItem.toolTip = "系统开启“减弱动态效果”时仍播放动画。"
         menu.addItem(.separator())
         loginItem.target = self
-        menu.addItem(loginItem)
-        add("检查更新…", action: #selector(checkForUpdatesManually))
+        if !Support.isGreetingDemo { menu.addItem(loginItem) }
+        add("检查更新…", action: #selector(checkForUpdatesManually), toolTip: UpdateRules.gitHubRequirement)
         autoUpdateItem.target = self; menu.addItem(autoUpdateItem)
         add("在 GitHub 查看", action: #selector(openUpdatePage))
         autoUpdateItem.toolTip = "每周最多联网一次，只读取 GitHub 上的公开版本列表；不下载、不安装。"
@@ -171,6 +193,23 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
                         Support.log("pack-installed id=\(installed.id)")
                     }
                 } catch { Support.log("bundled-pack-error=\(error.localizedDescription)") }
+            }
+            if let greeting = Bundle.main.resourceURL?.appendingPathComponent(Support.greetingResource),
+               FileManager.default.fileExists(atPath: greeting.path) {
+                do {
+                    if let pack = try await Support.library.installIfMissing(bundled: greeting, probe: PackMedia.probe, imageProbe: PackMedia.imageProbe) {
+                        Support.log("pack-installed id=\(pack.id)")
+                    }
+                } catch { Support.log("greeting-pack-error=\(error.localizedDescription)") }
+                // New installs start on the built-in Welcome; the featured pack is still added to the library.
+                if Support.library.installed().packs.contains(where: { $0.id == Support.greetingID }),
+                   let choice = PackLibrary.newInstallChoice(
+                       preferredID: Support.defaults.string(forKey: "activePackID"),
+                       alreadyOfferedFeatured: !(Support.defaults.stringArray(forKey: "featuredInstalled") ?? []).isEmpty,
+                       defaultID: Support.greetingID) {
+                    Support.defaults.set(choice, forKey: "activePackID")
+                    Support.log("default-made-current id=\(choice)")
+                }
             }
             await self.installFeaturedPack()
             do {
@@ -227,9 +266,10 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
         configureTargets()
     }
 
-    private func add(_ title: String, action: Selector, key: String = "") {
+    private func add(_ title: String, action: Selector, key: String = "", toolTip: String? = nil) {
         let item = NSMenuItem(title: title, action: action, keyEquivalent: key)
         item.target = self
+        item.toolTip = toolTip
         menu.addItem(item)
     }
 
@@ -263,9 +303,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
             Support.log("playback-skipped reason=\(reason) target=\(target.id)" + (detail.map { " detail=\($0)" } ?? ""))
         }
         if !testing {
-            guard PlaybackPolicy.shouldAutoPlay(paused: paused,
-                reduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
-                playDespiteReduceMotion: playDespiteReduceMotion) else { skip("policy"); return }
+            guard !paused else { skip("policy"); return }
             if kind == "cold", !CommandLine.arguments.contains("--test-root"),
                let reason = LaunchFilter.skip(targetHidden: app.isHidden, launcherAge: Date().timeIntervalSince(started),
                                             launcherStartedAtLogin: startedAtLogin, systemUptime: ProcessInfo.processInfo.systemUptime) {
@@ -301,7 +339,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
                 self.autoTask = nil; self.sessions[target.id]?.finish(); self.playbackTargetID = nil; return
             }
             let active = PackLibrary.resolveActive(preferredID: Support.defaults.string(forKey: "activePackID"),
-                packs: installed.packs, fallbackID: Support.demoID)
+                packs: installed.packs, fallbackID: Support.defaultPackID)
             let choice = TargetPackChoice.choose(animation: target.animation, rotation: self.experience.library.rotation,
                 favorites: self.experience.library.favorites, available: installed.packs.map(\.id).sorted(), active: active?.id,
                 lastPackId: self.playbackState.targets[target.id]?.lastPackId, random: Double.random(in: 0..<1))
@@ -310,6 +348,13 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
                 self.autoTask = nil; self.sessions[target.id]?.finish(); self.playbackTargetID = nil
                 self.stateItem.title = "尚无可用动画"
                 Support.log("playback-skipped reason=no-configured-pack target=\(target.id)"); return
+            }
+            guard testing || PlaybackPolicy.shouldAutoPlay(paused: self.paused,
+                reduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
+                playDespiteReduceMotion: self.playDespiteReduceMotion || chosen.manifest.showsGreeting) else {
+                self.autoTask = nil; self.playbackTargetID = nil
+                skip("policy")
+                return
             }
             Support.log("pack-chosen id=\(chosen.id) rotation=\(target.animation != nil && !choice.missing ? "target" : self.experience.library.rotation.rawValue) target=\(target.id)")
             self.autoTask = nil
@@ -340,9 +385,20 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
         do { pack = try original.applying(preferences) }
         catch { stateItem.title = "无法播放：个人设置无效"; sessions[targetID ?? ""]?.finish(); playbackTargetID = nil; return }
         Support.log("experience-applied pack=\(pack.id) preview=\(preview) volume=\(pack.manifest.effectiveVolume) fade=\(pack.manifest.effectiveFadeDuration) coverage=\(preferences.coverage(for: pack.id)) target=\(targetID ?? "preview")")
+        let greetingName = try? Greeting.normalizedName(preferences.greetingName)
+        let previewWindow = preview && pack.manifest.showsGreeting ? settingsWindow?.window : nil
+        let useDemoChoices = preview && Support.isGreetingArtDemo
+        let demoLight = useDemoChoices ? Support.defaults.string(forKey: "greetingDemoLight").flatMap(Greeting.Light.init(rawValue:)) : nil
+        let style = useDemoChoices ? Support.defaults.string(forKey: "greetingDemoStyle").flatMap(Greeting.Style.init(rawValue:)) ?? .script : nil
         let warm = takeWarmPlayback(for: original, preferences: preferences)
         let overlay = LaunchOverlay(pack: pack, target: target, screen: screen, preview: preview, opened: detected, warmPlayback: warm,
-                                    launchCoverage: preferences.coverage(for: pack.id), targetID: targetID ?? "preview") { [weak self] reason in
+                                    launchCoverage: preferences.coverage(for: pack.id), targetID: targetID ?? "preview",
+                                    greetingName: greetingName, greetingLight: demoLight,
+                                    // The built-in Welcome pack writes the nickname in rainbow neon; other packs with
+                                    // a text overlay keep their own video under the light-sweep lettering.
+                                    greetingStyle: style ?? (Support.usesProceduralGreeting(pack) ? .script : .sweep),
+                                    reduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
+                                    previewFrame: previewWindow?.isVisible == true ? previewWindow?.frame : nil) { [weak self] reason in
             guard let self, self.generation == token else { return }
             self.player = nil
             if case .failed = reason { self.failedOverviewPacks[targetID ?? "preview"] = pack.id }
@@ -405,7 +461,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
             if force { discardWarmup() }
             return
         }
-        guard let pack = activePack else { discardWarmup(); return }
+        guard let pack = activePack, !Support.usesProceduralGreeting(pack) else { discardWarmup(); return }
         let key = preparationKey(pack, experience)
         guard force || key != warmKey else { return }
         discardWarmup()
@@ -473,6 +529,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
             input.hasPack = chosen.map { pack in pack.manifest.segments.values.allSatisfy {
                 FileManager.default.fileExists(atPath: pack.directory.appendingPathComponent($0).path)
             } } ?? false
+            if chosen?.manifest.showsGreeting == true { input.reduceMotion = false }
             if let chosen { input.failed = failedOverviewPacks[selected.id] == chosen.id || failedOverviewPacks["preview"] == chosen.id }
         }
         return OverviewSnapshot(targets: configured.map { OverviewTarget(id: $0.id, name: $0.name) },
@@ -492,7 +549,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
     /// launch; users without a current choice select it, while existing choices are preserved. Test roots skip it
     /// unless `--test-featured` is given, so controlled checks keep using the demo pack.
     private func installFeaturedPack() async {
-        guard argument(after: "--test-root") == nil || CommandLine.arguments.contains("--test-featured"),
+        guard !Support.isIsolated || CommandLine.arguments.contains("--test-featured"),
               let folder = Bundle.main.resourceURL?.appendingPathComponent(Support.featuredResource, isDirectory: true),
               let bundled = try? PackLibrary.load(directory: folder) else { return }
         var installed = Support.defaults.stringArray(forKey: "featuredInstalled") ?? []
@@ -651,7 +708,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
                 self.cancel(.superseded)
                 Support.defaults.set(pack.id, forKey: "activePackID"); self.reloadPacks()
             }, onRemove: { [weak self] entry in
-                guard let self, entry.id != Support.demoID else { return }
+                guard let self, !Support.protectedPackIDs.contains(entry.id) else { return }
                 self.cancel(.superseded)
                 // Entries are direct children enumerated from the library, including broken packs.
                 let folder = Support.library.root.appendingPathComponent(entry.id, isDirectory: true)
@@ -690,6 +747,36 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
     @objc private func preview() {
         guard libraryTask == nil else { return }
         play(target: nil, preview: true)
+    }
+
+    private func addGreetingDemoMenu(_ title: String, choices: [(String, String)], key: String, fallback: String) {
+        let parent = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        let submenu = NSMenu(title: title)
+        let selected = Support.defaults.string(forKey: key) ?? fallback
+        for (value, label) in choices {
+            let item = NSMenuItem(title: label, action: #selector(selectGreetingDemoChoice(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = value
+            item.identifier = NSUserInterfaceItemIdentifier(key)
+            item.state = value == selected ? .on : .off
+            submenu.addItem(item)
+        }
+        parent.submenu = submenu
+        menu.addItem(parent)
+    }
+
+    @objc private func selectGreetingDemoChoice(_ item: NSMenuItem) {
+        guard let key = item.identifier?.rawValue, let value = item.representedObject as? String else { return }
+        Support.defaults.set(value, forKey: key)
+        item.menu?.items.forEach { $0.state = $0 === item ? .on : .off }
+    }
+
+    @objc private func previewGreeting() {
+        guard libraryTask == nil,
+              let folder = Bundle.main.resourceURL?.appendingPathComponent(Support.greetingResource),
+              let greeting = try? PackLibrary.load(directory: folder) else { return }
+        if Support.isGreetingArtDemo, settingsWindow?.window?.isVisible != true { openSettings() }
+        play(target: nil, preview: true, pack: greeting)
     }
 
     func createPack(fromVideo video: URL, name: String) throws {
@@ -765,7 +852,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
     private func reloadPacks() {
         let installed = Support.library.installed()
         activePack = PackLibrary.resolveActive(preferredID: Support.defaults.string(forKey: "activePackID"),
-                                              packs: installed.packs, fallbackID: Support.demoID)
+                                              packs: installed.packs, fallbackID: Support.defaultPackID)
         currentItem.title = "当前动画：\(activePack?.manifest.name ?? "无")"
         libraryProblemCount = installed.problems.count
         packsMenu.removeAllItems()
@@ -800,7 +887,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
     private var updateMessage = "尚未检查更新" { didSet { if installTask != nil { updateItem.title = updateMessage + " · 取消下载" } } }
     private var autoUpdateEnabled: Bool {
         // Isolated test roots never go online by default.
-        let fallback = argument(after: "--test-root") == nil || CommandLine.arguments.contains("--test-check-update")
+        let fallback = !Support.isIsolated || CommandLine.arguments.contains("--test-check-update")
         return Support.defaults.object(forKey: "autoCheckUpdates") as? Bool ?? fallback
     }
 
@@ -835,7 +922,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
         if let feed = argument(after: "--test-update-feed") {
             return try UpdateRules.decodeReleases(Data(contentsOf: URL(fileURLWithPath: feed)))
         }
-        guard argument(after: "--test-root") == nil else { throw URLError(.notConnectedToInternet) }
+        guard !Support.isIsolated else { throw URLError(.notConnectedToInternet) }
         var request = URLRequest(url: UpdateRules.releasesURL, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
         request.setValue("Sakura/\(Support.releaseVersion)", forHTTPHeaderField: "User-Agent")
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
@@ -860,7 +947,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
             switch result {
             case .failure(let error):
                 Support.log("update-check source=\(source) result=failed latest=none error=\(type(of: error))")
-                self.updateMessage = "暂时无法检查更新，请稍后再试。"
+                self.updateMessage = UpdateRules.checkFailureMessage(error)
                 if manual && showAlert { self.updateAlert(self.updateMessage, button: nil, url: nil) }
             case .success(let releases):
                 Support.defaults.set(Date().timeIntervalSince1970, forKey: "updateLastCheckAt")
@@ -915,7 +1002,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
             let work = fm.temporaryDirectory.appendingPathComponent("Sakura-update-" + UUID().uuidString)
             var prepared: URL?
             do {
-                guard argument(after: "--test-root") == nil else { throw SignedUpdate.Failure.permission }
+                guard !Support.isIsolated else { throw SignedUpdate.Failure.permission }
                 try fm.createDirectory(at: work, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
                 let free = try fm.attributesOfFileSystem(forPath: work.path)[.systemFreeSize] as? NSNumber
                 guard (free?.int64Value ?? 0) > 5 * 1024 * 1024 * 1024 else { throw SignedUpdate.Failure.space }
@@ -943,7 +1030,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
                 if let prepared, let data = try? Data(contentsOf: prepared), let r = try? JSONDecoder().decode(UpdateInstaller.Request.self, from: data) { try? fm.removeItem(atPath: r.staged) }
                 try? fm.removeItem(at: work)
                 let cancelled = Task.isCancelled
-                self.updateMessage = cancelled ? "下载已取消，旧版仍可使用。" : "更新失败：\(error.localizedDescription) 可去 GitHub 手动下载。"
+                self.updateMessage = cancelled ? "下载已取消，旧版仍可使用。" : SignedUpdate.failureMessage(error)
                 if !cancelled { self.updateAlert(self.updateMessage, button: "去 GitHub 手动下载", url: "https://github.com/shishyguo-cyber/sakura-launcher/releases") }
                 self.installTask = nil
                 self.refreshUpdateItem()
@@ -975,6 +1062,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
         autoStatusItem.title = stateItem.title + " · " + autoStatusItem.title
         if libraryProblemCount > 0 { autoStatusItem.title += " · 已跳过 \(libraryProblemCount) 个无效动画" }
         motionItem.state = playDespiteReduceMotion ? .on : .off
+        guard !Support.isGreetingDemo else { return }
         let status = SMAppService.mainApp.status
         loginItem.state = status == .enabled ? .on : .off
         loginItem.title = "开机自动运行"
@@ -1014,6 +1102,7 @@ final class ApplicationController: NSObject, NSApplicationDelegate, NSMenuDelega
         refreshWarmup(force: true)
     }
     @objc private func toggleLogin() {
+        guard !Support.isGreetingDemo else { return }
         do {
             if SMAppService.mainApp.status == .enabled { try SMAppService.mainApp.unregister() }
             else { try SMAppService.mainApp.register() }

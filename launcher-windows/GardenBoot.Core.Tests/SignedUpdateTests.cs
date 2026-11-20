@@ -1,9 +1,50 @@
+using System.Net;
+using System.Net.Http;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using GardenBoot.Core;
 namespace GardenBoot.Core.Tests;
 public static class SignedUpdateTests
 {
+    [Test] public static void GitHubConnectivityMessagesForCheckAndDownload()
+    {
+        Exception[] errors = [
+            new HttpRequestException(HttpRequestError.NameResolutionError),
+            new HttpRequestException(HttpRequestError.ConnectionError),
+            new HttpRequestException(HttpRequestError.SecureConnectionError),
+            new TaskCanceledException("request timed out", new TimeoutException()),
+            new SocketException((int)SocketError.NetworkUnreachable),
+            new HttpRequestException("connection refused", new SocketException((int)SocketError.ConnectionRefused)),
+            new HttpIOException(HttpRequestError.Unknown, "connection reset", new SocketException((int)SocketError.ConnectionReset)),
+        ];
+        const string expected = "连不上 GitHub，请确认这台电脑能打开 github.com 后重试。";
+        foreach (var error in errors)
+        {
+            Check.Equal(expected, UpdateRules.CheckFailureMessage(error));
+            Check.Equal(expected, SignedUpdate.FailureMessage(error));
+        }
+    }
+
+    [Test] public static void OtherUpdateErrorsRetainTheirMessages()
+    {
+        Exception[] errors = [
+            new HttpRequestException(HttpRequestError.ConnectionError, "server error", statusCode: HttpStatusCode.ServiceUnavailable),
+            new HttpRequestException(HttpRequestError.ProxyTunnelError, "proxy returned an error"),
+            new HttpIOException(HttpRequestError.ResponseEnded, "incomplete response"),
+            new JsonException("invalid release list"),
+            new TaskCanceledException(),
+            new SignedUpdate.Failure("signature", "更新签名验证失败。"),
+            new IOException("磁盘空间不足，请至少留出 5 GB。"),
+            new UnauthorizedAccessException("安装目录不可写。"),
+        ];
+        foreach (var error in errors)
+        {
+            Check.Equal("暂时无法检查更新，请稍后再试。", UpdateRules.CheckFailureMessage(error));
+            Check.Equal($"更新失败：{error.Message} 可去 GitHub 手动下载。", SignedUpdate.FailureMessage(error));
+        }
+    }
+
     [Test] public static void LargePrereleaseAndCanonicalVersions()
     {
         Check.Equal<int?>(1, UpdateRules.Compare("0.2.0-preview.999999999999999999999999", "0.2.0-preview.8"));

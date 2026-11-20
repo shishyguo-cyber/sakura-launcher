@@ -100,6 +100,16 @@ private final class OverlaySurface: NSView {
 
     required init?(coder: NSCoder) { nil }
 
+    private(set) var greeting: (NSView & GreetingRendering)?
+
+    func showGreeting(_ view: NSView & GreetingRendering) {
+        hint.textColor = NSColor(white: 0.88, alpha: 0.82)
+        view.frame = bounds
+        view.autoresizingMask = [.width, .height]
+        addSubview(view, positioned: .below, relativeTo: hint)
+        greeting = view
+    }
+
     func configure(requested: VideoFit.Mode) { self.requested = requested }
 
     /// Keep the outgoing picture underneath until the incoming layer can display a real frame.
@@ -204,6 +214,17 @@ final class LaunchOverlay {
     private let pack: InstalledPack
     private let target: NSRunningApplication?
     private let isPreview: Bool
+    private let greetingLight: Greeting.Light?
+    private let greetingName: String?
+    private let greetingTreatment: Greeting.Treatment
+    private let greetingStyle: Greeting.Style
+    private let proceduralGreeting: Bool
+    private var reduceMotion: Bool { greetingLight != nil && !greetingTreatment.allowsDocking }
+    private var greetingExitStarted: Date?
+    /// The procedural intro substitutes for the compatibility video’s runtime.
+    /// Handwriting (style C) needs longer to finish the line before it docks.
+    private var greetingHold: Double { greetingStyle == .script ? 3.30 : 2.40 }
+    private let previewFrame: CGRect?
     private let onFinish: (PlaybackEndReason) -> Void
     private var machine: PlaybackMachine
     private var inbox: [PlaybackEvent] = []
@@ -252,6 +273,8 @@ final class LaunchOverlay {
     private func log(_ event: String) { Support.log(event + " target=\(targetID)") }
 
     init(pack: InstalledPack, target: NSRunningApplication?, screen: NSScreen, preview: Bool, opened: Date, warmPlayback: PreparedPlayback? = nil, launchCoverage: Double = 0.72, targetID: String = "preview",
+         greetingName: String? = nil, greetingLight: Greeting.Light? = nil, greetingStyle: Greeting.Style = .sweep,
+         reduceMotion: Bool = false, previewFrame: CGRect? = nil,
          onFinish: @escaping (PlaybackEndReason) -> Void) {
         self.targetID = targetID
         self.opened = opened
@@ -259,6 +282,14 @@ final class LaunchOverlay {
         self.pack = pack
         self.target = target
         self.isPreview = preview
+        self.greetingLight = pack.manifest.showsGreeting ? greetingLight ?? Greeting.light(at: opened) : nil
+        self.greetingName = greetingName
+        // Emoji have no pen strokes to trace, so such names get the light sweep instead.
+        let style = greetingStyle == .script && !Greeting.scriptCanWrite(name: greetingName) ? .sweep : greetingStyle
+        self.greetingStyle = style
+        self.greetingTreatment = .init(style: style, reduceMotion: reduceMotion)
+        self.proceduralGreeting = Support.usesProceduralGreeting(pack)
+        self.previewFrame = previewFrame
         self.onFinish = onFinish
         self.launchScreen = screen.visibleFrame
         self.launchCoverage = CGFloat(launchCoverage)
@@ -267,14 +298,17 @@ final class LaunchOverlay {
     }
 
     func begin() {
-        preload()
+        if !proceduralGreeting { preload() }
         let clock = Timer(timeInterval: Self.tickInterval, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.tick() }
         }
         RunLoop.main.add(clock, forMode: .common)
         self.clock = clock
-        targetFrame = target.flatMap { ApplicationMonitor.mainWindowFrame(pid: $0.processIdentifier) }
-        let ready = targetFrame != nil || (isPreview && !pack.layout.coversLaunch)
+        if !proceduralGreeting {
+            targetFrame = target.flatMap { ApplicationMonitor.mainWindowFrame(pid: $0.processIdentifier) }
+        }
+        let ready = !proceduralGreeting && (targetFrame != nil || (isPreview && !pack.layout.coversLaunch))
+        if ready, isPreview, greetingLight != nil { targetFrame = previewFrame }
         windowReported = ready
         // Even single-video packs waiting for a target need Esc routing before their first frame.
         present(at: launchFrame, place: "launch-screen")
@@ -304,11 +338,19 @@ final class LaunchOverlay {
             present(at: targetFrame ?? launchFrame, place: "target-window")
         case .moveToTargetWindow(let animated):
             guard let panel else { return }
+            guard !reduceMotion else { return }
             location = "target-window"
             let destination = targetFrame ?? panel.frame
             self.log("player-move animated=\(animated) to=\(NSStringFromRect(destination))")
             if animated { move = (panel.frame, destination, Date(), Self.moveDuration) } else { setPanelFrame(destination) }
         case .play(let segment, let looping):
+            if proceduralGreeting {
+                let now = Date()
+                if segment == .outro { greetingExitStarted = now }
+                self.log("player-play segment=\(segment.rawValue) renderer=procedural")
+                showFirstFrame(segment: segment, now: now)
+                return
+            }
             current?.player.pause()
             stopObservingPlayback()
             if let incoming {
@@ -322,6 +364,7 @@ final class LaunchOverlay {
             player?.pause()
             self.log("player-hold-last-frame")
         case .beginFade(let duration):
+            if greetingLight != nil, greetingExitStarted == nil { greetingExitStarted = Date() }
             incoming?.player.pause()
             revealStarted = nil
             fade = (Date(), duration, player?.volume ?? 0, panel?.alphaValue ?? 0)
@@ -339,6 +382,14 @@ final class LaunchOverlay {
         surface.targetID = targetID
         surface.autoresizingMask = [.width, .height]
         surface.configure(requested: pack.manifest.effectiveVideoFit)
+        if let greetingLight {
+            if greetingStyle == .script {
+                surface.showGreeting(ScriptGreetingView(name: greetingName, still: !greetingTreatment.allowsDocking))
+            } else {
+                surface.showGreeting(GreetingOverlayView(light: greetingLight, name: greetingName,
+                    treatment: greetingTreatment, opaque: proceduralGreeting || reduceMotion))
+            }
+        }
         surface.onClick = { [weak self] in self?.send(.skip) }
         panel.onDismiss = { [weak self] in self?.send(.skip) }
         panel.contentView = surface
@@ -449,17 +500,19 @@ final class LaunchOverlay {
         handoffAt = isFinal ? pack.manifest.handoffTime(finalDuration: incoming.media.duration) : nil
         handoffReported = false
         self.log("player-play segment=\(request.segment.rawValue) looping=\(request.looping) length=\(String(format: "%.2f", incoming.media.duration))")
-        if shownAt == nil, let panel {
-            let now = Date()
-            self.log("first-frame age=\(String(format: "%.3f", now.timeIntervalSince(opened))) warm=\(usedWarm) segment=\(request.segment.rawValue)")
-            self.log("overlay-alpha=\(String(format: "%.3f", panel.alphaValue)) phase=before-show")
-            shownAt = now
-            revealStarted = now
-            self.log("player-show location=\(location) frame=\(NSStringFromRect(panel.frame)) pack=\(pack.id)")
-            panel.ignoresMouseEvents = false
-            panel.makeKey()
-            onShown?()
-        }
+        showFirstFrame(segment: request.segment, now: Date())
+    }
+
+    private func showFirstFrame(segment: PackSegment, now: Date) {
+        guard shownAt == nil, let panel else { return }
+        self.log("first-frame age=\(String(format: "%.3f", now.timeIntervalSince(opened))) warm=\(usedWarm) segment=\(segment.rawValue)")
+        self.log("overlay-alpha=\(String(format: "%.3f", panel.alphaValue)) phase=before-show")
+        shownAt = now
+        revealStarted = now
+        self.log("player-show location=\(location) frame=\(NSStringFromRect(panel.frame)) pack=\(pack.id)")
+        panel.ignoresMouseEvents = false
+        panel.makeKey()
+        onShown?()
     }
 
     private func stopObservingPlayback() {
@@ -484,6 +537,11 @@ final class LaunchOverlay {
         if let target, target.isTerminated { send(.targetExited); return }
         if let target, target.isHidden, !windowReported { send(.targetHidden); return }
 
+        if let shownAt {
+            surface?.greeting?.render(time: now.timeIntervalSince(shownAt),
+                                     exit: greetingExitStarted.map { now.timeIntervalSince($0) })
+        }
+
         if let fade {
             let progress = now.timeIntervalSince(fade.start) / fade.duration
             let eased = OverlayGeometry.ease(progress)
@@ -506,7 +564,9 @@ final class LaunchOverlay {
 
         if let shownAt, let surface {
             let visible = OverlayGeometry.ease((now.timeIntervalSince(shownAt) - Self.hintDelay) / 0.4)
-            surface.hint.alphaValue = CGFloat(visible * 0.85)
+            // Keep the greeting's skip affordance available when pointing at the panel.
+            let showHint = greetingLight == nil || panel?.frame.contains(NSEvent.mouseLocation) == true
+            surface.hint.alphaValue = CGFloat(showHint ? visible * 0.85 : 0)
             if !focusChecked, now.timeIntervalSince(shownAt) > 0.3 {
                 focusChecked = true
                 let isKey = panel?.isKeyWindow ?? false
@@ -532,9 +592,18 @@ final class LaunchOverlay {
             send(.failed("prepare-timeout"))
             return
         }
+        if proceduralGreeting, let shownAt {
+            if machine.phase == .intro, now.timeIntervalSince(shownAt) >= greetingHold {
+                send(.segmentEnded(.intro))
+            }
+            if machine.phase == .final, let greetingExitStarted,
+               now.timeIntervalSince(greetingExitStarted) >= Self.moveDuration {
+                send(.reachedHandoff)
+            }
+        }
         displayIncomingIfReady()
         if let start = revealStarted {
-            let progress = now.timeIntervalSince(start) / Self.revealDuration
+            let progress = now.timeIntervalSince(start) / (reduceMotion ? 0.42 : Self.revealDuration)
             panel?.alphaValue = CGFloat(OverlayGeometry.ease(progress))
             self.log("overlay-alpha=\(String(format: "%.3f", panel?.alphaValue ?? 0)) phase=fade-in")
             if progress >= 1 { revealStarted = nil }
@@ -549,9 +618,15 @@ final class LaunchOverlay {
 
     private func pollTargetWindow(_ now: Date) {
         guard !windowReported, now.timeIntervalSince(lastWindowQuery) >= Self.windowQueryInterval else { return }
+        if proceduralGreeting {
+            guard let shownAt, now.timeIntervalSince(shownAt) >= greetingHold else { return }
+        }
         lastWindowQuery = now
         if let target { targetFrame = ApplicationMonitor.mainWindowFrame(pid: target.processIdentifier) }
-        let previewReady = isPreview && now.timeIntervalSince(opened) >= Self.previewWindowDelay
+        let previewReady = isPreview && (greetingLight == nil
+            ? now.timeIntervalSince(opened) >= Self.previewWindowDelay
+            : shownAt.map { now.timeIntervalSince($0) >= 0.45 } ?? false)
+        if previewReady, greetingLight != nil { targetFrame = previewFrame }
         guard targetFrame != nil || previewReady else { return }
         windowReported = true
         self.log("window-ready preview=\(isPreview)")
@@ -561,7 +636,7 @@ final class LaunchOverlay {
     /// After docking, keep the overlay on the target window if it still moves or resizes
     /// (apps often restore their saved frame a moment after first appearing). Stops once fading.
     private func followTargetWindow(_ now: Date) {
-        guard windowReported, machine.isOnTargetWindow, machine.phase != .fading, !machine.isClosed,
+        guard !reduceMotion, windowReported, machine.isOnTargetWindow, machine.phase != .fading, !machine.isClosed,
               let target, let panel,
               now.timeIntervalSince(lastFollowQuery) >= Self.windowQueryInterval else { return }
         lastFollowQuery = now

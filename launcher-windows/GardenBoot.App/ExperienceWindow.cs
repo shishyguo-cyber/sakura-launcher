@@ -70,6 +70,8 @@ internal sealed partial class ExperienceWindow : Window
     private readonly ComboBox fitMode = new() { MinWidth = 220 };
     private readonly ComboBox presets = new() { MinWidth = 180, DisplayMemberPath = "Name" };
     private readonly TextBox presetName = new() { MinWidth = 180 };
+    /// <summary>The nickname the built-in Welcome writes (EXPERIENCE-SETTINGS.md "称呼").</summary>
+    private readonly TextBox greetingName = new() { Width = 180, MaxLength = 40 };
     private readonly OverrideSlider fade, wait, coverage;
     private readonly TextBlock statFade = Stat(), statWait = Stat(), statLoop = Stat();
     private readonly Border heroCover = new() { Width = 185, Height = 104, CornerRadius = new(8), ClipToBounds = true };
@@ -321,6 +323,17 @@ internal sealed partial class ExperienceWindow : Window
         everyLaunch.Checked += (_, _) => { ShowDayRows(); Changed(); };
         firstOfDay.Checked += (_, _) => { ShowDayRows(); Changed(); UpdateToday(); };
         page.Children.Add(Hint("临时暂停在托盘菜单里，立即生效。"));
+        var welcome = Group(page);
+        System.Windows.Automation.AutomationProperties.SetName(greetingName, "称呼");
+        System.Windows.Automation.AutomationProperties.SetAutomationId(greetingName, "greeting-name");
+        greetingName.TextChanged += (_, _) => Changed();
+        var nameRow = new StackPanel { Orientation = Orientation.Horizontal };
+        nameRow.Children.Add(greetingName);
+        var previewWelcome = Small("预览 Welcome", PreviewWelcome, "预览 Welcome");
+        previewWelcome.Margin = new(8, 0, 0, 0);
+        nameRow.Children.Add(previewWelcome);
+        AddRow(welcome, "Sakura 怎么称呼你", nameRow);
+        page.Children.Add(Hint("最多 20 个字符。保存后，内置的「Welcome · 彩虹手写」会把这个称呼写出来；只保存在这台电脑。"));
         return page;
     }
 
@@ -492,6 +505,7 @@ internal sealed partial class ExperienceWindow : Window
         next.Playback.DayStartHour = Math.Max(0, dayStart.SelectedIndex);
         next.Playback.QuietWhenFullscreen = quiet.IsChecked == true;
         next.Library.Rotation = rotation.SelectedIndex switch { 1 => PackRotation.ShuffleAll, 2 => PackRotation.ShuffleFavorites, _ => PackRotation.Fixed };
+        next.GreetingName = Greeting.NormalizedName(greetingName.Text);
         next.Validate(); return next;
     }
 
@@ -516,6 +530,7 @@ internal sealed partial class ExperienceWindow : Window
         dayStart.SelectedIndex = draft.Playback.DayStartHour;
         quiet.IsChecked = draft.Playback.QuietWhenFullscreen;
         rotation.SelectedIndex = draft.Library.Rotation switch { PackRotation.ShuffleAll => 1, PackRotation.ShuffleFavorites => 2, _ => 0 };
+        greetingName.Text = draft.GreetingName ?? "";
         loading = false;
         UpdateToday(); UpdateStats();
     }
@@ -557,6 +572,12 @@ internal sealed partial class ExperienceWindow : Window
             status.Text = "已保存，下次播放使用这些设置。"; return true;
         }
         catch (Exception e) when (e is ExperienceException or System.IO.IOException or UnauthorizedAccessException) { status.Text = $"未保存：{e.Message}"; return false; }
+    }
+
+    private void PreviewWelcome()
+    {
+        if (library?.Packs.FirstOrDefault(p => p.Id == Greeting.BuiltInPackId) is { } welcome) PreviewPack(welcome);
+        else status.Text = "Welcome 动画还在准备，请稍后再试。";
     }
 
     private void TryPreview() { if (pack is null) { status.Text = "请先导入可用动画包，再进行预览。"; return; } PreviewPack(pack); }

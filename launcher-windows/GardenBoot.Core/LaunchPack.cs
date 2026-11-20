@@ -45,7 +45,8 @@ public sealed record PackManifest(
     LoopExit? LoopExit = null,
     string? Notice = null,
     string? Cover = null,
-    VideoFitMode? VideoFit = null)
+    VideoFitMode? VideoFit = null,
+    string? TextOverlay = null)
 {
     private static readonly Regex IdPattern = new("^[a-z0-9][a-z0-9-]{0,63}$", RegexOptions.CultureInvariant);
 
@@ -55,6 +56,8 @@ public sealed record PackManifest(
     public LoopExit EffectiveLoopExit => LoopExit ?? Core.LoopExit.CycleEnd;
     public string NoticeFile => Notice ?? PackDefaults.NoticeFile;
     public VideoFitMode EffectiveVideoFit => VideoFit ?? VideoFitMode.Auto;
+    /// <summary><c>"textOverlay": "greeting"</c>: Sakura draws the greeting (PACK-FORMAT.md "问候文字").</summary>
+    public bool ShowsGreeting => TextOverlay == "greeting";
 
     /// <summary>Parses manifest JSON; throws <see cref="PackException"/> on any type or key error.</summary>
     public static PackManifest Parse(string json)
@@ -104,7 +107,9 @@ public sealed record PackManifest(
                 exit,
                 OptionalString(root, "notice"),
                 OptionalString(root, "cover"),
-                fit);
+                fit,
+                // Any string is kept for round trips; other shapes mean "no text" (future formats, never an error).
+                root.TryGetProperty("textOverlay", out var overlay) && overlay.ValueKind == JsonValueKind.String ? overlay.GetString() : null);
         }
     }
 
@@ -124,6 +129,7 @@ public sealed record PackManifest(
         if (Notice is { } n) body["notice"] = n;
         if (Cover is { } cover) body["cover"] = cover;
         if (VideoFit is { } videoFit) body["videoFit"] = videoFit.LogName();
+        if (TextOverlay is { } overlay) body["textOverlay"] = overlay;
         return JsonSerializer.Serialize(body, new JsonSerializerOptions { WriteIndented = true });
     }
 

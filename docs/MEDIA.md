@@ -1,6 +1,6 @@
 # 媒体与动画包
 
-代码许可不等于素材许可。内置几何示例采用 [CC0 声明](../launcher-macos/demo-pack/NOTICE.md)；用户导入的图片、视频、音乐、模型和派生内容继续适用各自权利与许可。
+代码许可不等于素材许可。内置几何示例和问候背景分别采用 [几何示例 CC0 声明](../launcher-macos/demo-pack/NOTICE.md)和 [问候 CC0 声明](../launcher-macos/greeting-pack/NOTICE.md)；用户导入的图片、视频、音乐、模型和派生内容继续适用各自权利与许可。
 
 动画包格式见[共享规格](../launcher-spec/PACK-FORMAT.md)。包作者应在 NOTICE.md 中标明作者、来源、许可入口和允许的使用方式；有多项来源时逐项列出。未经确认，不应将“可以二次创作”写成“允许公开原始素材或再分发”。
 

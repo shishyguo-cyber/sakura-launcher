@@ -57,10 +57,11 @@ public struct ExperienceSettings: Codable, Equatable, Sendable {
     public var packs: [String: PackPreferences] = [:]
     public var playback = PlaybackPreferences()
     public var library = LibraryPreferences()
+    public var greetingName: String?
     public var targets: [ApplicationTarget] = [.defaultTarget]
     public init() {}
 
-    private enum CodingKeys: String, CodingKey { case schemaVersion, masterVolume, muted, packs, playback, library, targets }
+    private enum CodingKeys: String, CodingKey { case schemaVersion, masterVolume, muted, packs, playback, library, targets, greetingName }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let version = try c.decode(Int.self, forKey: .schemaVersion)
@@ -69,6 +70,7 @@ public struct ExperienceSettings: Codable, Equatable, Sendable {
         masterVolume = try c.decode(Double.self, forKey: .masterVolume)
         muted = try c.decode(Bool.self, forKey: .muted)
         packs = try c.decode([String: PackPreferences].self, forKey: .packs)
+        greetingName = try Greeting.normalizedName(c.decodeIfPresent(String.self, forKey: .greetingName))
         if version >= 2 {
             playback = try c.decode(PlaybackPreferences.self, forKey: .playback)
             library = try c.decode(LibraryPreferences.self, forKey: .library)
@@ -79,6 +81,7 @@ public struct ExperienceSettings: Codable, Equatable, Sendable {
     public func validated() throws {
         guard schemaVersion == 3 else { throw ExperienceError.unsupportedVersion }
         guard masterVolume.isFinite, (0...1).contains(masterVolume) else { throw ExperienceError.invalid("总音量需在 0–100% 之间") }
+        _ = try Greeting.normalizedName(greetingName)
         try playback.validated()
         try library.validated()
         try ApplicationTarget.validate(targets)

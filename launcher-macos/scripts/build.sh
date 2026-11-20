@@ -1,6 +1,7 @@
 #!/bin/bash
 # Builds Sakura.app (release) into the work folder and links it at launcher-macos/build/Sakura.app.
 #   GARDENBOOT_WORK_ROOT  where intermediate files and the app go (default: ~/Library/Caches/GardenBoot)
+#   SAKURA_GREETING_DEMO=1 (or art)  build an isolated Greeting Demo
 #   SAKURA_UNIVERSAL=1    also build for Intel and ship one universal binary
 # The app is signed ad hoc only; that is enough for local use, not for distribution without Gatekeeper prompts.
 set -euo pipefail
@@ -24,7 +25,16 @@ swiftpm() {
 swiftpm "$work/swift-build"
 host_binary="$(swiftpm "$work/swift-build" --show-bin-path)/GardenBoot"
 
-bundle="$work/products/Sakura.app"
+name=Sakura
+identifier=local.gardenboot.GardenBoot
+if [ "${SAKURA_GREETING_DEMO:-0}" = "1" ]; then
+  name="Sakura Greeting Demo"
+  identifier=local.gardenboot.SakuraGreetingDemo
+elif [ "${SAKURA_GREETING_DEMO:-0}" = "art" ]; then
+  name="Sakura Greeting Art Demo"
+  identifier=local.gardenboot.SakuraGreetingArtDemo
+fi
+bundle="$work/products/$name.app"
 contents="$bundle/Contents"
 mkdir -p "$contents/MacOS"
 if [ "${SAKURA_UNIVERSAL:-0}" = "1" ]; then
@@ -36,11 +46,19 @@ else
   cp "$host_binary" "$contents/MacOS/GardenBoot"
 fi
 cp "$package_dir/Resources/Info.plist" "$contents/Info.plist"
+if [ "$name" != "Sakura" ]; then
+  /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $identifier" -c "Set :CFBundleName $name" \
+    -c "Set :CFBundleDisplayName $name" "$contents/Info.plist"
+fi
 
 # Resources are ours alone: rebuild them from scratch so a removed file cannot linger in the bundle.
 rm -rf "${contents:?}/Resources"
 mkdir -p "$contents/Resources"
 cp -R "$package_dir/demo-pack" "$contents/Resources/demo-pack"
+mkdir -p "$contents/Resources/greeting-pack"
+for file in manifest.json NOTICE.md intro.mp4 outro.mp4 cover.png; do
+  cp "$package_dir/greeting-pack/$file" "$contents/Resources/greeting-pack/$file"
+done
 if [ -d "$package_dir/featured-pack" ]; then
   mkdir -p "$contents/Resources/featured-pack"
   for file in manifest.json NOTICE.md intro.mp4 loop.mov outro.mp4; do
@@ -49,12 +67,12 @@ if [ -d "$package_dir/featured-pack" ]; then
 fi
 
 xattr -cr "$bundle"
-codesign --force --sign - --identifier local.gardenboot.GardenBoot "$bundle"
+codesign --force --sign - --identifier "$identifier" "$bundle"
 codesign --verify --deep --strict "$bundle"
 
 # Stable path for scripts and docs. Only replace our own generated link or folder.
 # SAKURA_NO_LINK=1 (used by package.sh) leaves the development link pointing at the everyday build.
-if [ "${SAKURA_NO_LINK:-0}" = "1" ]; then echo "$bundle"; exit 0; fi
+if [ "${SAKURA_NO_LINK:-0}" = "1" ] || [ "$name" != "Sakura" ]; then echo "$bundle"; exit 0; fi
 link="$package_dir/build/Sakura.app"
 mkdir -p "$(dirname "$link")"
 if [ -L "$link" ]; then rm "$link"; elif [ -d "$link" ]; then rm -rf "${link:?}"; fi

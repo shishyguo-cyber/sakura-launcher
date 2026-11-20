@@ -25,7 +25,7 @@ struct AnimationLibraryView: View {
                         .font(.system(size: 12)).foregroundStyle(Theme.danger).fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
                     Button("移除…") { editor.remove(entry) }.buttonStyle(GardenButtonStyle(kind: .danger, small: true))
-                        .disabled(editor.libraryBusy || entry.id == Support.demoID)
+                        .disabled(editor.libraryBusy || Support.protectedPackIDs.contains(entry.id))
                 }
             }
         }.sheet(item: $editor.videoDraft) { _ in VideoPackSheet(editor: editor) }
@@ -128,8 +128,8 @@ private struct AnimationCard: View {
                     .disabled(editor.libraryBusy || entry.pack == nil || editor.activeID == entry.id)
                 Text("·").foregroundStyle(Theme.textSecondary)
                 Button("移除…") { editor.remove(entry) }.buttonStyle(GardenButtonStyle(kind: .danger, small: true))
-                    .disabled(editor.libraryBusy || entry.id == Support.demoID)
-                    .help(entry.id == Support.demoID ? "随程序附带的示例动画不可移除" : "移到废纸篓，保留个人设置")
+                    .disabled(editor.libraryBusy || Support.protectedPackIDs.contains(entry.id))
+                    .help(Support.protectedPackIDs.contains(entry.id) ? "随程序附带的动画不可移除" : "移到废纸篓，保留个人设置")
             }.padding(.top, 4)
         }.padding(12).frame(maxWidth: .infinity, alignment: .leading)
             .background(selected ? Theme.accentSoft : hovering ? Theme.hover : Theme.surface, in: RoundedRectangle(cornerRadius: 12))

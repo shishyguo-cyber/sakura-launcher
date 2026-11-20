@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fail if private media could leak into the public repository or the built app.
 
-Rules: video files may only live under the bundled pack folders (demo-pack/, featured-pack/) in the repository
+Rules: video files may only live under the bundled pack folders (demo-pack/, featured-pack/, greeting-pack/) in the repository
 or the app. Any path containing a blocked word fails everywhere; the featured pack keeps a neutral folder name,
 and its rights were confirmed by the project owner (docs/MEDIA.md).
 Usage: check-public-media.py [--app PATH_TO.app]
@@ -28,7 +28,7 @@ def repo_files():
                 if p.is_file() and not SKIP_DIRS.intersection(p.relative_to(PROJECT).parts)]
 
 
-ALLOWED_VIDEO_DIRS = ("demo-pack", "featured-pack")
+ALLOWED_VIDEO_DIRS = ("demo-pack", "featured-pack", "greeting-pack")
 
 
 def problems(files, base, allowed_video_dirs=ALLOWED_VIDEO_DIRS):

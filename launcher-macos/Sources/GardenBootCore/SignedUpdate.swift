@@ -21,6 +21,12 @@ public enum SignedUpdate {
             }
         }
     }
+
+    public static func failureMessage(_ error: Error) -> String {
+        if UpdateRules.isGitHubConnectionFailure(error) { return UpdateRules.gitHubConnectionMessage }
+        return "更新失败：\(error.localizedDescription) 可去 GitHub 手动下载。"
+    }
+
     public struct Manifest: Codable {
         public var format: Int
         public var version: String

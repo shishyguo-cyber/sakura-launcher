@@ -122,6 +122,12 @@ public static class ConformanceTests
                     Check.Equal(fit.GetString(), PackManifest.Parse(json).VideoFit?.LogName(), name);
                 if (c.TryGetProperty("expectCover", out var cover))
                     Check.Equal(cover.ValueKind == JsonValueKind.Null ? null : cover.GetString(), PackManifest.Parse(json).Cover, name);
+                if (c.TryGetProperty("expectTextOverlay", out var overlay))
+                {
+                    var parsed = PackManifest.Parse(json);
+                    Check.Equal(overlay.ValueKind == JsonValueKind.Null ? null : overlay.GetString(), PackManifest.Parse(parsed.ToJson()).TextOverlay, name);
+                    Check.Equal(c.GetProperty("showsGreeting").GetBoolean(), parsed.ShowsGreeting, name);
+                }
             }
             else
             {

@@ -6,6 +6,26 @@ final class ExperienceTests: XCTestCase {
         PackManifest(id: "a", name: "A", segments: [.outro: "outro.mp4"], volume: 0.8)
     }
 
+    func testGreetingNameSurvivesSettingsMigrationAndSave() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let store = ExperienceStore(directory: directory)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        try Data(#"{"schemaVersion":1,"masterVolume":0.5,"muted":true,"packs":{}}"#.utf8).write(to: store.file)
+        XCTAssertNil(try store.load().greetingName)
+        try Data(#"{"schemaVersion":1,"masterVolume":0.5,"muted":true,"packs":{},"greetingName":" 郭👩‍💻 "}"#.utf8).write(to: store.file)
+        let migrated = try store.load()
+        XCTAssertEqual(migrated.schemaVersion, 3)
+        XCTAssertEqual(migrated.greetingName, "郭👩‍💻")
+        XCTAssertEqual(migrated.masterVolume, 0.5)
+        try store.save(migrated)
+        XCTAssertEqual(try store.load(), migrated)
+        var cleared = migrated
+        cleared.greetingName = "  "
+        try store.save(cleared)
+        XCTAssertNil(try store.load().greetingName)
+    }
+
     func testSharedResolution() throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent()

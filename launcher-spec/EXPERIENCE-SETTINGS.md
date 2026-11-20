@@ -63,3 +63,9 @@ schemaVersion 1 顶层四个字段必需，schemaVersion 2 另需 `playback`、`
 共享 `conformance/experience.json` 覆盖合并、范围、静音、包隔离与 Unicode 方案；两端另有实际文件存储和方案快照用例。
 
 Windows 核心和测试使用与 WPF 程序一致的正常 .NET 全球化模式，以支持 Unicode 名称比较；不额外安装包。有关运行模式与规范化行为参见 [Microsoft 全球化设置](https://learn.microsoft.com/en-us/dotnet/core/runtime-config/globalization)和 [String.Normalize](https://learn.microsoft.com/en-us/dotnet/api/system.string.normalize?view=net-10.0)。
+
+## 称呼（macOS 与 Windows）
+
+`experience.json` 可包含字符串字段 `greetingName`。缺省、空白或 `null` 表示只显示问候语。两端保存和读取时都去掉首尾空白，并按 [启动包格式](PACK-FORMAT.md)验证单行和长度。该字段随本机体验设置从版本 1 或 2 迁移到版本 3，无需提高设置 schemaVersion。称呼不读取系统用户名，不随包导出，也不跨设备同步。
+
+问候语按本机时段固定使用英文。称呼支持中文和 emoji，显示时用逗号加空格连接，例如 “Good morning, 小樱🌸”。深夜沿用 “Good evening”。[问候时段表](PACK-FORMAT.md#问候文字)

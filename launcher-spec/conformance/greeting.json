@@ -1,0 +1,24 @@
+{
+  "about": "English greetings across locales, using the local 24-hour clock and an optional display name. The language identifies the test calendar locale.",
+  "messages": [
+    {"hour": 0, "language": "zh-Hans", "name": null, "expect": "Good evening"},
+    {"hour": 4, "language": "zh-Hans", "name": "Sora", "expect": "Good evening, Sora"},
+    {"hour": 5, "language": "zh-Hans", "name": "小樱🌸", "expect": "Good morning, 小樱🌸"},
+    {"hour": 11, "language": "en-US", "name": null, "expect": "Good morning"},
+    {"hour": 12, "language": "en", "name": "Sora", "expect": "Good afternoon, Sora"},
+    {"hour": 17, "language": "zh-Hant", "name": "", "expect": "Good afternoon"},
+    {"hour": 18, "language": "zh-CN", "name": "Guo", "expect": "Good evening, Guo"},
+    {"hour": 22, "language": "en-GB", "name": "🌸", "expect": "Good evening, 🌸"},
+    {"hour": 23, "language": "zh-Hans", "name": null, "expect": "Good evening"},
+    {"hour": 23, "language": "fr-FR", "name": null, "expect": "Good evening"}
+  ],
+  "names": [
+    {"input": null, "expect": null},
+    {"input": " \t　 ", "expect": null},
+    {"input": "  Sora  ", "expect": "Sora"},
+    {"input": "　小樱 👩‍💻　", "expect": "小樱 👩‍💻"},
+    {"input": "1234567890123456789👩‍💻", "expect": "1234567890123456789👩‍💻"},
+    {"input": "12345678901234567890👩‍💻", "invalid": true},
+    {"input": "小\n樱", "invalid": true}
+  ]
+}

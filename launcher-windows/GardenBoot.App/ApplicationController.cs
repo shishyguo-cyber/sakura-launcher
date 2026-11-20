@@ -106,6 +106,30 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
         finally { libraryBusy = false; }
     }
 
+    /// <summary>
+    /// Installs the built-in "Welcome · 彩虹手写" and makes it current on a brand-new install. A choice the user already
+    /// has is never replaced, and an upgrade that went through the featured offer keeps playing what it played.
+    /// </summary>
+    private async Task InstallWelcome()
+    {
+        var folder = Path.Combine(AppContext.BaseDirectory, "greeting-pack");
+        if (!Directory.Exists(folder)) return;
+        libraryBusy = true;
+        try
+        {
+            if (await library.InstallIfMissing(folder, Probe, ImageProbe) is { } installed) log.Write($"pack-installed id={installed.Id}");
+            if (PackLibrary.NewInstallChoice(settings.ActivePackId, settings.FeaturedInstalled.Count > 0, Greeting.BuiltInPackId) is { } choice)
+            {
+                settings.ActivePackId = choice;
+                SaveSettings();
+                log.Write($"default-made-current id={choice}");
+            }
+        }
+        catch (Exception e) when (e is PackException or IOException or UnauthorizedAccessException or OperationCanceledException)
+        { if (!disposed) log.Write($"greeting-pack-error type={e.GetType().Name}"); }
+        finally { libraryBusy = false; }
+    }
+
     private async Task InstallBundled(string bundled)
     {
         libraryBusy = true;
@@ -117,6 +141,8 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
         catch (Exception e) when (e is PackException or IOException or UnauthorizedAccessException or OperationCanceledException)
         { if (!disposed) log.Write($"bundled-pack-error type={e.GetType().Name}"); }
         finally { libraryBusy = false; }
+        if (disposed) return;
+        await InstallWelcome();
         if (disposed) return;
         await InstallFeatured();
         if (disposed) return;
@@ -211,7 +237,9 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
         var mine = playState.For(targetId);
         if (!testing)
         {
-            if (!PlaybackPolicy.ShouldAutoPlay(settings.Paused, TargetMonitor.ReduceMotion, settings.PlayDespiteReduceMotion))
+            // The built-in Welcome still plays when Windows animations are off, as a gentle fade (macOS does the same).
+            var gentle = activePack is { } current && Greeting.IsProcedural(current);
+            if (!PlaybackPolicy.ShouldAutoPlay(settings.Paused, TargetMonitor.ReduceMotion, settings.PlayDespiteReduceMotion || gentle))
             { log.Write($"playback-skipped reason=policy target={targetId}"); return; }
             if (kind == "cold" && options.TestRoot is null && LaunchFilter.Skip(TargetMonitor.IsHidden(processes), lifetime.Elapsed.TotalSeconds,
                 options.AtLogin, Environment.TickCount64 / 1000.0) is { } skip)
@@ -330,7 +358,8 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
             Rewarm();
             if (preview && experienceWindow is { IsVisible: true } editor) editor.ReportPreview(reason);
             status = settings.Paused ? "自动播放已暂停" : Waiting();
-        }, coverage: preferences.Coverage(pack.Id), warmFirst: TakeWarm(pack), targetId: targetId);
+        }, coverage: preferences.Coverage(pack.Id), warmFirst: TakeWarm(pack), targetId: targetId,
+           greetingName: preferences.GreetingName, greetingStill: TargetMonitor.ReduceMotion);
         player = overlay;
         status = $"正在播放：{pack.Manifest.Name}";
         overlay.Begin();
@@ -358,7 +387,7 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
     private void Rewarm()
     {
         if (disposed || player is not null) return;
-        if (activePack is not { } pack || libraryBusy) { warmClip?.Dispose(); warmClip = null; return; }
+        if (activePack is not { } pack || libraryBusy || Greeting.IsProcedural(pack)) { warmClip?.Dispose(); warmClip = null; return; }
         var segment = FirstSegment(pack);
         var path = pack.PathFor(pack.Manifest.Segments[segment]);
         if (warmClip is { } existing && existing.Path == path && !existing.Ready.IsFaulted && !existing.Ready.IsCanceled) return;
@@ -375,7 +404,8 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
             var installed = library.Installed();
             packs = installed.Packs;
             problems = installed.Problems.Count;
-            activePack = PackLibrary.ResolveActive(settings.ActivePackId, packs, BundledId);
+            // A missing choice falls back to the built-in Welcome (the default animation), then to any pack.
+            activePack = PackLibrary.ResolveActive(settings.ActivePackId, packs, Greeting.BuiltInPackId);
             problemList = installed.Problems;
             log.Write($"packs-loaded count={packs.Count} skipped={problems} active={activePack?.Id ?? "none"}");
             Rewarm();
@@ -470,8 +500,8 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
         {
             if (disposed) return;
             log.Write($"update-check source={source} result=failed latest=none error={e.GetType().Name}");
-            updateMessage = "暂时无法检查更新，请稍后再试。";
-            if (manual && showAlert) MessageBox.Show("暂时无法检查更新，请稍后再试。", "检查更新", MessageBoxButton.OK, MessageBoxImage.Warning);
+            updateMessage = UpdateRules.CheckFailureMessage(e);
+            if (manual && showAlert) MessageBox.Show(updateMessage, "检查更新", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         finally { updateChecking = false; }
     }
@@ -518,7 +548,7 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
         catch (Exception e)
         {
             try { if (staged is not null && Directory.Exists(staged)) Directory.Delete(staged, true); if (Directory.Exists(work)) Directory.Delete(work, true); } catch { }
-            updateMessage = cancellation.IsCancellationRequested ? "下载已取消，旧版仍可使用。" : $"更新失败：{e.Message} 可去 GitHub 手动下载。";
+            updateMessage = cancellation.IsCancellationRequested ? "下载已取消，旧版仍可使用。" : SignedUpdate.FailureMessage(e);
             if (!cancellation.IsCancellationRequested && MessageBox.Show(updateMessage + "\n\n去 GitHub 手动下载？", "更新失败", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes) OpenUpdateFallback();
         }
         finally { installCancellation = null; }
@@ -575,6 +605,7 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
             new(Separator: true),
             new("开机自动运行", () => ToggleLogin(!login), Enabled: options.TestRoot is null && options.TestTargetExe is null, Checked: login),
             new("检查更新…", () => _ = CheckForUpdates(manual: true)),
+            new(UpdateRules.GitHubRequirement, Enabled: false),
             new("自动检查更新", ToggleAutoUpdate, Checked: AutoUpdateEnabled),
             new("打开日志", OpenLog), new(Separator: true), new("退出 Sakura", () => { if (experienceWindow?.RequestClose() != false) Application.Current.Shutdown(); }),
         ];

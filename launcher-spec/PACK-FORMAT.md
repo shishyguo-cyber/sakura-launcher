@@ -44,11 +44,39 @@ my-pack/
 | `loopExit` | 否 | `cycleEnd`（默认，播完当前这一圈再进 outro）或 `immediate`（窗口一就绪就切） |
 | `notice` | 否 | 说明文件名，默认 `NOTICE.md` |
 | `videoFit` | 否 | 贴到目标窗口时的显示方式：`auto`（默认，比例接近时铺满，否则完整显示并模糊补边）、`fill`（铺满裁边）、`fit`（完整显示），见 VIDEO-FIT.md |
+| `textOverlay` | 否 | 字符串 `"greeting"` 启用系统绘制的问候文字。省略、`null`、不认识的值或其他类型时只播放视频。 |
 | `cover` | 否 | 封面图片文件名，`png`、`jpg` 或 `jpeg`，文件名规则同视频；建议 16:9。省略时动画库显示第一段视频的首帧 |
 
 不认识的顶层字段会被忽略，便于以后扩展；不认识的片段名会被拒绝。
 
 允许的片段组合：`video`；`outro`；`intro + outro`；`loop + outro`；`intro + loop + outro`。
+
+## 问候文字
+
+`"textOverlay": "greeting"` 让 Sakura 绘制问候文字。Windows 目前只为内置 Welcome 包绘制；其他带此字段的包在 Windows 上照常只播放视频。macOS 用系统字体绘制一行动态问候。普通问候包保留各自的视频，光照和英文问候文字绘制于视频上方。
+
+内置包「Welcome · 彩虹手写」（`sakura-greeting`）不播放视频：黑底上用一根彩虹霓虹线写出 `welcome` 加用户在设置里填的称呼（称呼为空时只写 `welcome`）。笔画取自手写字形的骨架（macOS 用系统 Bradley Hand；Windows 优先用随 Office 安装的 Bradley Hand ITC，没有时用系统自带的 Segoe Script），任意称呼都能书写；中文按笔画书写；含 emoji 的称呼在 macOS 改用下面的光扫问候、在 Windows 改为彩虹文字淡入。书写约 1.6–2.8 秒（随字数），约 3.3 秒后贴合已就绪的目标窗口并淡出。
+
+两种问候在慢启动时都保留画面，直到窗口就绪或等待超时。系统开启减少动态效果时跳过位移：彩虹手写整句直接淡入，光扫问候使用静态光照和柔和淡入淡出。纯视频包沿用原有的减少动态效果设置。
+
+光扫问候（普通问候包，以及含 emoji 的称呼）：
+
+清晨使用金光薄雾，午后使用暖白日光，黄昏使用琥珀至紫罗兰光，深夜使用带星点的冷月光。时段以本地 05:00、12:00、18:00 和 23:00 为分界。
+
+播放开始时按本机时间选用英文问候语。所有系统语言均使用下表文案。
+
+| 本机时间（含起点，至下一时段前） | 问候语 |
+|---|---|
+| 05:00–12:00 | Good morning |
+| 12:00–18:00 | Good afternoon |
+| 18:00–23:00 | Good evening |
+| 23:00–次日 05:00 | Good evening |
+
+深夜沿用 “Good evening”。“Good night” 通常用于道别。
+
+称呼从本机 Sakura 的体验设置读取。输入去掉首尾空白后可留空，或填写单行 1–20 个扩展字素簇，支持中英文和复合 emoji。空值只显示问候语。有称呼时用逗号加空格连接，例如 “Good morning, 小樱🌸”。较宽的文字缩小字号，保持单行完整显示。包内没有自定义文案或个人数据。
+
+格式仍为 schemaVersion 1。旧版 macOS 和当前 Windows 播放视频背景，忽略该字段。当前 macOS 只识别 `"greeting"`。字段不影响片段组合、媒体校验或导入。
 
 ## 播放流程
 
@@ -79,9 +107,10 @@ my-pack/
 
 ## 内置动画
 
-程序附带两个包，首次运行时安装到动画库：
+程序将随附的包安装到动画库：
 
 - `demo-garden`（`launcher-macos/demo-pack/`，CC0 几何示例）：每次启动都确保存在；当前选择不可用时的回退；不能移除。
-- 精选动画（`launcher-macos/featured-pack/`，目前为 `raiden-garden`）：每个用户只安装一次，记录在本机偏好（macOS `featuredInstalled`，Windows `settings.json` 的 `FeaturedInstalled`）。用户移除后不再自动装回。首次成功安装后，仅在用户还没有当前选择时设为当前动画，日志 `featured-made-current id=<id>`；新安装默认使用「雷电将军 · 花园」，与 preview.6 一致。已有选择（包括几何示例或个人包）的用户升级保持原选择；已安装过精选但尚未写入当前选择的用户也不会因升级被重新设为精选。精选缺失或安装失败时仍使用几何示例回退，不能为了恢复默认值清空已安装标记。
-- 独立测试目录（`--test-root`）默认不安装精选动画，`--test-featured` 时才安装，保证受控检查仍只用几何示例。
+- 精选动画（`launcher-macos/featured-pack/`，目前为 `raiden-garden`）：每个用户只安装一次，记录在本机偏好（macOS `featuredInstalled`，Windows `settings.json` 的 `FeaturedInstalled`）。用户移除后不再自动装回。首次成功安装后，仅在用户还没有当前选择时设为当前动画，日志 `featured-made-current id=<id>`；新安装默认：两端都使用内置「Welcome · 彩虹手写」（`sakura-greeting`，日志 `default-made-current id=sakura-greeting`，此后精选包只加入动画库、不再设为当前），所选动画缺失时也回退到它。已有选择（包括几何示例或个人包）的用户升级保持原选择；已安装过精选但尚未写入当前选择的用户也不会因升级被重新设为精选。精选缺失或安装失败时仍使用几何示例回退，不能为了恢复默认值清空已安装标记。
+- `sakura-greeting`（macOS `launcher-macos/greeting-pack/`，CC0 问候背景）：附带的无声兼容视频共 2.10 秒，旧读端按普通片段播放。每次启动确保包可用，不能移除，安装时不写当前动画选择。Windows 本次只支持读包及视频回退，尚未内置问候包。
+- 独立测试目录（`--test-root`）默认不安装精选动画，`--test-featured` 时才安装，保持受控检查的默认选择为几何示例。
 

@@ -37,6 +37,9 @@ launcher-macos/Sources/GardenBoot/ApplicationController.swift
 launcher-macos/Sources/GardenBoot/ApplicationMonitor.swift
 launcher-macos/Sources/GardenBoot/ExperienceEditor.swift
 launcher-macos/Sources/GardenBoot/FlowerIcon.swift
+launcher-macos/Sources/GardenBoot/GreetingLighting.swift
+launcher-macos/Sources/GardenBoot/GreetingOverlayView.swift
+launcher-macos/Sources/GardenBoot/GreetingSettingsView.swift
 launcher-macos/Sources/GardenBoot/InstalledApplications.swift
 launcher-macos/Sources/GardenBoot/LaunchOverlay.swift
 launcher-macos/Sources/GardenBoot/NativeMenu.swift
@@ -60,6 +63,7 @@ launcher-macos/Sources/GardenBootCore/Compatibility.swift
 launcher-macos/Sources/GardenBootCore/EventLog.swift
 launcher-macos/Sources/GardenBootCore/ExperienceSettings.swift
 launcher-macos/Sources/GardenBootCore/ExperienceStore.swift
+launcher-macos/Sources/GardenBootCore/Greeting.swift
 launcher-macos/Sources/GardenBootCore/LaunchPack.swift
 launcher-macos/Sources/GardenBootCore/LaunchSession.swift
 launcher-macos/Sources/GardenBootCore/MediaLibrary.swift
@@ -102,6 +106,11 @@ launcher-macos/featured-pack/intro.mp4
 launcher-macos/featured-pack/loop.mov
 launcher-macos/featured-pack/manifest.json
 launcher-macos/featured-pack/outro.mp4
+launcher-macos/greeting-pack/NOTICE.md
+launcher-macos/greeting-pack/generate.py
+launcher-macos/greeting-pack/intro.mp4
+launcher-macos/greeting-pack/manifest.json
+launcher-macos/greeting-pack/outro.mp4
 launcher-macos/scripts/build.sh
 launcher-macos/scripts/check-design-model.py
 launcher-macos/scripts/check-design-render.py
@@ -133,6 +142,7 @@ launcher-spec/VIDEO-FIT.md
 launcher-spec/conformance/compatibility.json
 launcher-spec/conformance/experience.json
 launcher-spec/conformance/geometry.json
+launcher-spec/conformance/greeting.json
 launcher-spec/conformance/library.json
 launcher-spec/conformance/manifest.json
 launcher-spec/conformance/overview.json
@@ -223,3 +233,14 @@ scripts/sign-update.py
 scripts/tests/test_update_signing.py
 launcher-windows/GardenBoot.Core.Tests/UpdateHarness.cs
 launcher-macos/scripts/update-test-driver.swift
+launcher-macos/Sources/GardenBoot/GreetingRecorder.swift
+launcher-macos/Sources/GardenBoot/ScriptGreetingView.swift
+launcher-macos/Sources/GardenBootCore/ScriptSkeleton.swift
+launcher-macos/Tests/GardenBootCoreTests/ScriptSkeletonTests.swift
+launcher-macos/greeting-pack/cover.png
+launcher-macos/Tests/GardenBootCoreTests/DefaultPackTests.swift
+launcher-windows/GardenBoot.Core/Greeting.cs
+launcher-windows/GardenBoot.Core/ScriptSkeleton.cs
+launcher-windows/GardenBoot.App/ScriptGreetingView.cs
+launcher-windows/GardenBoot.App/GreetingRecorder.cs
+launcher-windows/GardenBoot.Core.Tests/GreetingTests.cs

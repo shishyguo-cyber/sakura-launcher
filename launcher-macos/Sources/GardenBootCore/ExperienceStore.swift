@@ -10,6 +10,8 @@ public struct ExperienceStore: Sendable {
         return try ExperienceSettings.decode(Data(contentsOf: file))
     }
     public func save(_ settings: ExperienceSettings) throws {
+        var settings = settings
+        settings.greetingName = try Greeting.normalizedName(settings.greetingName)
         try settings.validated()
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]

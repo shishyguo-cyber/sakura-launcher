@@ -14,6 +14,10 @@ public static class SignedUpdate
     public sealed class RecoveryRequired(string backup, Exception inner) : IOException($"自动恢复未完成，旧版保留于：{backup}。请手动恢复或去 GitHub 下载。", inner);
     public const string PublicKey = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAELfF7XIzY6fqIOYOf7aN5SViuJ7PKHuKfsTPVCCp2EQv1yceqVYpgpHPG/ksrrPI9Qb/taY3F45xepyT4zB5ntA==";
     public const long MaxArchive = 512L * 1024 * 1024, MaxExpanded = 2L * 1024 * 1024 * 1024;
+
+    public static string FailureMessage(Exception error) =>
+        UpdateRules.IsGitHubConnectionFailure(error) ? UpdateRules.GitHubConnectionMessage : $"更新失败：{error.Message} 可去 GitHub 手动下载。";
+
     public static Uri Asset(string version, string current, string platform)
     {
         if (UpdateRules.Parse(version)?.Text != version || (UpdateRules.Compare(version, current) ?? 0) <= 0 || platform is not ("macOS" or "windows-x64")) throw new Failure("version", "版本无效或不是更新版本。");

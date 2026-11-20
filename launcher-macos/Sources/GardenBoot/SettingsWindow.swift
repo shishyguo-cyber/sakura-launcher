@@ -15,7 +15,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             onSave: onSave, onPreview: onPreview, runtime: runtime)
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 960, height: 640),
                               styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
-        window.title = "启动体验"
+        window.title = Support.isGreetingDemo ? "Sakura Demo · 问候" : "启动体验"
         window.contentMinSize = NSSize(width: 820, height: 560)
         window.isReleasedWhenClosed = false
         super.init(window: window)
@@ -38,7 +38,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         guard editor.isDirty else { return true }
         let alert = NSAlert()
         alert.messageText = "保存启动体验的修改？"
-        alert.informativeText = "尚未保存的应用、收藏、播放偏好、参数和方案会在关闭后丢失。"
+        alert.informativeText = "尚未保存的称呼、应用、收藏、播放偏好、参数和方案会在关闭后丢失。"
         alert.addButton(withTitle: "保存")
         alert.addButton(withTitle: "放弃修改")
         alert.addButton(withTitle: "继续编辑")
@@ -166,6 +166,7 @@ struct ExperienceSettingsView: View {
 
     private var playback: some View {
         VStack(alignment: .leading, spacing: 16) {
+            SettingsGroup { SettingsRow { GreetingSettingsView(editor: editor, title: "称呼") } }
             SettingsGroup {
                 SettingsRow {
                     HStack {

@@ -1,5 +1,5 @@
 {
- "about": "Manifest validation. valid=false means decoding or validatedLayout must fail. handoff: PackManifest.handoffTime(finalDuration:). expectCover: the manifest's cover file name, null when absent. expectVideoFit: the manifest's videoFit (absent = not checked; default auto).",
+ "about": "Manifest validation. valid=false means decoding or validatedLayout must fail. handoff: PackManifest.handoffTime(finalDuration:). expectCover: the manifest's cover file name, null when absent. expectVideoFit: the manifest's videoFit (absent = not checked; default auto). expectTextOverlay and showsGreeting describe the round trip and whether Sakura draws the greeting (both platforms).",
  "manifests": [
   {
    "name": "segmented",
@@ -37,7 +37,9 @@
     "final": "v.mov",
     "finalSegment": "video",
     "coversLaunch": false
-   }
+   },
+   "expectTextOverlay": null,
+   "showsGreeting": false
   },
   {
    "name": "outro only",
@@ -73,6 +75,70 @@
     "finalSegment": "video",
     "coversLaunch": false
    }
+  },
+  {
+   "name": "text overlay greeting",
+   "json": {
+    "schemaVersion": 1,
+    "id": "sakura-greeting",
+    "name": "问候",
+    "segments": {
+     "intro": "intro.mp4",
+     "outro": "outro.mp4"
+    },
+    "textOverlay": "greeting"
+   },
+   "valid": true,
+   "layout": {
+    "intro": "intro.mp4",
+    "final": "outro.mp4",
+    "finalSegment": "outro",
+    "coversLaunch": true
+   },
+   "expectTextOverlay": "greeting",
+   "showsGreeting": true
+  },
+  {
+   "name": "text overlay future-caption",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "textOverlay": "future-caption"
+   },
+   "valid": true,
+   "layout": {
+    "final": "v.mp4",
+    "finalSegment": "video",
+    "coversLaunch": false
+   },
+   "expectTextOverlay": "future-caption",
+   "showsGreeting": false
+  },
+  {
+   "name": "text overlay with unknown shape",
+   "json": {
+    "schemaVersion": 1,
+    "id": "a",
+    "name": "A",
+    "segments": {
+     "video": "v.mp4"
+    },
+    "textOverlay": {
+     "mode": "future-caption"
+    }
+   },
+   "valid": true,
+   "layout": {
+    "final": "v.mp4",
+    "finalSegment": "video",
+    "coversLaunch": false
+   },
+   "expectTextOverlay": null,
+   "showsGreeting": false
   },
   {
    "name": "all options",

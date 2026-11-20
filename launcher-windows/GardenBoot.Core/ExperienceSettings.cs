@@ -109,6 +109,8 @@ public sealed class ExperienceSettings
     public LibraryPreferences Library { get; set; } = new();
     /// <summary>schemaVersion 3: the apps Sakura watches (launcher-spec/TARGETS.md).</summary>
     public List<LaunchTarget> Targets { get; set; } = [TargetRules.DefaultWindowsTarget()];
+    /// <summary>The nickname the built-in Welcome writes (EXPERIENCE-SETTINGS.md "称呼"); null = just "welcome".</summary>
+    public string? GreetingName { get; set; }
 
     public void Validate()
     {
@@ -116,6 +118,7 @@ public sealed class ExperienceSettings
         if (SchemaVersion != CurrentSchema) throw new ExperienceException("设置版本无效");
         if (Playback is null || Library is null || Library.Favorites is null) throw new ExperienceException("播放或动画库设置缺失");
         TargetRules.Validate(Targets);
+        if (GreetingName is not null && Greeting.NormalizedName(GreetingName) != GreetingName) throw new ExperienceException("称呼需去掉首尾空白");
         if (!Enum.IsDefined(Playback.Frequency) || !Enum.IsDefined(Library.Rotation)) throw new ExperienceException("播放或轮换方式无效");
         if (Playback.DayStartHour is < 0 or > 23) throw new ExperienceException("新的一天起点需为 0–23 点");
         if (Library.Favorites.Count > LibraryPreferences.MaxFavorites) throw new ExperienceException($"收藏最多 {LibraryPreferences.MaxFavorites} 个");
@@ -194,6 +197,7 @@ public sealed class ExperienceSettings
                 settings.Library = new();
             }
             else if (!IsObject(root, "playback") || !IsObject(root, "library")) throw new ExperienceException("播放或动画库设置缺失");
+            settings.GreetingName = Greeting.NormalizedName(settings.GreetingName);
             if (version is 1 or 2) { settings.SchemaVersion = CurrentSchema; settings.Targets = [TargetRules.DefaultWindowsTarget()]; }
             else if (!root.TryGetProperty("targets", out var targets) || targets.ValueKind != JsonValueKind.Array) throw new ExperienceException("应用列表缺失");
             settings.Validate();

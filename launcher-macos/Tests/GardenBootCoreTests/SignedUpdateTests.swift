@@ -2,6 +2,36 @@ import XCTest
 @testable import GardenBootCore
 
 final class SignedUpdateTests: XCTestCase {
+    func testGitHubConnectivityMessagesForCheckAndDownload() {
+        let codes: [URLError.Code] = [
+            .notConnectedToInternet, .cannotFindHost, .dnsLookupFailed, .cannotConnectToHost,
+            .timedOut, .networkConnectionLost, .secureConnectionFailed, .serverCertificateHasBadDate,
+            .serverCertificateUntrusted, .serverCertificateHasUnknownRoot, .serverCertificateNotYetValid,
+            .clientCertificateRejected, .clientCertificateRequired,
+        ]
+        let expected = "连不上 GitHub，请确认这台电脑能打开 github.com 后重试。"
+        for code in codes {
+            let error = URLError(code)
+            XCTAssertEqual(UpdateRules.checkFailureMessage(error), expected, "\(code)")
+            XCTAssertEqual(SignedUpdate.failureMessage(error), expected, "\(code)")
+        }
+    }
+
+    func testOtherUpdateErrorsRetainTheirMessages() {
+        let errors: [Error] = [
+            URLError(.badServerResponse), URLError(.cancelled), URLError(.httpTooManyRedirects),
+            CocoaError(.fileWriteOutOfSpace),
+            NSError(domain: "Test", code: URLError.timedOut.rawValue),
+        ]
+        for error in errors {
+            XCTAssertEqual(UpdateRules.checkFailureMessage(error), "暂时无法检查更新，请稍后再试。")
+            XCTAssertEqual(SignedUpdate.failureMessage(error), "更新失败：\(error.localizedDescription) 可去 GitHub 手动下载。")
+        }
+        XCTAssertEqual(SignedUpdate.failureMessage(SignedUpdate.Failure.signature), "更新失败：更新签名验证失败。 可去 GitHub 手动下载。")
+        XCTAssertEqual(SignedUpdate.failureMessage(SignedUpdate.Failure.space), "更新失败：磁盘空间不足，请至少留出 5 GB。 可去 GitHub 手动下载。")
+        XCTAssertEqual(SignedUpdate.failureMessage(SignedUpdate.Failure.network), "更新失败：更新下载失败，请检查网络后重试。 可去 GitHub 手动下载。")
+    }
+
     func testRejectsDowngradeAndUnsafeVersions() throws {
         XCTAssertThrowsError(try SignedUpdate.asset(version: "0.2.0-preview.7", current: "0.2.0-preview.7", platform: "macOS"))
         XCTAssertThrowsError(try SignedUpdate.asset(version: "../bad", current: "0.1.0", platform: "macOS"))

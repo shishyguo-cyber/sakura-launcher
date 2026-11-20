@@ -104,6 +104,10 @@ internal sealed partial class ExperienceWindow
         updateResult.TextWrapping = TextWrapping.Wrap;
         AutomationProperties.SetAutomationId(updateResult, "overview-update-result");
         result.Children.Add(updateResult); body.Children.Add(result);
+        var requirement = Secondary(UpdateRules.GitHubRequirement);
+        requirement.Margin = new(0, 0, 0, 12);
+        AutomationProperties.SetAutomationId(requirement, "overview-update-requirement");
+        body.Children.Add(requirement);
         var line = new Border { Height = 1, Margin = new(0, 0, 0, 12) };
         line.SetResourceReference(Border.BackgroundProperty, "Divider"); body.Children.Add(line);
         AutomationProperties.SetName(automaticUpdates, "自动检查更新");

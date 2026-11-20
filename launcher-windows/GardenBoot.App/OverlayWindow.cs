@@ -115,6 +115,9 @@ internal sealed class OverlayWindow : Window
             blur.Radius = Math.Clamp(Math.Min(surface.ActualWidth, surface.ActualHeight) * 0.04, 8, 60);
         if (applied != mode) { applied = mode; Log?.Invoke($"video-fit mode={mode.LogName()} requested={FitMode.LogName()}"); }
     }
+    /// <summary>Shows a drawn greeting (the built-in Welcome) instead of video, under the skip hint.</summary>
+    public void ShowGreeting(UIElement view) => surface.Children.Insert(surface.Children.IndexOf(hint), view);
+
     public void SetHint(double opacity, bool hasEscape)
     {
         hint.Text = hasEscape ? "点击或按 Esc 跳过" : "点击跳过（Esc 被其他程序占用）";

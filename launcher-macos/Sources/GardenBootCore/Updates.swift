@@ -4,6 +4,27 @@ import Foundation
 public enum UpdateRules {
     public static let checkInterval: Double = 7 * 24 * 3600
     public static let releasesURL = URL(string: "https://api.github.com/repos/shishyguo-cyber/sakura-launcher/releases?per_page=20")!
+    public static let gitHubRequirement = "检查和下载更新需要能连接 GitHub。"
+    public static let gitHubConnectionMessage = "连不上 GitHub，请确认这台电脑能打开 github.com 后重试。"
+
+    static func isGitHubConnectionFailure(_ error: Error) -> Bool {
+        let urlError = error as NSError
+        guard urlError.domain == NSURLErrorDomain else { return false }
+        switch URLError.Code(rawValue: urlError.code) {
+        case .notConnectedToInternet, .cannotFindHost, .dnsLookupFailed, .cannotConnectToHost,
+             .timedOut, .networkConnectionLost, .secureConnectionFailed,
+             .serverCertificateHasBadDate, .serverCertificateUntrusted,
+             .serverCertificateHasUnknownRoot, .serverCertificateNotYetValid,
+             .clientCertificateRejected, .clientCertificateRequired:
+            return true
+        default:
+            return false
+        }
+    }
+
+    public static func checkFailureMessage(_ error: Error) -> String {
+        isGitHubConnectionFailure(error) ? gitHubConnectionMessage : "暂时无法检查更新，请稍后再试。"
+    }
 
     public struct Version: Equatable, Sendable {
         public let core: [Int]
