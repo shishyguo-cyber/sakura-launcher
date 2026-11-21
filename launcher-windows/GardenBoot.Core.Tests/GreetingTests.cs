@@ -95,4 +95,27 @@ public static class GreetingTests
         Check.Equal(0, ScriptSkeleton.Strokes(new byte[100], 10, 10, 100).Count);
         Check.Equal(0, ScriptSkeleton.Strokes([1, 2, 3], 10, 10, 100).Count);
     }
+
+    /// Regression (preview.11): the built-in Welcome must install from its movie headers alone.
+    [Test] public static async Task BundledWelcomeInstallsFromHeadersAlone()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null && !Directory.Exists(Path.Combine(dir.FullName, "launcher-macos", "greeting-pack"))) dir = dir.Parent;
+        Check.True(dir is not null, "greeting-pack found next to the sources");
+        var bundled = Path.Combine(dir!.FullName, "launcher-macos", "greeting-pack");
+        Check.Near(0.9, MediaDuration.Read(Path.Combine(bundled, "intro.mp4")) ?? 0, 0.05);
+        Check.Near(1.2, MediaDuration.Read(Path.Combine(bundled, "outro.mp4")) ?? 0, 0.05);
+        var root = Path.Combine(Path.GetTempPath(), "sakura-welcome-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var library = new PackLibrary(root);
+            static Task<MediaInfo> Header(string path) => Task.FromResult(new MediaInfo(MediaDuration.Read(path) ?? 0, MediaDuration.Read(path) is > 0));
+            var installed = await library.InstallIfMissing(bundled, Header);
+            Check.Equal(Greeting.BuiltInPackId, installed?.Id);
+            Check.True(Greeting.IsProcedural(installed!), "installed copy is still drawn by Sakura");
+            Check.True(File.Exists(Path.Combine(root, Greeting.BuiltInPackId, "cover.png")), "cover copied for the library card");
+            Check.Equal<InstalledPack?>(null, await library.InstallIfMissing(bundled, Header), "second start leaves it alone");
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+    }
 }

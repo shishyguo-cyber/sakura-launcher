@@ -117,7 +117,7 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
         libraryBusy = true;
         try
         {
-            if (await library.InstallIfMissing(folder, Probe, ImageProbe) is { } installed) log.Write($"pack-installed id={installed.Id}");
+            if (await library.InstallIfMissing(folder, HeaderProbe, ImageProbe) is { } installed) log.Write($"pack-installed id={installed.Id}");
             if (PackLibrary.NewInstallChoice(settings.ActivePackId, settings.FeaturedInstalled.Count > 0, Greeting.BuiltInPackId) is { } choice)
             {
                 settings.ActivePackId = choice;
@@ -126,7 +126,7 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
             }
         }
         catch (Exception e) when (e is PackException or IOException or UnauthorizedAccessException or OperationCanceledException)
-        { if (!disposed) log.Write($"greeting-pack-error type={e.GetType().Name}"); }
+        { if (!disposed) log.Write($"greeting-pack-error type={e.GetType().Name} reason={(e is PackException ? e.Message : "-")}"); }
         finally { libraryBusy = false; }
     }
 
@@ -175,6 +175,14 @@ internal sealed class ApplicationController : IDisposable, ILibraryActions, IOve
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException)
         { log.Write($"playback-state-save-failed type={e.GetType().Name}"); }
     }
+
+    /// <summary>
+    /// The built-in Welcome is drawn by Sakura and never decodes its two short compatibility videos on Windows, so
+    /// installing it only checks that each file has a readable movie header (a full decode probe rejected them on a
+    /// user's PC with Sakura 0.2.0-preview.11, leaving Welcome out of the library).
+    /// </summary>
+    private static Task<MediaInfo> HeaderProbe(string path) =>
+        Task.FromResult(new MediaInfo(MediaDuration.Read(path) ?? 0, MediaDuration.Read(path) is > 0));
 
     private Task<MediaInfo> Probe(string path)
     {
